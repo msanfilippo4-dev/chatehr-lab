@@ -4,15 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { readFile } from "fs/promises";
 import path from "path";
 import { retrieveChunks } from "@/lib/rag-retrieval";
+import { GUIDELINE_FILES } from "@/lib/rag-corpus";
 import type { RAGChunk } from "@/lib/types";
-
-const GUIDELINE_FILES = [
-  "diabetes.json",
-  "hypertension.json",
-  "cholesterol.json",
-  "immunizations.json",
-  "heart_failure.json",
-];
 
 let guidelineChunksPromise: Promise<RAGChunk[]> | null = null;
 

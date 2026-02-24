@@ -20,6 +20,13 @@ export default function LabInstructionsPage() {
           >
             /submissions
           </a>
+          . If you want to inspect the retrieval corpus, see{" "}
+          <a
+            href="/rag"
+            className="font-semibold text-[#8C1515] underline underline-offset-2 hover:text-[#6B1010]"
+          >
+            /rag
+          </a>
           .
         </p>
       </section>
@@ -142,6 +149,13 @@ export default function LabInstructionsPage() {
             className="font-semibold text-[#8C1515] underline underline-offset-2 hover:text-[#6B1010]"
           >
             Open /extracredit
+          </a>
+          {" · "}
+          <a
+            href="/rag"
+            className="font-semibold text-[#8C1515] underline underline-offset-2 hover:text-[#6B1010]"
+          >
+            Open /rag (RAG database guide)
           </a>
         </p>
       </section>

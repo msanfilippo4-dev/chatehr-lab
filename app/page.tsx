@@ -345,6 +345,14 @@ export default function ChatEHRPage() {
               Try Extra Credit (3 challenge exams).
             </a>
           </p>
+          <p className="text-xs mt-1">
+            <a
+              href="/rag"
+              className="text-[#8C1515] underline underline-offset-2 hover:text-[#6B1010]"
+            >
+              See what is in the RAG database.
+            </a>
+          </p>
         </div>
         <div className="flex flex-col items-end gap-2">
           {totals.tokens > 0 && (
