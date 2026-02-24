@@ -140,12 +140,22 @@ export default function FordhamHealthBenchPage() {
           Follow the patient/cohort targets and prompt paths below, then submit
           your extracted answers.
         </p>
+        <p className="t-caption mt-2">
+          Want harder prompts after this?{" "}
+          <a
+            href="/extracredit"
+            className="font-semibold text-[#8C1515] underline underline-offset-2 hover:text-[#6B1010]"
+          >
+            Open /extracredit
+          </a>
+          .
+        </p>
       </section>
 
       <section className="ehr-shell p-5 md:p-6">
         <h2 className="t-heading t-primary">Query Targets + Prompt Paths</h2>
         <ul className="list-disc pl-5 mt-2 space-y-1 t-body t-secondary">
-          <li>Cases 1-3: use patient IDs `LAB-001`, `LAB-002`, `LAB-003`.</li>
+          <li>Cases 1-3: use patient IDs `LAB-001`, `LAB-002`, `LAB-003` (Eleanor, Marcus, Chloe).</li>
           <li>Cases 4-5: use `Bronx Hospital Cohort (50)` from the selector.</li>
           <li>Prompt pattern: ask for specific values first, then ask model to cite chart evidence.</li>
           <li>If unsure, verify directly in chart tabs and lab panels before submitting.</li>
@@ -165,7 +175,7 @@ export default function FordhamHealthBenchPage() {
             </p>
             <p className="t-caption t-secondary">
               Prompt idea: &quot;What is the latest potassium and which active med increases
-              hyperkalemia risk?&quot;
+              hyperkalemia risk?&quot; Hint: The absolute latest lab value might be buried in the clinical notes, not just the structured Labs tab. Pay attention to active vs discontinued medications.
             </p>
             <div className="grid gap-3 md:grid-cols-2">
               <input
@@ -188,7 +198,7 @@ export default function FordhamHealthBenchPage() {
               Case 2 (LAB-002): cardiometabolic value extraction
             </p>
             <p className="t-caption t-secondary">
-              Prompt idea: &quot;Give me latest A1c and LDL for this patient.&quot;
+              Prompt idea: &quot;Give me latest A1c and LDL for this patient.&quot; Hint: Similar to Case 1, point-of-care lab results are sometimes documented in free-text clinical notes rather than structured lab interfaces.
             </p>
             <div className="grid gap-3 md:grid-cols-2">
               <input
@@ -375,4 +385,3 @@ function Stat({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
-

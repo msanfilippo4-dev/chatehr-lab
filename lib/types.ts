@@ -84,6 +84,9 @@ export interface UsageMetadata {
   totalTokens: number;
   estimatedCost: number;
   model: string;
+  modelLatencyMs?: number;
+  totalLatencyMs?: number;
+  historyMessagesUsed?: number;
 }
 
 export interface Message {

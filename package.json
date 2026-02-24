@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "generate": "node scripts/generate_patients.js"
+    "generate": "node scripts/generate_patients.js",
+    "validate:data": "node scripts/validate_patients.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.21.0",

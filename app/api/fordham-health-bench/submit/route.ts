@@ -72,6 +72,7 @@ export async function POST(req: NextRequest) {
     const record: BenchSubmissionRecord = {
       id: `fhb_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       createdAt: new Date().toISOString(),
+      source: "fordham-health-bench",
       student: {
         name: session.user.name || "Student",
         email: session.user.email,
@@ -103,4 +104,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-

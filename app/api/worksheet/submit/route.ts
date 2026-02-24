@@ -80,6 +80,7 @@ export async function POST(req: NextRequest) {
     const entry = {
       id: `ws_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       createdAt: new Date().toISOString(),
+      source: "worksheet",
       student: {
         name: session.user.name || "Student",
         email: session.user.email,
@@ -107,4 +108,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-

@@ -1,5 +1,5 @@
 "use client";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 type Answers = {
   q1: string;
@@ -8,6 +8,7 @@ type Answers = {
 };
 
 type EvaluationResponse = {
+  submission?: { id: string; createdAt: string };
   submittedAt: string;
   benchmark: {
     overallScore: number;
@@ -26,6 +27,15 @@ type EvaluationResponse = {
     perQuestion: Array<{ id: keyof Answers; feedback: string }>;
     model: string | null;
   };
+  analytics?: {
+    scope: "student" | "class";
+    scopeLabel: string;
+    submissionCount: number;
+    averageOverall: number;
+    averageByQuestion: Array<{ id: keyof Answers; title: string; avgScore: number }>;
+    recent: Array<{ id: string; createdAt: string; student: string; overallScore: number }>;
+  };
+  delivery?: { forwarded: boolean; message: string };
 };
 
 const INITIAL_ANSWERS: Answers = {
@@ -61,6 +71,7 @@ export default function SubmissionsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<EvaluationResponse | null>(null);
+  const [analytics, setAnalytics] = useState<EvaluationResponse["analytics"] | null>(null);
 
   const completeness = useMemo(() => {
     const filled = QUESTIONS.filter((q) => answers[q.id].trim().length > 0).length;
@@ -70,6 +81,20 @@ export default function SubmissionsPage() {
   const onAnswerChange = (id: keyof Answers, value: string) => {
     setAnswers((prev) => ({ ...prev, [id]: value }));
   };
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch("/api/submissions/analytics");
+        if (!res.ok) return;
+        const data = (await res.json()) as { analytics?: EvaluationResponse["analytics"] };
+        if (data.analytics) setAnalytics(data.analytics);
+      } catch {
+        // Non-fatal.
+      }
+    };
+    load();
+  }, []);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,6 +122,7 @@ export default function SubmissionsPage() {
         return;
       }
       setResult(data);
+      if (data.analytics) setAnalytics(data.analytics);
     } catch {
       setError("Network error while evaluating submission.");
     } finally {
@@ -118,6 +144,16 @@ export default function SubmissionsPage() {
         <p className="t-caption t-secondary mt-2">
           This is a learning aid, not a clinical decision system and not a
           grading replacement.
+        </p>
+        <p className="t-caption mt-2">
+          Optional advanced extraction tasks are available at{" "}
+          <a
+            href="/extracredit"
+            className="font-semibold text-[#8C1515] underline underline-offset-2 hover:text-[#6B1010]"
+          >
+            /extracredit
+          </a>
+          .
         </p>
       </section>
 
@@ -184,7 +220,14 @@ export default function SubmissionsPage() {
           <p className="t-caption t-secondary">
             Submitted: {new Date(result.submittedAt).toLocaleString()}
             {result.judge.model ? ` · Judge Model: ${result.judge.model}` : ""}
+            {result.submission ? ` · ID: ${result.submission.id}` : ""}
           </p>
+          {result.delivery && (
+            <p className="t-caption t-secondary">
+              Email forwarding: {result.delivery.forwarded ? "sent" : "not sent"} ·{" "}
+              {result.delivery.message}
+            </p>
+          )}
 
           <div className="space-y-3">
             {result.benchmark.perQuestion.map((q) => {
@@ -238,6 +281,41 @@ export default function SubmissionsPage() {
           </div>
         </section>
       )}
+
+      {analytics && (
+        <section className="ehr-shell p-5 md:p-6 space-y-4">
+          <h2 className="t-heading t-primary">Analytics</h2>
+          <div className="grid gap-3 md:grid-cols-3">
+            <Metric label={analytics.scopeLabel} value={analytics.submissionCount.toString()} />
+            <Metric label="Average Overall" value={`${analytics.averageOverall}%`} />
+            <Metric label="Most Recent Rows" value={analytics.recent.length.toString()} />
+          </div>
+
+          <div className="space-y-2">
+            <p className="t-caption font-semibold text-[#122033]">Average by Question</p>
+            {analytics.averageByQuestion.map((q) => (
+              <div
+                key={q.id}
+                className="rounded-lg border border-[#d6dfeb] bg-[#f8fbff] px-3 py-2"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <p className="t-caption font-semibold text-[#122033]">{q.title}</p>
+                  <p className="t-caption text-[#4c637f]">{q.avgScore.toFixed(1)}%</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
+  );
+}
+
+function Metric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-[#d6dfeb] bg-[#f8fbff] px-3 py-2.5">
+      <p className="t-caption text-[#4c637f]">{label}</p>
+      <p className="text-lg font-semibold text-[#122033]">{value}</p>
     </div>
   );
 }

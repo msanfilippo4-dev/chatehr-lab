@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { authOptions } from "@/lib/auth";
+import {
+  appendReflectionSubmission,
+  buildReflectionAnalytics,
+  forwardReflectionSubmissionEmail,
+  readReflectionSubmissions,
+  ReflectionSubmissionRecord,
+} from "../_lib";
 
 type SubmissionAnswers = {
   q1: string;
@@ -305,11 +312,37 @@ export async function POST(req: NextRequest) {
 
     const benchmark = scoreAnswers(answers);
     const judge = await getJudgeFeedback(answers, benchmark);
-
-    return NextResponse.json({
-      submittedAt: new Date().toISOString(),
+    const now = new Date().toISOString();
+    const record: ReflectionSubmissionRecord = {
+      id: `sub_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      createdAt: now,
+      source: "submissions",
+      student: {
+        name: session.user?.name || "Student",
+        email: session.user?.email || "unknown@fordham.edu",
+      },
+      answers,
       benchmark,
       judge,
+    };
+    await appendReflectionSubmission(record);
+    const delivery = await forwardReflectionSubmissionEmail(record);
+    const allRecords = await readReflectionSubmissions();
+    const analytics = buildReflectionAnalytics(
+      allRecords,
+      session.user?.email || "unknown@fordham.edu"
+    );
+
+    return NextResponse.json({
+      submission: {
+        id: record.id,
+        createdAt: record.createdAt,
+      },
+      submittedAt: now,
+      benchmark,
+      judge,
+      analytics,
+      delivery,
     });
   } catch (error: unknown) {
     const err = error as { message?: string };

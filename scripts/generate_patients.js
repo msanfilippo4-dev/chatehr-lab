@@ -2,16 +2,30 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { generateGoldenPatients } from './golden_patients.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const NUM_PATIENTS = 1000;
+const PATIENT_SEED = Number.parseInt(process.env.PATIENT_SEED || '61172026', 10);
+const REFERENCE_DATE = new Date(process.env.PATIENT_REFERENCE_DATE || '2026-01-15T00:00:00Z');
+const REFERENCE_YEAR = REFERENCE_DATE.getUTCFullYear();
 
-const firstNamesMale = ["James","John","Robert","Michael","William","David","Richard","Joseph","Thomas","Charles","Christopher","Daniel","Matthew","Anthony","Mark","Donald","Steven","Paul","Andrew","Joshua","Kevin","Brian","Edward","Ronald","Timothy","Jason","Jeffrey","Ryan","Jacob","Gary","Nicholas","Eric","Jonathan","Stephen","Larry","Justin","Scott","Brandon","Raymond","Gregory","Samuel","Frank","Alexander","Patrick","Benjamin","Jack","Dennis","Jerry","Tyler","Aaron"];
-const firstNamesFemale = ["Mary","Patricia","Jennifer","Linda","Elizabeth","Barbara","Susan","Jessica","Sarah","Karen","Lisa","Nancy","Betty","Margaret","Sandra","Ashley","Kimberly","Emily","Donna","Michelle","Carol","Amanda","Dorothy","Melissa","Deborah","Stephanie","Rebecca","Sharon","Laura","Cynthia","Kathleen","Amy","Angela","Shirley","Anna","Brenda","Pamela","Emma","Nicole","Helen","Samantha","Katherine","Christine","Debra","Rachel","Carolyn","Janet","Catherine","Maria","Heather"];
-const lastNames = ["Smith","Johnson","Williams","Brown","Jones","Garcia","Miller","Davis","Rodriguez","Martinez","Hernandez","Lopez","Gonzalez","Wilson","Anderson","Thomas","Taylor","Moore","Jackson","Martin","Lee","Perez","Thompson","White","Harris","Sanchez","Clark","Ramirez","Lewis","Robinson","Walker","Young","Allen","King","Wright","Scott","Torres","Nguyen","Hill","Flores","Green","Adams","Nelson","Baker","Hall","Rivera","Campbell","Mitchell","Carter","Roberts"];
-const providers = ["Dr. Sarah Chen","Dr. Marcus Williams","Dr. Priya Patel","Dr. James O'Brien","Dr. Fatima Al-Hassan","Dr. Robert Kim","Dr. Lisa Thompson","Dr. David Nguyen","Dr. Maria Rodriguez","Dr. John Smith","Dr. Emily Johnson","Dr. Michael Brown"];
+function createRng(seed) {
+  let state = seed >>> 0;
+  return function next() {
+    state = (state * 1664525 + 1013904223) >>> 0;
+    return state / 4294967296;
+  };
+}
+
+const random = createRng(PATIENT_SEED);
+
+const firstNamesMale = ["James", "John", "Robert", "Michael", "William", "David", "Richard", "Joseph", "Thomas", "Charles", "Christopher", "Daniel", "Matthew", "Anthony", "Mark", "Donald", "Steven", "Paul", "Andrew", "Joshua", "Kevin", "Brian", "Edward", "Ronald", "Timothy", "Jason", "Jeffrey", "Ryan", "Jacob", "Gary", "Nicholas", "Eric", "Jonathan", "Stephen", "Larry", "Justin", "Scott", "Brandon", "Raymond", "Gregory", "Samuel", "Frank", "Alexander", "Patrick", "Benjamin", "Jack", "Dennis", "Jerry", "Tyler", "Aaron"];
+const firstNamesFemale = ["Mary", "Patricia", "Jennifer", "Linda", "Elizabeth", "Barbara", "Susan", "Jessica", "Sarah", "Karen", "Lisa", "Nancy", "Betty", "Margaret", "Sandra", "Ashley", "Kimberly", "Emily", "Donna", "Michelle", "Carol", "Amanda", "Dorothy", "Melissa", "Deborah", "Stephanie", "Rebecca", "Sharon", "Laura", "Cynthia", "Kathleen", "Amy", "Angela", "Shirley", "Anna", "Brenda", "Pamela", "Emma", "Nicole", "Helen", "Samantha", "Katherine", "Christine", "Debra", "Rachel", "Carolyn", "Janet", "Catherine", "Maria", "Heather"];
+const lastNames = ["Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Rodriguez", "Martinez", "Hernandez", "Lopez", "Gonzalez", "Wilson", "Anderson", "Thomas", "Taylor", "Moore", "Jackson", "Martin", "Lee", "Perez", "Thompson", "White", "Harris", "Sanchez", "Clark", "Ramirez", "Lewis", "Robinson", "Walker", "Young", "Allen", "King", "Wright", "Scott", "Torres", "Nguyen", "Hill", "Flores", "Green", "Adams", "Nelson", "Baker", "Hall", "Rivera", "Campbell", "Mitchell", "Carter", "Roberts"];
+const providers = ["Dr. Sarah Chen", "Dr. Marcus Williams", "Dr. Priya Patel", "Dr. James O'Brien", "Dr. Fatima Al-Hassan", "Dr. Robert Kim", "Dr. Lisa Thompson", "Dr. David Nguyen", "Dr. Maria Rodriguez", "Dr. John Smith", "Dr. Emily Johnson", "Dr. Michael Brown"];
 
 const conditionsList = [
   { code: "E11.9", display: "Type 2 diabetes mellitus without complications" },
@@ -133,19 +147,19 @@ const allergyData = [
 ];
 
 const chiefComplaints = [
-  "Follow-up for chronic disease management","Routine annual physical exam","Blood pressure check",
-  "Worsening shortness of breath","Fatigue and generalized weakness","Lower extremity edema",
-  "Medication refill request","Lab result review","New onset headaches","Poorly controlled blood glucose",
-  "Weight gain concern","Joint pain and stiffness","Cough and URI symptoms","Abdominal pain",
-  "Follow-up after ED visit","Post-hospitalization visit","Dizziness and lightheadedness",
-  "Annual wellness visit","Chest pain, exertional","Medication side effect concern"
+  "Follow-up for chronic disease management", "Routine annual physical exam", "Blood pressure check",
+  "Worsening shortness of breath", "Fatigue and generalized weakness", "Lower extremity edema",
+  "Medication refill request", "Lab result review", "New onset headaches", "Poorly controlled blood glucose",
+  "Weight gain concern", "Joint pain and stiffness", "Cough and URI symptoms", "Abdominal pain",
+  "Follow-up after ED visit", "Post-hospitalization visit", "Dizziness and lightheadedness",
+  "Annual wellness visit", "Chest pain, exertional", "Medication side effect concern"
 ];
 
-function getRandomItem(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-function getRandom(min, max) { return Math.random() * (max - min) + min; }
+function getRandomItem(arr) { return arr[Math.floor(random() * arr.length)]; }
+function getRandom(min, max) { return random() * (max - min) + min; }
 function getRandomInt(min, max) { return Math.floor(getRandom(min, max + 1)); }
 function getRandomDate(start, end) {
-  return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()))
+  return new Date(start.getTime() + random() * (end.getTime() - start.getTime()))
     .toISOString().split('T')[0];
 }
 
@@ -174,10 +188,12 @@ function generateVisit(patientAge, patientGender, conditions, usedConditionCodes
     { type: "ED Visit", w: 0.15 },
     { type: "Hospital Admission", w: 0.10 }
   ];
-  let rand = Math.random(), cumulative = 0, visitType = "Office Visit";
+  const draw = random();
+  let cumulative = 0;
+  let visitType = "Office Visit";
   for (const { type, w } of typeWeights) {
     cumulative += w;
-    if (rand < cumulative) { visitType = type; break; }
+    if (draw < cumulative) { visitType = type; break; }
   }
 
   const complaint = getRandomItem(chiefComplaints);
@@ -216,14 +232,14 @@ function generateVisit(patientAge, patientGender, conditions, usedConditionCodes
 }
 
 function generatePatient(id) {
-  const isMale = Math.random() > 0.5;
+  const isMale = random() > 0.5;
   const firstName = isMale ? getRandomItem(firstNamesMale) : getRandomItem(firstNamesFemale);
   const lastName = getRandomItem(lastNames);
   const gender = isMale ? "Male" : "Female";
 
   const age = getRandomInt(18, 85);
-  const birthYear = new Date().getFullYear() - age;
-  const dob = `${birthYear}-${String(getRandomInt(1,12)).padStart(2,'0')}-${String(getRandomInt(1,28)).padStart(2,'0')}`;
+  const birthYear = REFERENCE_YEAR - age;
+  const dob = `${birthYear}-${String(getRandomInt(1, 12)).padStart(2, '0')}-${String(getRandomInt(1, 28)).padStart(2, '0')}`;
 
   // Conditions
   const numConditions = getRandomInt(0, 4);
@@ -235,7 +251,7 @@ function generatePatient(id) {
     if (!usedConditionCodes.has(cond.code)) {
       usedConditionCodes.add(cond.code);
       const onsetYear = birthYear + getRandomInt(0, Math.max(1, age - 5));
-      conditions.push({ code: cond.code, display: cond.display, onset: `${onsetYear}-${String(getRandomInt(1,12)).padStart(2,'0')}-${String(getRandomInt(1,28)).padStart(2,'0')}` });
+      conditions.push({ code: cond.code, display: cond.display, onset: `${onsetYear}-${String(getRandomInt(1, 12)).padStart(2, '0')}-${String(getRandomInt(1, 28)).padStart(2, '0')}` });
     }
   }
 
@@ -259,7 +275,7 @@ function generatePatient(id) {
       let flag = "Normal";
       if (test.normalMax && value > test.normalMax) flag = "High";
       if (test.normalMin && value < test.normalMin) flag = "Low";
-      labs.push({ name: test.name, value: Number(value.toFixed(1)), unit: test.unit, flag, date: getRandomDate(new Date(2023, 0, 1), new Date()) });
+      labs.push({ name: test.name, value: Number(value.toFixed(1)), unit: test.unit, flag, date: getRandomDate(new Date(2023, 0, 1), REFERENCE_DATE) });
     }
   }
   labs.sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -273,7 +289,7 @@ function generatePatient(id) {
     do { vac = getRandomItem(vaccines); attempts++; } while (usedVacCodes.has(vac.cvx) && attempts < 20);
     if (!usedVacCodes.has(vac.cvx)) {
       usedVacCodes.add(vac.cvx);
-      immunizations.push({ name: vac.name, cvx: vac.cvx, date: getRandomDate(new Date(2019, 0, 1), new Date()) });
+      immunizations.push({ name: vac.name, cvx: vac.cvx, date: getRandomDate(new Date(2019, 0, 1), REFERENCE_DATE) });
     }
   }
   immunizations.sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -290,7 +306,7 @@ function generatePatient(id) {
       if (!usedMedNames.has(med.name)) {
         usedMedNames.add(med.name);
         const startYear = birthYear + getRandomInt(Math.max(0, age - 12), Math.max(1, age - 1));
-        medications.push({ name: med.name, dose: med.dose, frequency: med.frequency, route: med.route, status: Math.random() > 0.1 ? "Active" : "Discontinued", started: `${startYear}-${String(getRandomInt(1,12)).padStart(2,'0')}-${String(getRandomInt(1,28)).padStart(2,'0')}` });
+        medications.push({ name: med.name, dose: med.dose, frequency: med.frequency, route: med.route, status: random() > 0.1 ? "Active" : "Discontinued", started: `${startYear}-${String(getRandomInt(1, 12)).padStart(2, '0')}-${String(getRandomInt(1, 28)).padStart(2, '0')}` });
         added++;
       }
     }
@@ -301,7 +317,7 @@ function generatePatient(id) {
     if (!usedMedNames.has(med.name)) {
       usedMedNames.add(med.name);
       const startYear = birthYear + getRandomInt(Math.max(0, age - 8), Math.max(1, age - 1));
-      medications.push({ name: med.name, dose: med.dose, frequency: med.frequency, route: med.route, status: "Active", started: `${startYear}-${String(getRandomInt(1,12)).padStart(2,'0')}-${String(getRandomInt(1,28)).padStart(2,'0')}` });
+      medications.push({ name: med.name, dose: med.dose, frequency: med.frequency, route: med.route, status: "Active", started: `${startYear}-${String(getRandomInt(1, 12)).padStart(2, '0')}-${String(getRandomInt(1, 28)).padStart(2, '0')}` });
     }
   }
 
@@ -324,12 +340,12 @@ function generatePatient(id) {
   for (let i = 0; i < numVisits; i++) {
     const visit = generateVisit(age, gender, conditions, usedConditionCodes);
     const daysAgo = getRandomInt(i * 45, (i + 1) * 150 + 90);
-    visit.date = new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    visit.date = new Date(REFERENCE_DATE.getTime() - daysAgo * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     visits.push(visit);
   }
   visits.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-  const lastVisit = visits.length > 0 ? visits[0].date : getRandomDate(new Date(2023, 6, 1), new Date());
+  const lastVisit = visits.length > 0 ? visits[0].date : getRandomDate(new Date(2023, 6, 1), REFERENCE_DATE);
 
   return {
     id: `PT-${String(id).padStart(4, '0')}`,
@@ -338,9 +354,68 @@ function generatePatient(id) {
   };
 }
 
-const patients = [];
+function applyBronxCohortConstraints(patient, bronxIndex) {
+  const includeFlu = bronxIndex < 34;     // exactly 34/50
+  const includeHighA1c = bronxIndex >= 38; // exactly 12/50
+
+  patient.immunizations = patient.immunizations.filter(
+    (imm) => !imm.name.toLowerCase().includes('influenza')
+  );
+  if (includeFlu) {
+    patient.immunizations.push({
+      name: 'Influenza, seasonal, injectable',
+      cvx: '141',
+      date: '2024-10-01',
+    });
+  }
+  patient.immunizations.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  patient.labs = patient.labs.filter(
+    (lab) => lab.name.toLowerCase() !== 'hemoglobin a1c'
+  );
+
+  if (includeHighA1c) {
+    const value = Number((8.1 + random() * 2.4).toFixed(1));
+    patient.labs.push({
+      name: 'Hemoglobin A1c',
+      value,
+      unit: '%',
+      flag: 'High',
+      date: '2024-12-15',
+    });
+
+    if (!patient.conditions.some((c) => c.code === 'E11.9')) {
+      patient.conditions.push({
+        code: 'E11.9',
+        display: 'Type 2 diabetes mellitus without complications',
+        onset: '2020-01-01',
+      });
+    }
+  } else {
+    const value = Number((5.4 + random() * 2.3).toFixed(1));
+    patient.labs.push({
+      name: 'Hemoglobin A1c',
+      value,
+      unit: '%',
+      flag: value > 5.6 ? 'High' : 'Normal',
+      date: '2024-11-15',
+    });
+  }
+
+  patient.labs.sort((a, b) => new Date(b.date) - new Date(a.date));
+}
+
+const patients = generateGoldenPatients();
 for (let i = 1; i <= NUM_PATIENTS; i++) {
-  patients.push(generatePatient(i));
+  const patient = generatePatient(i);
+
+  // Bronx cohort is PT-0001 through PT-0050 (index 0..49 after 3 golden cases).
+  const bronxIndex = patients.length - 3;
+  if (bronxIndex >= 0 && bronxIndex < 50) {
+    applyBronxCohortConstraints(patient, bronxIndex);
+  }
+
+  patients.push(patient);
 }
 
 const outDir = path.join(__dirname, '..', 'public', 'data');
@@ -348,4 +423,6 @@ if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
 
 const outFile = path.join(outDir, 'patients.json');
 fs.writeFileSync(outFile, JSON.stringify(patients, null, 2));
-console.log(`✓ Generated ${NUM_PATIENTS} patients → ${outFile}`);
+console.log(
+  `✓ Generated ${NUM_PATIENTS} synthetic + 3 golden patients (seed=${PATIENT_SEED}, referenceDate=${REFERENCE_DATE.toISOString().slice(0, 10)}) → ${outFile}`
+);

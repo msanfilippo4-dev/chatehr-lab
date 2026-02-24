@@ -1,7 +1,9 @@
 import { appendFile, mkdir, readFile } from "fs/promises";
 import path from "path";
-import { Patient } from "@/lib/types";
-import { getBronxHospitalCohort } from "@/lib/cohort-context";
+import {
+  FordhamBenchGroundTruth,
+  getFordhamHealthBenchGroundTruth,
+} from "@/lib/bench-ground-truth";
 
 export const PROFESSOR_EMAIL = "msanfilippo4@fordham.edu";
 const STORAGE_PATH =
@@ -33,6 +35,8 @@ export type BenchGrade = {
   cases: CaseGrade[];
   groundTruthReference: {
     lab001Potassium: number | null;
+    lab001ActiveRiskMedication: string | null;
+    lab001DiscontinuedMedication: string | null;
     lab002A1c: number | null;
     lab002Ldl: number | null;
     lab003Hcg: number | null;
@@ -45,6 +49,7 @@ export type BenchGrade = {
 export type BenchSubmissionRecord = {
   id: string;
   createdAt: string;
+  source: "fordham-health-bench";
   student: {
     name: string;
     email: string;
@@ -52,18 +57,6 @@ export type BenchSubmissionRecord = {
   answers: FordhamHealthBenchAnswers;
   grade: BenchGrade;
 };
-
-type GroundTruth = {
-  lab001Potassium: number | null;
-  lab002A1c: number | null;
-  lab002Ldl: number | null;
-  lab003Hcg: number | null;
-  bronxFluCount: number;
-  bronxA1cHighCount: number;
-  bronxA1cHighIds: string[];
-};
-
-let patientsCache: Patient[] | null = null;
 
 function normalize(text: string): string {
   return text.toLowerCase().replace(/\s+/g, " ").trim();
@@ -81,47 +74,8 @@ function sameNumber(a: number | null, b: number | null, tolerance = 0.11): boole
   return Math.abs(a - b) <= tolerance;
 }
 
-function latestLab(patient: Patient, name: string): number | null {
-  const lab = patient.labs
-    .filter((l) => l.name.toLowerCase() === name.toLowerCase())
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
-  return lab ? lab.value : null;
-}
-
-function hasFluShot(patient: Patient): boolean {
-  return patient.immunizations.some((i) => i.name.toLowerCase().includes("influenza"));
-}
-
-function hasHighA1c(patient: Patient): boolean {
-  const a1c = latestLab(patient, "Hemoglobin A1c");
-  return a1c !== null && a1c >= 8;
-}
-
-async function loadPatients(): Promise<Patient[]> {
-  if (patientsCache) return patientsCache;
-  const p = path.join(process.cwd(), "public", "data", "patients.json");
-  const raw = await readFile(p, "utf8");
-  patientsCache = JSON.parse(raw) as Patient[];
-  return patientsCache;
-}
-
-async function buildGroundTruth(): Promise<GroundTruth> {
-  const patients = await loadPatients();
-  const lab001 = patients.find((p) => p.id === "LAB-001") || null;
-  const lab002 = patients.find((p) => p.id === "LAB-002") || null;
-  const lab003 = patients.find((p) => p.id === "LAB-003") || null;
-  const bronx = getBronxHospitalCohort(patients);
-  const bronxA1cHigh = bronx.filter(hasHighA1c);
-
-  return {
-    lab001Potassium: lab001 ? latestLab(lab001, "Potassium") : null,
-    lab002A1c: lab002 ? latestLab(lab002, "Hemoglobin A1c") : null,
-    lab002Ldl: lab002 ? latestLab(lab002, "LDL Cholesterol") : null,
-    lab003Hcg: lab003 ? latestLab(lab003, "Pregnancy test (hCG)") : null,
-    bronxFluCount: bronx.filter(hasFluShot).length,
-    bronxA1cHighCount: bronxA1cHigh.length,
-    bronxA1cHighIds: bronxA1cHigh.map((p) => p.id).sort(),
-  };
+async function buildGroundTruth(): Promise<FordhamBenchGroundTruth> {
+  return getFordhamHealthBenchGroundTruth();
 }
 
 export async function gradeFordhamHealthBench(
@@ -134,8 +88,14 @@ export async function gradeFordhamHealthBench(
     let score = 0;
     const userK = parseNumeric(answers.case1Potassium);
     if (sameNumber(userK, truth.lab001Potassium)) score += 10;
+    const expectedActive = normalize(truth.lab001ActiveRiskMedication || "lisinopril");
+    const expectedDiscontinued = normalize(
+      truth.lab001DiscontinuedMedication || "spironolactone"
+    );
     const med = normalize(answers.case1Medication);
-    if (med.includes("lisinopril") || med.includes("spironolactone")) score += 10;
+    if (med.includes(expectedActive) && !med.includes(expectedDiscontinued)) score += 10;
+    else if (med.includes(expectedActive)) score += 5;
+
     cases.push({
       caseId: "case1",
       title: "LAB-001 potassium + medication risk extraction",
@@ -144,7 +104,7 @@ export async function gradeFordhamHealthBench(
       feedback:
         score >= 16
           ? "Strong extraction of key safety details."
-          : "Re-check LAB-001 latest potassium and active potassium-risk medications.",
+          : "Re-check LAB-001 visit notes for latest potassium and active/discontinued med status.",
     });
   }
 
@@ -162,7 +122,7 @@ export async function gradeFordhamHealthBench(
       feedback:
         score >= 16
           ? "Good extraction of cardiometabolic targets."
-          : "Re-check the latest LAB-002 HbA1c and LDL values in labs.",
+          : "Re-check LAB-002 notes for point-of-care HbA1c and LDL values.",
     });
   }
 
@@ -235,7 +195,15 @@ export async function gradeFordhamHealthBench(
     maxScore,
     cases,
     groundTruthReference: {
-      ...truth,
+      lab001Potassium: truth.lab001Potassium,
+      lab001ActiveRiskMedication: truth.lab001ActiveRiskMedication,
+      lab001DiscontinuedMedication: truth.lab001DiscontinuedMedication,
+      lab002A1c: truth.lab002A1c,
+      lab002Ldl: truth.lab002Ldl,
+      lab003Hcg: truth.lab003Hcg,
+      bronxFluCount: truth.bronxFluCount,
+      bronxA1cHighCount: truth.bronxA1cHighCount,
+      bronxA1cHighIds: truth.bronxA1cHighIds,
     },
   };
 }
@@ -281,8 +249,8 @@ export function buildBenchAnalytics(
   const averageOverall =
     submissionCount > 0
       ? Math.round(
-          scoped.reduce((sum, r) => sum + r.grade.overallScore, 0) / submissionCount
-        )
+        scoped.reduce((sum, r) => sum + r.grade.overallScore, 0) / submissionCount
+      )
       : 0;
 
   const caseTemplate = scoped[0]?.grade.cases || [];

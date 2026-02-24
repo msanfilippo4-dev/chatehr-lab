@@ -116,6 +116,18 @@ export default function ChatInterface({
                     <span>↑{msg.usage.inputTokens} ↓{msg.usage.outputTokens} tok</span>
                     <span>·</span>
                     <span>~${(msg.usage.estimatedCost || 0).toFixed(6)}</span>
+                    {typeof msg.usage.modelLatencyMs === "number" && (
+                      <>
+                        <span>·</span>
+                        <span>{(msg.usage.modelLatencyMs / 1000).toFixed(1)}s model</span>
+                      </>
+                    )}
+                    {typeof msg.usage.totalLatencyMs === "number" && (
+                      <>
+                        <span>·</span>
+                        <span>{(msg.usage.totalLatencyMs / 1000).toFixed(1)}s total</span>
+                      </>
+                    )}
                     {msg.usage.model && (
                       <>
                         <span>·</span>

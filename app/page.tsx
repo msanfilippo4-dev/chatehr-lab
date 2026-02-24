@@ -44,15 +44,6 @@ export default function ChatEHRPage() {
   const [ragChunks, setRagChunks] = useState<RAGChunk[]>([]);
   const [isRagLoading, setIsRagLoading] = useState(false);
 
-  useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-    const previousScrollRestoration = window.history.scrollRestoration;
-    window.history.scrollRestoration = "manual";
-    return () => {
-      window.history.scrollRestoration = previousScrollRestoration;
-    };
-  }, []);
-
   // Load patients
   useEffect(() => {
     fetch("/data/patients.json")
@@ -131,7 +122,6 @@ export default function ChatEHRPage() {
   }, [selectedPatientId, selectedPatient]);
 
   const handlePatientSelect = (patientId: string) => {
-    const currentScrollY = window.scrollY;
     setSelectedPatientId(patientId);
     setRagChunks([]);
 
@@ -163,9 +153,6 @@ export default function ChatEHRPage() {
         ]);
       }
     }
-    requestAnimationFrame(() => {
-      window.scrollTo({ top: currentScrollY, left: 0, behavior: "auto" });
-    });
   };
 
   const handleSendMessage = useCallback(
@@ -348,6 +335,14 @@ export default function ChatEHRPage() {
               className="text-[#8C1515] underline underline-offset-2 hover:text-[#6B1010]"
             >
               Try the Fordham Health Bench (5 cases).
+            </a>
+          </p>
+          <p className="text-xs mt-1">
+            <a
+              href="/extracredit"
+              className="text-[#8C1515] underline underline-offset-2 hover:text-[#6B1010]"
+            >
+              Try Extra Credit (3 challenge exams).
             </a>
           </p>
         </div>
