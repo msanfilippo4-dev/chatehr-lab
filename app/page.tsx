@@ -37,6 +37,15 @@ export default function ChatEHRPage() {
   const [ragChunks, setRagChunks] = useState<RAGChunk[]>([]);
   const [isRagLoading, setIsRagLoading] = useState(false);
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    const previousScrollRestoration = window.history.scrollRestoration;
+    window.history.scrollRestoration = "manual";
+    return () => {
+      window.history.scrollRestoration = previousScrollRestoration;
+    };
+  }, []);
+
   // Load patients
   useEffect(() => {
     fetch("/data/patients.json")
@@ -62,6 +71,7 @@ export default function ChatEHRPage() {
   const selectedPatient = patients.find((p) => p.id === selectedPatientId) || null;
 
   const handlePatientSelect = (patientId: string) => {
+    const currentScrollY = window.scrollY;
     setSelectedPatientId(patientId);
     const patient = patients.find((p) => p.id === patientId);
     if (patient) {
@@ -74,6 +84,9 @@ export default function ChatEHRPage() {
       ]);
       setRagChunks([]);
     }
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: currentScrollY, left: 0, behavior: "auto" });
+    });
   };
 
   const handleSendMessage = useCallback(
@@ -289,14 +302,23 @@ export default function ChatEHRPage() {
           </div>
         </div>
 
-        {/* CENTER: Chat */}
-        <div className="h-[60vh] md:h-[70vh] xl:h-[calc(100vh-220px)] min-w-0 ehr-shell overflow-hidden">
-          <ChatInterface
-            messages={messages}
-            isLoading={isLoading}
-            onSendMessage={handleSendMessage}
-            patientName={selectedPatient?.name || null}
-            disabled={!selectedPatient}
+        {/* CENTER: Chat + Worksheet */}
+        <div className="min-w-0 flex flex-col gap-4">
+          <div className="h-[55vh] md:h-[62vh] xl:h-[calc(100vh-360px)] min-w-0 ehr-shell overflow-hidden">
+            <ChatInterface
+              messages={messages}
+              isLoading={isLoading}
+              onSendMessage={handleSendMessage}
+              patientName={selectedPatient?.name || null}
+              disabled={!selectedPatient}
+            />
+          </div>
+          <LabWorksheetPanel
+            selectedPatientLabel={
+              selectedPatient ? `${selectedPatient.name} (${selectedPatient.id})` : "No patient selected"
+            }
+            totalTokens={totals.tokens}
+            totalCost={totals.cost}
           />
         </div>
 
@@ -313,13 +335,6 @@ export default function ChatEHRPage() {
             chunks={ragChunks}
             isLoading={isRagLoading}
             ragEnabled={config.ragEnabled}
-          />
-          <LabWorksheetPanel
-            selectedPatientLabel={
-              selectedPatient ? `${selectedPatient.name} (${selectedPatient.id})` : "No patient selected"
-            }
-            totalTokens={totals.tokens}
-            totalCost={totals.cost}
           />
         </div>
       </div>
