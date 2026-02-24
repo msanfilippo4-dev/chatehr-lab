@@ -124,10 +124,13 @@ export async function POST(req: NextRequest) {
     }
     const model = genAI.getGenerativeModel(modelConfig);
 
-    const history = normalizedMessages.slice(0, -1).map((msg: IncomingMessage) => ({
+    const mappedHistory = normalizedMessages.slice(0, -1).map((msg: IncomingMessage) => ({
       role: msg.role === "user" ? "user" : "model",
       parts: [{ text: msg.content }],
     }));
+    // Gemini requires history to start with a user turn; drop any leading model messages (e.g. welcome message)
+    const firstUserIdx = mappedHistory.findIndex((m) => m.role === "user");
+    const history = firstUserIdx >= 0 ? mappedHistory.slice(firstUserIdx) : [];
 
     const chat = model.startChat({ history });
     const lastMessage = normalizedMessages[normalizedMessages.length - 1];
