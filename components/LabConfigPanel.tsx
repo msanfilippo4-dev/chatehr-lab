@@ -15,6 +15,12 @@ Do not use general medical knowledge that isn't grounded in the patient's chart.
 If the information is not in the chart, say "I don't have that information in the current chart."
 Always prioritize patient __________ in your responses.`;
 
+const MODEL_OPTIONS = [
+  { value: "gemini-3-flash-preview", label: "gemini-3-flash-preview" },
+  { value: "gemini-flash-latest", label: "gemini-flash-latest" },
+  { value: "gemini-flash-lite-latest", label: "gemini-flash-lite-latest" },
+] as const;
+
 export default function LabConfigPanel({ config, onChange }: LabConfigPanelProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [showHint, setShowHint] = useState<string | null>(null);
@@ -68,30 +74,25 @@ export default function LabConfigPanel({ config, onChange }: LabConfigPanelProps
             </div>
             {showHint === "model" && (
               <div className="mb-2 p-2.5 bg-[#eef4fd] border border-[#bfcde0] rounded t-caption text-gray-300">
-                The model ID tells Google&apos;s API which AI model to use. Try:{" "}
-                <code className="font-mono bg-gray-950 px-1 rounded">
-                  2.0
-                </code>{" "}
-                — wrong names cause API errors! That&apos;s a feature, not a bug.
+                Select a model ID from the dropdown. If a model is retired or
+                unavailable for your key, the API returns a model-not-found
+                error.
               </div>
             )}
-            <div className="flex items-center gap-1 bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 font-mono text-sm focus-within:ring-2 focus-within:ring-[#8C1515]/60 focus-within:border-transparent">
-              <span className="text-gray-500">gemini-</span>
-              <input
-                type="text"
-                value={config.modelSuffix}
-                onChange={(e) => update({ modelSuffix: e.target.value })}
-                placeholder="___"
-                className="bg-transparent text-gray-200 w-12 focus:outline-none placeholder-gray-600 text-center"
-                maxLength={10}
-              />
-              <span className="text-gray-500">-flash</span>
-            </div>
+            <select
+              value={config.modelName}
+              onChange={(e) => update({ modelName: e.target.value })}
+              className="w-full bg-gray-950 border border-gray-700 text-gray-200 text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#8C1515]/60 focus:border-transparent font-mono"
+            >
+              {MODEL_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
             <p className="t-micro t-tertiary mt-1">
-              Full model ID:{" "}
-              <span className="font-mono text-gray-500">
-                gemini-{config.modelSuffix || "___"}-flash
-              </span>
+              Selected model:{" "}
+              <span className="font-mono text-gray-500">{config.modelName}</span>
             </p>
           </div>
 

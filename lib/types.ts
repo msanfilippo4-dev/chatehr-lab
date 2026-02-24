@@ -97,7 +97,7 @@ export interface Message {
 }
 
 export interface LabConfig {
-  modelSuffix: string;
+  modelName: string;
   systemInstruction: string;
   temperature: number;
   contextLevel: "LIMITED" | "STANDARD" | "FULL";

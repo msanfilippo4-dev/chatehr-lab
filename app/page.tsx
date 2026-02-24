@@ -11,7 +11,7 @@ import { Patient, Message, LabConfig, RAGChunk } from "@/lib/types";
 import { buildPatientContext } from "@/lib/patient-context";
 
 const DEFAULT_CONFIG: LabConfig = {
-  modelSuffix: "",
+  modelName: "gemini-flash-latest",
   systemInstruction: "",
   temperature: 0.2,
   contextLevel: "STANDARD",
@@ -145,8 +145,10 @@ export default function ChatEHRPage() {
           }
         }
 
-        // Full model name
-        const modelName = `gemini-${config.modelSuffix.trim()}-flash`;
+        const modelName =
+          typeof config.modelName === "string" && config.modelName.trim()
+            ? config.modelName.trim()
+            : "gemini-flash-latest";
 
         const res = await fetch("/api/chat", {
           method: "POST",

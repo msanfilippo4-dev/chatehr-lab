@@ -59,20 +59,20 @@ export async function POST(req: NextRequest) {
     }
 
     // -----------------------------------------------------------------------
-    // STUDENT-CONFIGURABLE: Model name from LabConfigPanel
-    // Students fill in "gemini-___-flash" — a wrong model name = API error!
+    // STUDENT-CONFIGURABLE: Model name from LabConfigPanel dropdown
+    // Wrong/retired model names produce API errors by design for the lab.
     // -----------------------------------------------------------------------
     const resolvedModel =
       typeof modelName === "string" && modelName.trim() ? modelName.trim() : "";
 
     if (!resolvedModel) {
       return NextResponse.json(
-        {
-          error: "Model name is required",
-          hint: "Fill the model blank in Lab Configuration. Example: 2.0 (for gemini-2.0-flash).",
-        },
-        { status: 400 }
-      );
+          {
+            error: "Model name is required",
+            hint: "Choose a model in Lab Configuration (for example, gemini-flash-latest).",
+          },
+          { status: 400 }
+        );
     }
 
     // -----------------------------------------------------------------------
@@ -179,7 +179,7 @@ export async function POST(req: NextRequest) {
       err.message?.includes("models/")
     ) {
       hint =
-        "Check the model name in Lab Configuration. Try 'gemini-2.0-flash'.";
+        "Check the model selected in Lab Configuration. Try 'gemini-flash-latest'.";
     } else if (err.message?.includes("API key")) {
       hint = "Check that GEMINI_API_KEY is set in .env.local";
     }
