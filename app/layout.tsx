@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import "./globals.css";
 import SessionProvider from "@/components/SessionProvider";
 
@@ -15,9 +16,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <header className="bg-gradient-to-r from-[#7A1313] via-[#8C1515] to-[#6B1010] border-b border-[#5A0E0E] shadow-xl">
           <div className="max-w-screen-2xl mx-auto px-4 py-2 md:h-14 flex items-center justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-md bg-white/10 flex items-center justify-center font-bold text-white text-sm border border-white/25 shadow-inner">
+              <Link
+                href="/"
+                aria-label="Go to home page"
+                className="w-8 h-8 rounded-md bg-white/10 flex items-center justify-center font-bold text-white text-sm border border-white/25 shadow-inner hover:bg-white/20 transition-colors"
+              >
                 F
-              </div>
+              </Link>
               <div className="leading-tight">
                 <span className="block text-white font-bold text-sm tracking-wide">
                   FORDHAM UNIVERSITY
