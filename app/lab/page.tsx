@@ -163,9 +163,18 @@ export default function LabInstructionsPage() {
         <h2 className="t-heading t-primary">What To Submit</h2>
         <ul className="list-disc pl-5 mt-2 space-y-1 t-body t-secondary">
           <li>Completed responses for all 6 worksheet prompts.</li>
+          <li>Standard benchmark responses in the submissions page.</li>
           <li>Patient used for testing.</li>
           <li>Total session tokens and estimated cost.</li>
         </ul>
+        <p className="mt-2 t-caption">
+          <a
+            href="/submissions"
+            className="font-semibold text-[#8C1515] underline underline-offset-2 hover:text-[#6B1010]"
+          >
+            Open /submissions for benchmark + LLM judge feedback
+          </a>
+        </p>
       </section>
     </div>
   );

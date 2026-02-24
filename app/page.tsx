@@ -241,6 +241,14 @@ export default function ChatEHRPage() {
               Need assignment steps? Open the lab instructions page.
             </a>
           </p>
+          <p className="text-xs mt-1">
+            <a
+              href="/submissions"
+              className="text-[#8C1515] underline underline-offset-2 hover:text-[#6B1010]"
+            >
+              Ready to submit? Open benchmark + judge feedback.
+            </a>
+          </p>
         </div>
         <div className="flex flex-col items-end gap-2">
           {totals.tokens > 0 && (
