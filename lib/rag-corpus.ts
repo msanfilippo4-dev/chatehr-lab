@@ -32,6 +32,8 @@ export type RagCorpusLoadResult = {
   warnings: CorpusWarning[];
 };
 
+let ragCorpusPromise: Promise<RagCorpusLoadResult> | null = null;
+
 const PREFERRED_EXAMPLE_IDS = [
   "dm-001",
   "hf-002",
@@ -102,6 +104,13 @@ export async function loadRagCorpus(): Promise<RagCorpusLoadResult> {
     sourceSummaries: buildSourceSummaries(chunks),
     warnings,
   };
+}
+
+export async function loadRagCorpusCached(): Promise<RagCorpusLoadResult> {
+  if (!ragCorpusPromise) {
+    ragCorpusPromise = loadRagCorpus();
+  }
+  return ragCorpusPromise;
 }
 
 export function getRagExampleChunks(chunks: RAGChunk[], max = 7): RAGChunk[] {

@@ -3,13 +3,14 @@ import path from "path";
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { clampNumber, readJsonBodyWithLimit, trimString } from "@/lib/api-request";
 
 type WorksheetPayload = {
-  teamName?: string;
-  selectedPatientLabel?: string;
-  totalTokens?: number;
-  totalCost?: number;
-  notes?: Record<string, string>;
+  teamName?: unknown;
+  selectedPatientLabel?: unknown;
+  totalTokens?: unknown;
+  totalCost?: unknown;
+  notes?: unknown;
 };
 
 const STORAGE_PATH =
@@ -28,7 +29,7 @@ async function forwardByEmail(entry: unknown): Promise<{ forwarded: boolean; mes
     return { forwarded: false, message: "RESEND_API_KEY not configured." };
   }
 
-  const to = process.env.EXTRACREDIT_NOTIFY_EMAIL || DEFAULT_NOTIFY_EMAIL;
+  const to = process.env.WORKSHEET_NOTIFY_EMAIL || process.env.EXTRACREDIT_NOTIFY_EMAIL || DEFAULT_NOTIFY_EMAIL;
   const from =
     process.env.RESEND_FROM_EMAIL || "Fordham Worksheet <worksheet@fordms.com>";
 
@@ -64,8 +65,22 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const body = (await req.json()) as WorksheetPayload;
-    const notes = body.notes && typeof body.notes === "object" ? body.notes : {};
+    const parsed = await readJsonBodyWithLimit<WorksheetPayload>(req, 70_000);
+    if (!parsed.ok) {
+      return NextResponse.json({ error: parsed.error }, { status: parsed.status });
+    }
+
+    const body = parsed.data;
+    const rawNotes = body.notes && typeof body.notes === "object" ? body.notes : {};
+    const notes = Object.entries(rawNotes as Record<string, unknown>)
+      .slice(0, 30)
+      .reduce<Record<string, string>>((acc, [key, value]) => {
+        const safeKey = trimString(key, 100);
+        if (!safeKey) return acc;
+        const normalized = trimString(value, 2500);
+        acc[safeKey] = normalized;
+        return acc;
+      }, {});
 
     const nonEmpty = Object.values(notes).filter(
       (v) => typeof v === "string" && v.trim().length > 0
@@ -85,10 +100,10 @@ export async function POST(req: NextRequest) {
         name: session.user.name || "Student",
         email: session.user.email,
       },
-      teamName: body.teamName?.trim() || "",
-      selectedPatientLabel: body.selectedPatientLabel || "",
-      totalTokens: body.totalTokens || 0,
-      totalCost: body.totalCost || 0,
+      teamName: trimString(body.teamName, 120),
+      selectedPatientLabel: trimString(body.selectedPatientLabel, 180),
+      totalTokens: clampNumber(body.totalTokens, 0, 20_000_000, 0),
+      totalCost: clampNumber(body.totalCost, 0, 9999, 0),
       notes,
     };
 

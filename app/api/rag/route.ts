@@ -1,36 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { readFile } from "fs/promises";
-import path from "path";
 import { retrieveChunks } from "@/lib/rag-retrieval";
-import { GUIDELINE_FILES } from "@/lib/rag-corpus";
-import type { RAGChunk } from "@/lib/types";
-
-let guidelineChunksPromise: Promise<RAGChunk[]> | null = null;
-
-async function loadAllChunks(): Promise<RAGChunk[]> {
-  const chunks: RAGChunk[] = [];
-  const guidelinesDir = path.join(process.cwd(), "public", "data", "guidelines");
-
-  for (const file of GUIDELINE_FILES) {
-    try {
-      const content = await readFile(path.join(guidelinesDir, file), "utf-8");
-      const fileChunks = JSON.parse(content) as RAGChunk[];
-      chunks.push(...fileChunks);
-    } catch {
-      console.warn(`Could not load guideline file: ${file}`);
-    }
-  }
-  return chunks;
-}
-
-async function loadAllChunksCached(): Promise<RAGChunk[]> {
-  if (!guidelineChunksPromise) {
-    guidelineChunksPromise = loadAllChunks();
-  }
-  return guidelineChunksPromise;
-}
+import { loadRagCorpusCached } from "@/lib/rag-corpus";
+import { normalizeStringArray, readJsonBodyWithLimit, trimString } from "@/lib/api-request";
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -39,9 +12,19 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { query, patientKeywords, patientConditions } = await req.json();
+    const parsed = await readJsonBodyWithLimit<{
+      query?: unknown;
+      patientKeywords?: unknown;
+      patientConditions?: unknown;
+      topK?: unknown;
+    }>(req, 40_000);
+    if (!parsed.ok) {
+      return NextResponse.json({ error: parsed.error }, { status: parsed.status });
+    }
 
-    const allChunks = await loadAllChunksCached();
+    const query = trimString(parsed.data.query, 1000);
+
+    const { chunks: allChunks } = await loadRagCorpusCached();
     if (allChunks.length === 0) {
       return NextResponse.json({
         chunks: [],
@@ -49,15 +32,16 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const supplementalKeywords = Array.isArray(patientKeywords)
-      ? patientKeywords
-      : Array.isArray(patientConditions)
-      ? patientConditions
-      : [];
+    const supplementalKeywords = normalizeStringArray(
+      Array.isArray(parsed.data.patientKeywords)
+        ? parsed.data.patientKeywords
+        : parsed.data.patientConditions,
+      { maxItems: 40, maxItemChars: 100 }
+    );
 
     const scored = retrieveChunks(
       allChunks,
-      typeof query === "string" ? query : "",
+      query,
       supplementalKeywords,
       3
     );

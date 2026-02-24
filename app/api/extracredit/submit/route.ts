@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { readJsonBodyWithLimit, trimString } from "@/lib/api-request";
 import {
   ExtraCreditAnswers,
   ExtraCreditRecord,
@@ -28,9 +29,7 @@ function parseAnswers(payload: unknown): ExtraCreditAnswers | null {
 
   const parsed: Record<string, string> = {};
   for (const key of required) {
-    const value = answers[key];
-    if (typeof value !== "string") return null;
-    parsed[key] = value.trim();
+    parsed[key] = trimString(answers[key], 2000);
   }
 
   if (
@@ -54,7 +53,11 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const payload = await req.json();
+    const parsed = await readJsonBodyWithLimit<{ answers?: unknown }>(req, 60_000);
+    if (!parsed.ok) {
+      return NextResponse.json({ error: parsed.error }, { status: parsed.status });
+    }
+    const payload = parsed.data;
     const answers = parseAnswers(payload);
     if (!answers) {
       return NextResponse.json(

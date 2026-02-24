@@ -87,6 +87,7 @@ export interface UsageMetadata {
   modelLatencyMs?: number;
   totalLatencyMs?: number;
   historyMessagesUsed?: number;
+  ragChunksUsed?: number;
 }
 
 export interface Message {

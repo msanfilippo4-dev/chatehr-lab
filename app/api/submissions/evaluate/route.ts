@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { authOptions } from "@/lib/auth";
+import { readJsonBodyWithLimit, trimString } from "@/lib/api-request";
 import {
   appendReflectionSubmission,
   buildReflectionAnalytics,
@@ -14,6 +15,11 @@ type SubmissionAnswers = {
   q1: string;
   q2: string;
   q3: string;
+};
+
+type SubmissionPayload = {
+  answers?: unknown;
+  teamName?: unknown;
 };
 
 type ConceptRubric = {
@@ -286,9 +292,9 @@ function parseAnswers(payload: unknown): SubmissionAnswers | null {
   const answers = body?.answers;
   if (!answers || typeof answers !== "object") return null;
 
-  const q1 = typeof answers.q1 === "string" ? answers.q1.trim() : "";
-  const q2 = typeof answers.q2 === "string" ? answers.q2.trim() : "";
-  const q3 = typeof answers.q3 === "string" ? answers.q3.trim() : "";
+  const q1 = trimString(answers.q1, 3000);
+  const q2 = trimString(answers.q2, 3000);
+  const q3 = trimString(answers.q3, 3000);
 
   if (!q1 || !q2 || !q3) return null;
   return { q1, q2, q3 };
@@ -301,7 +307,12 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const payload = await req.json();
+    const parsed = await readJsonBodyWithLimit<SubmissionPayload>(req, 80_000);
+    if (!parsed.ok) {
+      return NextResponse.json({ error: parsed.error }, { status: parsed.status });
+    }
+
+    const payload = parsed.data;
     const answers = parseAnswers(payload);
     if (!answers) {
       return NextResponse.json(
@@ -317,6 +328,7 @@ export async function POST(req: NextRequest) {
       id: `sub_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       createdAt: now,
       source: "submissions",
+      teamName: trimString(payload.teamName, 120),
       student: {
         name: session.user?.name || "Student",
         email: session.user?.email || "unknown@fordham.edu",
@@ -337,6 +349,7 @@ export async function POST(req: NextRequest) {
       submission: {
         id: record.id,
         createdAt: record.createdAt,
+        teamName: record.teamName || null,
       },
       submittedAt: now,
       benchmark,

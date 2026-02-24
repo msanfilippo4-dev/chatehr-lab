@@ -234,7 +234,7 @@ export default function ChatEHRPage() {
             modelName,
             systemInstruction: config.systemInstruction,
             temperature: config.temperature,
-            ragChunks: currentRagChunks,
+            ragChunkIds: currentRagChunks.map((chunk) => chunk.id),
           }),
         });
 

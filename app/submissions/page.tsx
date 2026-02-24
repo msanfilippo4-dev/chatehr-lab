@@ -8,7 +8,7 @@ type Answers = {
 };
 
 type EvaluationResponse = {
-  submission?: { id: string; createdAt: string };
+  submission?: { id: string; createdAt: string; teamName?: string | null };
   submittedAt: string;
   benchmark: {
     overallScore: number;
@@ -221,6 +221,7 @@ export default function SubmissionsPage() {
             Submitted: {new Date(result.submittedAt).toLocaleString()}
             {result.judge.model ? ` · Judge Model: ${result.judge.model}` : ""}
             {result.submission ? ` · ID: ${result.submission.id}` : ""}
+            {result.submission?.teamName ? ` · Team: ${result.submission.teamName}` : ""}
           </p>
           {result.delivery && (
             <p className="t-caption t-secondary">

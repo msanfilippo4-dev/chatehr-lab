@@ -30,10 +30,6 @@ const EMPTY_WORKSHEET: WorksheetState = {
   benchmarkQ3: "",
 };
 
-type BenchmarkResult = {
-  benchmark: { overallScore: number };
-};
-
 export default function LabWorksheetPanel({
   selectedPatientLabel,
   totalTokens,
@@ -45,7 +41,6 @@ export default function LabWorksheetPanel({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [benchmarkScore, setBenchmarkScore] = useState<number | null>(null);
 
   const update = (key: keyof WorksheetState, value: string) => {
     setNotes((prev) => ({ ...prev, [key]: value }));
@@ -54,7 +49,6 @@ export default function LabWorksheetPanel({
   const submitWorksheet = async () => {
     setSubmitError(null);
     setSubmitMessage(null);
-    setBenchmarkScore(null);
     setIsSubmitting(true);
     try {
       const saveRes = await fetch("/api/worksheet/submit", {
@@ -72,27 +66,6 @@ export default function LabWorksheetPanel({
       if (!saveRes.ok) {
         setSubmitError(saveData.error || "Unable to save worksheet.");
         return;
-      }
-
-      const hasBenchmarkAnswers =
-        notes.benchmarkQ1.trim() && notes.benchmarkQ2.trim() && notes.benchmarkQ3.trim();
-
-      if (hasBenchmarkAnswers) {
-        const benchRes = await fetch("/api/submissions/evaluate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            answers: {
-              q1: notes.benchmarkQ1,
-              q2: notes.benchmarkQ2,
-              q3: notes.benchmarkQ3,
-            },
-          }),
-        });
-        const benchData = (await benchRes.json()) as BenchmarkResult & { error?: string };
-        if (benchRes.ok && benchData.benchmark?.overallScore !== undefined) {
-          setBenchmarkScore(benchData.benchmark.overallScore);
-        }
       }
 
       setSubmitMessage(saveData.message || "Worksheet submitted.");
@@ -216,9 +189,7 @@ export default function LabWorksheetPanel({
           {submitMessage && (
             <p className="t-caption text-[#304762] rounded-lg border border-[#d6dfeb] bg-[#f8fbff] px-3 py-2">
               {submitMessage}
-              {benchmarkScore !== null
-                ? ` Benchmark score: ${benchmarkScore}%`
-                : " Add Benchmark Q1-Q3 to get automatic scoring."}
+              {" Submit Benchmark Q1-Q3 on /submissions to get scored feedback."}
             </p>
           )}
 
@@ -270,4 +241,3 @@ function WorksheetField({
     </label>
   );
 }
-

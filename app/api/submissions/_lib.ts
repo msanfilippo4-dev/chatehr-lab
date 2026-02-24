@@ -34,6 +34,7 @@ export type ReflectionSubmissionRecord = {
   id: string;
   createdAt: string;
   source: "submissions";
+  teamName?: string;
   student: {
     name: string;
     email: string;
@@ -128,6 +129,9 @@ function stringify(record: ReflectionSubmissionRecord): string {
   lines.push(`Submission ID: ${record.id}`);
   lines.push(`Submitted At: ${record.createdAt}`);
   lines.push(`Student: ${record.student.name} <${record.student.email}>`);
+  if (record.teamName) {
+    lines.push(`Team: ${record.teamName}`);
+  }
   lines.push(`Overall Score: ${record.benchmark.overallScore}/100`);
   lines.push("");
   lines.push("Answers:");

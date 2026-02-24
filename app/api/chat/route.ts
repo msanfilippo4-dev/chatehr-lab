@@ -1,23 +1,103 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { authOptions } from "@/lib/auth";
+import {
+  clampNumber,
+  normalizeStringArray,
+  readJsonBodyWithLimit,
+  trimString,
+} from "@/lib/api-request";
+import { loadRagCorpusCached } from "@/lib/rag-corpus";
 
 interface IncomingMessage {
   role: "user" | "assistant";
   content: string;
 }
 
-interface IncomingRagChunk {
-  source: string;
-  title: string;
-  text: string;
-}
+type ChatPayload = {
+  messages?: unknown;
+  context?: unknown;
+  modelName?: unknown;
+  systemInstruction?: unknown;
+  temperature?: unknown;
+  ragChunkIds?: unknown;
+};
 
 const MAX_HISTORY_MESSAGES = Math.max(
   6,
   Number.parseInt(process.env.CHAT_HISTORY_MESSAGES || "18", 10) || 18
 );
+const MAX_BODY_BYTES = Math.max(
+  100_000,
+  Number.parseInt(process.env.CHAT_MAX_BODY_BYTES || "220000", 10) || 220_000
+);
+const MAX_MESSAGE_CHARS = Math.max(
+  200,
+  Number.parseInt(process.env.CHAT_MAX_MESSAGE_CHARS || "1600", 10) || 1600
+);
+const MAX_CONTEXT_CHARS = Math.max(
+  3000,
+  Number.parseInt(process.env.CHAT_MAX_CONTEXT_CHARS || "14000", 10) || 14_000
+);
+const MAX_SYSTEM_INSTRUCTION_CHARS = Math.max(
+  200,
+  Number.parseInt(process.env.CHAT_MAX_SYSTEM_INSTRUCTION_CHARS || "2000", 10) || 2000
+);
+const MAX_RAG_CHUNKS = 3;
+const DEFAULT_ALLOWED_MODELS = [
+  "gemini-3-flash-preview",
+  "gemini-flash-latest",
+  "gemini-flash-lite-latest",
+];
+const ALLOWED_CHAT_MODELS = new Set(
+  (process.env.ALLOWED_CHAT_MODELS || DEFAULT_ALLOWED_MODELS.join(","))
+    .split(",")
+    .map((model) => model.trim())
+    .filter((model) => model.length > 0)
+);
+
+function normalizeMessages(input: unknown): IncomingMessage[] {
+  if (!Array.isArray(input)) return [];
+  return input
+    .slice(-MAX_HISTORY_MESSAGES)
+    .map((msg: unknown) => {
+      const candidate = msg as Partial<IncomingMessage>;
+      const role: IncomingMessage["role"] =
+        candidate.role === "user" ? "user" : "assistant";
+      const content = trimString(candidate.content, MAX_MESSAGE_CHARS);
+      return { role, content };
+    })
+    .filter((msg) => msg.content.length > 0);
+}
+
+async function buildRagContextFromIds(rawIds: unknown): Promise<{ text: string; chunkCount: number }> {
+  const ids = normalizeStringArray(rawIds, {
+    maxItems: MAX_RAG_CHUNKS,
+    maxItemChars: 80,
+  });
+  if (ids.length === 0) return { text: "", chunkCount: 0 };
+
+  const { chunks } = await loadRagCorpusCached();
+  if (chunks.length === 0) return { text: "", chunkCount: 0 };
+
+  const byId = new Map(chunks.map((chunk) => [chunk.id, chunk] as const));
+  const uniqueIds = Array.from(new Set(ids));
+  const selected = uniqueIds
+    .map((id) => byId.get(id))
+    .filter((chunk): chunk is NonNullable<typeof chunk> => Boolean(chunk))
+    .slice(0, MAX_RAG_CHUNKS);
+
+  if (selected.length === 0) return { text: "", chunkCount: 0 };
+
+  const text =
+    "\n\nRELEVANT CLINICAL GUIDELINES:\n" +
+    selected
+      .map((chunk) => `[${chunk.source}] ${chunk.title}:\n${trimString(chunk.text, 800)}`)
+      .join("\n\n");
+
+  return { text, chunkCount: selected.length };
+}
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -27,32 +107,27 @@ export async function POST(req: NextRequest) {
 
   try {
     const routeStartMs = Date.now();
-    const body = await req.json();
-    const { messages, context, modelName, systemInstruction, temperature, ragChunks } = body;
-
-    if (!messages || !Array.isArray(messages) || messages.length === 0) {
-      return NextResponse.json(
-        { error: "Messages array is required" },
-        { status: 400 }
-      );
+    const parsed = await readJsonBodyWithLimit<ChatPayload>(req, MAX_BODY_BYTES);
+    if (!parsed.ok) {
+      return NextResponse.json({ error: parsed.error }, { status: parsed.status });
     }
+    const body = parsed.data;
 
-    const normalizedMessages = (messages as unknown[])
-      .map((msg: unknown) => {
-        const candidate = msg as Partial<IncomingMessage>;
-        const role = candidate.role === "user" ? "user" : "assistant";
-        const content = typeof candidate.content === "string" ? candidate.content.trim() : "";
-        return { role, content };
-      })
-      .filter((msg) => msg.content.length > 0) as IncomingMessage[];
-
+    const normalizedMessages = normalizeMessages(body.messages);
     if (normalizedMessages.length === 0) {
       return NextResponse.json(
         { error: "At least one non-empty message is required" },
         { status: 400 }
       );
     }
-    const clippedMessages = normalizedMessages.slice(-MAX_HISTORY_MESSAGES);
+
+    const lastMessage = normalizedMessages[normalizedMessages.length - 1];
+    if (lastMessage.role !== "user") {
+      return NextResponse.json(
+        { error: "Last message must be a user prompt" },
+        { status: 400 }
+      );
+    }
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
@@ -65,51 +140,35 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // -----------------------------------------------------------------------
-    // STUDENT-CONFIGURABLE: Model name from LabConfigPanel dropdown
-    // Wrong/retired model names produce API errors by design for the lab.
-    // -----------------------------------------------------------------------
-    const resolvedModel =
-      typeof modelName === "string" && modelName.trim() ? modelName.trim() : "";
-
+    const resolvedModel = trimString(body.modelName, 120);
     if (!resolvedModel) {
       return NextResponse.json(
-          {
-            error: "Model name is required",
-            hint: "Choose a model in Lab Configuration (for example, gemini-flash-latest).",
-          },
-          { status: 400 }
-        );
+        {
+          error: "Model name is required",
+          hint: "Choose a model in Lab Configuration (for example, gemini-flash-latest).",
+        },
+        { status: 400 }
+      );
+    }
+    if (!ALLOWED_CHAT_MODELS.has(resolvedModel)) {
+      return NextResponse.json(
+        {
+          error: `Model '${resolvedModel}' is not allowed in this lab environment.`,
+          hint: `Use one of: ${Array.from(ALLOWED_CHAT_MODELS).join(", ")}`,
+        },
+        { status: 400 }
+      );
     }
 
-    // -----------------------------------------------------------------------
-    // STUDENT-CONFIGURABLE: System instruction from textarea
-    // -----------------------------------------------------------------------
-    const ragContext =
-      Array.isArray(ragChunks) && ragChunks.length > 0
-        ? `\n\nRELEVANT CLINICAL GUIDELINES:\n${ragChunks
-            .map(
-              (c: IncomingRagChunk) =>
-                `[${c.source}] ${c.title}:\n${c.text}`
-            )
-            .join("\n\n")}`
-        : "";
+    const resolvedSystemInstruction = trimString(
+      body.systemInstruction,
+      MAX_SYSTEM_INSTRUCTION_CHARS
+    );
+    const context = trimString(body.context, MAX_CONTEXT_CHARS);
+    const resolvedTemperature = clampNumber(body.temperature, 0, 1, 0.2);
+    const rag = await buildRagContextFromIds(body.ragChunkIds);
 
-    const resolvedSystemInstruction =
-      typeof systemInstruction === "string" ? systemInstruction.trim() : "";
-
-    const contextBlock = `PATIENT EHR CONTEXT:\n${
-      typeof context === "string" && context.trim() ? context : "No patient selected."
-    }${ragContext}`;
-
-    // -----------------------------------------------------------------------
-    // STUDENT-CONFIGURABLE: Temperature from slider (0.0 – 1.0)
-    // High temperature = inconsistent answers; low = deterministic
-    // -----------------------------------------------------------------------
-    const resolvedTemperature =
-      typeof temperature === "number"
-        ? Math.max(0, Math.min(1, temperature))
-        : 0.2;
+    const contextBlock = `PATIENT EHR CONTEXT:\n${context || "No patient selected."}${rag.text}`;
 
     const genAI = new GoogleGenerativeAI(apiKey);
     const modelConfig: {
@@ -126,41 +185,32 @@ export async function POST(req: NextRequest) {
         maxOutputTokens: 1024,
       },
     };
+
     if (resolvedSystemInstruction) {
       modelConfig.systemInstruction = resolvedSystemInstruction;
     }
     const model = genAI.getGenerativeModel(modelConfig);
 
-    const mappedHistory = clippedMessages.slice(0, -1).map((msg: IncomingMessage) => ({
+    const mappedHistory = normalizedMessages.slice(0, -1).map((msg: IncomingMessage) => ({
       role: msg.role === "user" ? "user" : "model",
       parts: [{ text: msg.content }],
     }));
-    // Gemini requires history to start with a user turn; drop any leading model messages (e.g. welcome message)
+    // Gemini requires history to start with a user turn; drop leading model messages (welcome text).
     const firstUserIdx = mappedHistory.findIndex((m) => m.role === "user");
     const history = firstUserIdx >= 0 ? mappedHistory.slice(firstUserIdx) : [];
 
     const chat = model.startChat({ history });
-    const lastMessage = clippedMessages[clippedMessages.length - 1];
-    if (lastMessage.role !== "user") {
-      return NextResponse.json(
-        { error: "Last message must be a user prompt" },
-        { status: 400 }
-      );
-    }
-
     const contextualizedPrompt = `${contextBlock}\n\nPATIENT QUESTION:\n${lastMessage.content}`;
+
     const modelStartMs = Date.now();
     const result = await chat.sendMessage(contextualizedPrompt);
     const modelLatencyMs = Date.now() - modelStartMs;
     const response = result.response;
     const responseText = response.text();
 
-    // Extract token usage
     const usageMetadata = response.usageMetadata;
     const inputTokens = usageMetadata?.promptTokenCount || 0;
     const outputTokens = usageMetadata?.candidatesTokenCount || 0;
-
-    // Lab estimate only: simplified flash-tier pricing for side-by-side comparisons.
     const estimatedCost =
       (inputTokens / 1_000_000) * 0.075 +
       (outputTokens / 1_000_000) * 0.3;
@@ -175,14 +225,15 @@ export async function POST(req: NextRequest) {
         model: resolvedModel,
         modelLatencyMs,
         totalLatencyMs: Date.now() - routeStartMs,
-        historyMessagesUsed: clippedMessages.length,
+        historyMessagesUsed: normalizedMessages.length,
+        ragChunksUsed: rag.chunkCount,
       },
     });
   } catch (error: unknown) {
     console.error("Chat API error:", error);
 
     const err = error as { message?: string };
-    let errorMessage = err.message || "Failed to process chat request";
+    const errorMessage = err.message || "Failed to process chat request";
     let hint = "";
 
     if (
