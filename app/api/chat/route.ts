@@ -15,6 +15,14 @@ interface IncomingMessage {
   content: string;
 }
 
+type GeminiResponse = {
+  text: () => string;
+  usageMetadata?: {
+    promptTokenCount?: number;
+    candidatesTokenCount?: number;
+  };
+};
+
 type ChatPayload = {
   messages?: unknown;
   context?: unknown;
@@ -45,6 +53,14 @@ const MAX_SYSTEM_INSTRUCTION_CHARS = Math.max(
   Number.parseInt(process.env.CHAT_MAX_SYSTEM_INSTRUCTION_CHARS || "2000", 10) || 2000
 );
 const MAX_RAG_CHUNKS = 3;
+const RETRY_ATTEMPTS = Math.max(
+  0,
+  Number.parseInt(process.env.CHAT_RETRY_ATTEMPTS || "2", 10) || 2
+);
+const RETRY_BASE_DELAY_MS = Math.max(
+  100,
+  Number.parseInt(process.env.CHAT_RETRY_BASE_DELAY_MS || "350", 10) || 350
+);
 const DEFAULT_ALLOWED_MODELS = [
   "gemini-3-flash-preview",
   "gemini-flash-latest",
@@ -69,6 +85,98 @@ function normalizeMessages(input: unknown): IncomingMessage[] {
       return { role, content };
     })
     .filter((msg) => msg.content.length > 0);
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isTransientProviderError(message: string): boolean {
+  const lower = message.toLowerCase();
+  return (
+    lower.includes("503") ||
+    lower.includes("service unavailable") ||
+    lower.includes("high demand") ||
+    lower.includes("429") ||
+    lower.includes("rate limit")
+  );
+}
+
+function isModelConfigError(message: string): boolean {
+  const lower = message.toLowerCase();
+  return lower.includes("not found") || lower.includes("invalid") || lower.includes("models/");
+}
+
+function buildModelCandidates(primary: string): string[] {
+  const candidates: string[] = [primary];
+  const fallback = "gemini-flash-lite-latest";
+  if (primary !== fallback && ALLOWED_CHAT_MODELS.has(fallback)) {
+    candidates.push(fallback);
+  }
+  return candidates;
+}
+
+async function sendMessageResiliently({
+  genAI,
+  modelCandidates,
+  resolvedSystemInstruction,
+  resolvedTemperature,
+  history,
+  prompt,
+}: {
+  genAI: GoogleGenerativeAI;
+  modelCandidates: string[];
+  resolvedSystemInstruction: string;
+  resolvedTemperature: number;
+  history: Array<{ role: "user" | "model"; parts: Array<{ text: string }> }>;
+  prompt: string;
+}): Promise<{
+  response: GeminiResponse;
+  modelUsed: string;
+  attempts: number;
+}> {
+  let lastError: unknown = null;
+  let totalAttempts = 0;
+
+  for (const candidateModel of modelCandidates) {
+    const model = genAI.getGenerativeModel({
+      model: candidateModel,
+      generationConfig: {
+        temperature: resolvedTemperature,
+        maxOutputTokens: 1024,
+      },
+      ...(resolvedSystemInstruction ? { systemInstruction: resolvedSystemInstruction } : {}),
+    });
+    const chat = model.startChat({ history });
+
+    for (let attempt = 0; attempt <= RETRY_ATTEMPTS; attempt++) {
+      totalAttempts += 1;
+      try {
+        const result = await chat.sendMessage(prompt);
+        return {
+          response: result.response,
+          modelUsed: candidateModel,
+          attempts: totalAttempts,
+        };
+      } catch (error: unknown) {
+        lastError = error;
+        const message = (error as { message?: string }).message || "";
+        if (!isTransientProviderError(message)) {
+          throw error;
+        }
+
+        const canRetrySameModel = attempt < RETRY_ATTEMPTS;
+        if (canRetrySameModel) {
+          const delayMs = RETRY_BASE_DELAY_MS * (attempt + 1);
+          await sleep(delayMs);
+          continue;
+        }
+        break;
+      }
+    }
+  }
+
+  throw lastError || new Error("Unable to generate response.");
 }
 
 async function buildRagContextFromIds(rawIds: unknown): Promise<{ text: string; chunkCount: number }> {
@@ -171,41 +279,27 @@ export async function POST(req: NextRequest) {
     const contextBlock = `PATIENT EHR CONTEXT:\n${context || "No patient selected."}${rag.text}`;
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const modelConfig: {
-      model: string;
-      systemInstruction?: string;
-      generationConfig: {
-        temperature: number;
-        maxOutputTokens: number;
-      };
-    } = {
-      model: resolvedModel,
-      generationConfig: {
-        temperature: resolvedTemperature,
-        maxOutputTokens: 1024,
-      },
-    };
-
-    if (resolvedSystemInstruction) {
-      modelConfig.systemInstruction = resolvedSystemInstruction;
-    }
-    const model = genAI.getGenerativeModel(modelConfig);
-
+    const modelCandidates = buildModelCandidates(resolvedModel);
     const mappedHistory = normalizedMessages.slice(0, -1).map((msg: IncomingMessage) => ({
-      role: msg.role === "user" ? "user" : "model",
+      role: (msg.role === "user" ? "user" : "model") as "user" | "model",
       parts: [{ text: msg.content }],
     }));
     // Gemini requires history to start with a user turn; drop leading model messages (welcome text).
     const firstUserIdx = mappedHistory.findIndex((m) => m.role === "user");
     const history = firstUserIdx >= 0 ? mappedHistory.slice(firstUserIdx) : [];
 
-    const chat = model.startChat({ history });
     const contextualizedPrompt = `${contextBlock}\n\nPATIENT QUESTION:\n${lastMessage.content}`;
 
     const modelStartMs = Date.now();
-    const result = await chat.sendMessage(contextualizedPrompt);
+    const { response, modelUsed, attempts } = await sendMessageResiliently({
+      genAI,
+      modelCandidates,
+      resolvedSystemInstruction,
+      resolvedTemperature,
+      history,
+      prompt: contextualizedPrompt,
+    });
     const modelLatencyMs = Date.now() - modelStartMs;
-    const response = result.response;
     const responseText = response.text();
 
     const usageMetadata = response.usageMetadata;
@@ -222,11 +316,12 @@ export async function POST(req: NextRequest) {
         outputTokens,
         totalTokens: inputTokens + outputTokens,
         estimatedCost,
-        model: resolvedModel,
+        model: modelUsed,
         modelLatencyMs,
         totalLatencyMs: Date.now() - routeStartMs,
         historyMessagesUsed: normalizedMessages.length,
         ragChunksUsed: rag.chunkCount,
+        requestAttempts: attempts,
       },
     });
   } catch (error: unknown) {
@@ -236,11 +331,16 @@ export async function POST(req: NextRequest) {
     const errorMessage = err.message || "Failed to process chat request";
     let hint = "";
 
-    if (
-      err.message?.includes("not found") ||
-      err.message?.includes("invalid") ||
-      err.message?.includes("models/")
-    ) {
+    if (isTransientProviderError(errorMessage)) {
+      hint =
+        "Gemini is under temporary load. Retry in a few seconds or switch to 'gemini-flash-lite-latest'.";
+      return NextResponse.json(
+        { error: errorMessage, hint },
+        { status: 503 }
+      );
+    }
+
+    if (isModelConfigError(errorMessage)) {
       hint =
         "Check the model selected in Lab Configuration. Try 'gemini-flash-latest'.";
     } else if (err.message?.includes("API key")) {
