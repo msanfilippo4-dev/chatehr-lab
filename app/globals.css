@@ -41,12 +41,67 @@ code,
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(247, 250, 254, 0.97) 100%);
   }
 
+  /* Consistent section header used in every panel */
   .ehr-shell-header {
-    @apply px-4 py-2.5 border-b text-xs font-semibold uppercase tracking-wider;
+    @apply px-4 py-2.5 border-b font-semibold uppercase tracking-wider;
+    font-size: 10px;
+    letter-spacing: 0.08em;
     border-color: #d6dfeb;
     color: #546a88;
     background: rgba(244, 247, 252, 0.95);
   }
+
+  /* Panel sub-label — e.g. "Student Workbench" blurb */
+  .ehr-panel-blurb {
+    font-size: 11px;
+    line-height: 1.5;
+    color: #546a88;
+  }
+}
+
+@layer utilities {
+  /* ── Type scale ──────────────────────────────────────────────────────── */
+  /* Use these instead of arbitrary text-[10px] / text-[11px] variants.    */
+
+  /* 10 px — token counts, badge chips, very secondary metadata */
+  .t-micro {
+    font-size: 10px;
+    line-height: 1.5;
+  }
+
+  /* 11 px — field labels, section captions, inline hints */
+  .t-caption {
+    font-size: 11px;
+    line-height: 1.45;
+  }
+
+  /* 12 px — standard small body (same as Tailwind text-xs) */
+  .t-small {
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  /* 13 px — card body text, chat messages detail */
+  .t-body {
+    font-size: 13px;
+    line-height: 1.55;
+  }
+
+  /* 15 px — panel headings, patient name */
+  .t-heading {
+    font-size: 15px;
+    line-height: 1.35;
+    font-weight: 600;
+  }
+
+  /* ── Semantic colors ─────────────────────────────────────────────────── */
+  .t-primary   { color: var(--ehr-text); }        /* #122033 */
+  .t-secondary { color: var(--ehr-text-muted); }  /* #4c637f */
+  .t-tertiary  { color: #7f93ab; }
+  .t-maroon    { color: var(--fordham-maroon); }
+
+  /* ── Mono shorthand ──────────────────────────────────────────────────── */
+  .t-mono { font-family: var(--font-mono), monospace; }
 }
 
 /* Light palette compatibility for legacy dark utility classes */

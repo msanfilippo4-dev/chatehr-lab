@@ -34,7 +34,7 @@ export default function PatientChart({ patient }: PatientChartProps) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center text-gray-500 p-6">
         <Heart className="w-12 h-12 mb-3 opacity-30" />
-        <p className="text-sm">Select a patient to view their EHR chart</p>
+        <p className="t-small t-secondary">Select a patient to view their EHR chart</p>
       </div>
     );
   }
@@ -46,7 +46,7 @@ export default function PatientChart({ patient }: PatientChartProps) {
         <p className="text-sm font-semibold text-[#122033] truncate">
           {patient.name}
         </p>
-        <p className="text-xs text-gray-400">
+        <p className="t-micro t-secondary">
           {patient.id} · {patient.age}y {patient.gender} · DOB: {patient.dob}
         </p>
       </div>

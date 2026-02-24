@@ -35,7 +35,7 @@ export default function LabConfigPanel({ config, onChange }: LabConfigPanelProps
           <span className="text-sm font-semibold text-gray-200">
             Lab Configuration
           </span>
-          <span className="text-xs bg-gray-800 text-gray-300 px-1.5 py-0.5 rounded-full border border-gray-700/50">
+          <span className="t-micro bg-gray-800 text-gray-300 px-1.5 py-0.5 rounded-full border border-gray-700/50">
             Fill in the blanks
           </span>
         </div>
@@ -47,11 +47,11 @@ export default function LabConfigPanel({ config, onChange }: LabConfigPanelProps
       </button>
 
       {isExpanded && (
-        <div className="p-4 space-y-5">
+        <div className="max-h-[70vh] overflow-y-auto overscroll-contain touch-pan-y [-webkit-overflow-scrolling:touch] p-4 space-y-5">
           {/* Step 1: Model Name */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs font-semibold text-gray-300 flex items-center gap-1.5">
+              <label className="t-caption font-semibold text-gray-300 flex items-center gap-1.5">
                 <span className="w-5 h-5 rounded-full bg-[#233247] text-[#9fb5d0] text-xs flex items-center justify-center font-bold">
                   1
                 </span>
@@ -67,7 +67,7 @@ export default function LabConfigPanel({ config, onChange }: LabConfigPanelProps
               </button>
             </div>
             {showHint === "model" && (
-              <div className="mb-2 p-2 bg-gray-800/70 border border-gray-700/60 rounded text-xs text-gray-300">
+              <div className="mb-2 p-2.5 bg-[#eef4fd] border border-[#bfcde0] rounded t-caption text-gray-300">
                 The model ID tells Google&apos;s API which AI model to use. Try:{" "}
                 <code className="font-mono bg-gray-950 px-1 rounded">
                   2.0
@@ -87,7 +87,7 @@ export default function LabConfigPanel({ config, onChange }: LabConfigPanelProps
               />
               <span className="text-gray-500">-flash</span>
             </div>
-            <p className="text-xs text-gray-600 mt-1">
+            <p className="t-micro t-tertiary mt-1">
               Full model ID:{" "}
               <span className="font-mono text-gray-500">
                 gemini-{config.modelSuffix || "___"}-flash
@@ -98,7 +98,7 @@ export default function LabConfigPanel({ config, onChange }: LabConfigPanelProps
           {/* Step 2: System Instruction */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs font-semibold text-gray-300 flex items-center gap-1.5">
+              <label className="t-caption font-semibold text-gray-300 flex items-center gap-1.5">
                 <span className="w-5 h-5 rounded-full bg-[#3b1f23] text-[#d9a5ab] text-xs flex items-center justify-center font-bold">
                   2
                 </span>
@@ -124,7 +124,7 @@ export default function LabConfigPanel({ config, onChange }: LabConfigPanelProps
               </div>
             </div>
             {showHint === "system" && (
-              <div className="mb-2 p-2 bg-gray-800/70 border border-gray-700/60 rounded text-xs text-gray-300">
+              <div className="mb-2 p-2.5 bg-[#eef4fd] border border-[#bfcde0] rounded t-caption text-gray-300">
                 Fill in the <span className="text-[#C49A6C]">__________</span>{" "}
                 blanks. The system instruction defines the AI&apos;s role and rules.
                 Try clearing it entirely — notice how the AI behaves without
@@ -138,7 +138,7 @@ export default function LabConfigPanel({ config, onChange }: LabConfigPanelProps
               placeholder={DEFAULT_SYSTEM_INSTRUCTION}
               className="w-full bg-gray-950 border border-gray-700 text-gray-200 text-xs rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#8C1515]/60 focus:border-transparent placeholder-gray-700 resize-none font-mono leading-relaxed"
             />
-            <p className="text-xs text-gray-600 mt-1">
+            <p className="t-micro t-tertiary mt-1">
               Replace the{" "}
               <span className="text-[#C49A6C] font-mono">__________</span> with
               your instructions
@@ -148,7 +148,7 @@ export default function LabConfigPanel({ config, onChange }: LabConfigPanelProps
           {/* Step 3: Temperature */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs font-semibold text-gray-300 flex items-center gap-1.5">
+              <label className="t-caption font-semibold text-gray-300 flex items-center gap-1.5">
                 <span className="w-5 h-5 rounded-full bg-[#3a3322] text-[#d4be8c] text-xs flex items-center justify-center font-bold">
                   3
                 </span>
@@ -167,14 +167,14 @@ export default function LabConfigPanel({ config, onChange }: LabConfigPanelProps
               </button>
             </div>
             {showHint === "temp" && (
-              <div className="mb-2 p-2 bg-gray-800/70 border border-gray-700/60 rounded text-xs text-gray-300">
+              <div className="mb-2 p-2.5 bg-[#eef4fd] border border-[#bfcde0] rounded t-caption text-gray-300">
                 Controls randomness. <strong>0.0</strong> = deterministic (same
                 answer every time). <strong>1.0</strong> = creative/random. Ask
                 the same question twice at temperature 1.0 and see what happens.
               </div>
             )}
             <div className="flex items-center gap-3">
-              <span className="text-xs text-gray-500">0.0</span>
+              <span className="t-micro t-secondary">0.0</span>
               <input
                 type="range"
                 min="0"
@@ -189,18 +189,18 @@ export default function LabConfigPanel({ config, onChange }: LabConfigPanelProps
                   background: `linear-gradient(to right, #8C1515 ${config.temperature * 100}%, #374151 ${config.temperature * 100}%)`,
                 }}
               />
-              <span className="text-xs text-gray-500">1.0</span>
+              <span className="t-micro t-secondary">1.0</span>
             </div>
             <div className="flex justify-between mt-1">
-              <span className="text-xs text-gray-600">← Deterministic</span>
-              <span className="text-xs text-gray-600">Creative →</span>
+              <span className="t-micro t-tertiary">← Deterministic</span>
+              <span className="t-micro t-tertiary">Creative →</span>
             </div>
           </div>
 
           {/* Step 4: Context Level */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs font-semibold text-gray-300 flex items-center gap-1.5">
+              <label className="t-caption font-semibold text-gray-300 flex items-center gap-1.5">
                 <span className="w-5 h-5 rounded-full bg-[#1f3a39] text-[#9fcfcb] text-xs flex items-center justify-center font-bold">
                   4
                 </span>
@@ -216,7 +216,7 @@ export default function LabConfigPanel({ config, onChange }: LabConfigPanelProps
               </button>
             </div>
             {showHint === "context" && (
-              <div className="mb-2 p-2 bg-gray-800/70 border border-gray-700/60 rounded text-xs text-gray-300">
+              <div className="mb-2 p-2.5 bg-[#eef4fd] border border-[#bfcde0] rounded t-caption text-gray-300">
                 Controls how much patient data is sent to the AI. Think about
                 HIPAA&apos;s &quot;minimum necessary&quot; standard — what does the AI
                 actually need to answer your question?
@@ -229,7 +229,7 @@ export default function LabConfigPanel({ config, onChange }: LabConfigPanelProps
                   className={`flex items-start gap-3 p-2.5 rounded-lg border cursor-pointer transition-colors ${
                     config.contextLevel === level
                       ? "border-[#8C1515]/60 bg-[#8C1515]/10"
-                      : "border-gray-700/50 bg-gray-800/20 hover:bg-gray-800/40"
+                      : "border-[#d6dfeb] bg-[#f7f9fc] hover:bg-[#edf2f9] hover:border-[#bfcde0]"
                   }`}
                 >
                   <input
@@ -241,10 +241,10 @@ export default function LabConfigPanel({ config, onChange }: LabConfigPanelProps
                     className="mt-0.5 accent-[#8C1515]"
                   />
                   <div>
-                    <p className="text-xs font-semibold text-gray-200">
+                    <p className="t-caption font-semibold text-gray-200">
                       {level}
                     </p>
-                    <p className="text-xs text-gray-500 mt-0.5">
+                    <p className="t-micro t-secondary mt-0.5">
                       {level === "LIMITED" &&
                         "Age + gender + zip prefix only. No name, no diagnoses."}
                       {level === "STANDARD" &&
@@ -259,22 +259,22 @@ export default function LabConfigPanel({ config, onChange }: LabConfigPanelProps
           </div>
 
           {/* Step 5: RAG Toggle */}
-          <div className="flex items-center justify-between p-3 rounded-lg border border-gray-700/50 bg-gray-800/20">
+          <div className="flex items-center justify-between p-3 rounded-lg border border-[#d6dfeb] bg-[#f7f9fc]">
             <div>
-              <p className="text-xs font-semibold text-gray-300 flex items-center gap-1.5">
+              <p className="t-caption font-semibold text-gray-300 flex items-center gap-1.5">
                 <span className="w-5 h-5 rounded-full bg-[#2d2540] text-[#b9a9dc] text-xs flex items-center justify-center font-bold">
                   5
                 </span>
                 Enable RAG (Clinical Guidelines)
               </p>
-              <p className="text-xs text-gray-500 mt-0.5">
+              <p className="t-micro t-secondary mt-0.5">
                 Retrieve relevant guideline chunks to ground responses
               </p>
             </div>
             <button
               onClick={() => update({ ragEnabled: !config.ragEnabled })}
               className={`relative w-11 h-6 rounded-full transition-colors ${
-                config.ragEnabled ? "bg-[#8C1515]" : "bg-gray-700"
+                config.ragEnabled ? "bg-[#8C1515]" : "bg-[#c8d5e3]"
               }`}
             >
               <span

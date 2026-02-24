@@ -64,7 +64,7 @@ export default function PatientSelector({
 
   return (
     <div className="relative" ref={containerRef}>
-      <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1 mb-2">
+      <label className="t-micro font-semibold t-secondary uppercase tracking-wider flex items-center gap-1 mb-2">
         <User className="w-3.5 h-3.5" />
         Patient Select
       </label>
@@ -116,7 +116,7 @@ export default function PatientSelector({
               </div>
               <div className="max-h-72 overflow-y-auto" role="listbox">
                 {filtered.length === 0 ? (
-                  <div className="p-3 text-center text-xs text-gray-500">
+                  <div className="p-3 text-center t-small t-secondary">
                     No patients found
                   </div>
                 ) : (
@@ -131,7 +131,7 @@ export default function PatientSelector({
                       }`}
                     >
                       <span>{p.name}</span>
-                      <span className="text-xs text-gray-500 font-mono">
+                      <span className="t-micro t-secondary t-mono">
                         {p.id}
                       </span>
                     </button>
@@ -139,7 +139,7 @@ export default function PatientSelector({
                 )}
               </div>
               <div className="px-3 py-1.5 border-t border-gray-700 bg-gray-800/50">
-                <span className="text-xs text-gray-500">
+                <span className="t-micro t-secondary">
                   {patients.length.toLocaleString()} patients · showing first 50
                   matches
                 </span>

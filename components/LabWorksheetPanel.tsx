@@ -49,7 +49,7 @@ export default function LabWorksheetPanel({
           <h3 className="text-sm font-semibold text-gray-100 text-left">Lab Worksheet</h3>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500">6 prompts</span>
+          <span className="t-micro t-secondary">6 prompts</span>
           {expanded ? (
             <ChevronUp className="w-4 h-4 text-gray-500" />
           ) : (
@@ -58,7 +58,7 @@ export default function LabWorksheetPanel({
         </div>
       </button>
 
-      {expanded && <div className="p-4 space-y-3">
+      {expanded && <div className="max-h-[65vh] overflow-y-auto overscroll-contain touch-pan-y [-webkit-overflow-scrolling:touch] p-4 space-y-3">
         <div className="rounded-lg border border-gray-700/60 bg-gray-950/60 p-2.5 text-xs text-gray-400">
           <p>
             Active patient:{" "}
@@ -131,7 +131,7 @@ function WorksheetField({
 }) {
   return (
     <label className="block">
-      <span className="block text-xs font-semibold text-gray-300 mb-1.5">
+      <span className="block t-caption font-semibold text-gray-300 mb-1.5">
         {label}
       </span>
       <textarea
@@ -139,7 +139,7 @@ function WorksheetField({
         onChange={(e) => onChange(e.target.value)}
         rows={2}
         placeholder={placeholder}
-        className="w-full bg-gray-950 border border-gray-700 text-gray-200 text-xs rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-[#8C1515]/60 focus:border-transparent resize-y min-h-[58px] placeholder-gray-600"
+        className="w-full bg-gray-950 border border-gray-700 text-gray-200 t-caption rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-[#8C1515]/60 focus:border-transparent resize-y min-h-[58px] placeholder-gray-600"
       />
     </label>
   );

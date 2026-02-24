@@ -216,6 +216,14 @@ export default function ChatEHRPage() {
           <p className="text-xs text-gray-500 mt-1">
             Educational environment only. Not for real patient care.
           </p>
+          <p className="text-xs mt-1">
+            <a
+              href="/lab"
+              className="text-[#8C1515] underline underline-offset-2 hover:text-[#6B1010]"
+            >
+              Need assignment steps? Open the lab instructions page.
+            </a>
+          </p>
         </div>
         {totals.tokens > 0 && (
           <div className="text-left sm:text-right bg-[#f3f7fd] border border-[#d6dfeb] rounded-lg px-3 py-2">
@@ -230,9 +238,9 @@ export default function ChatEHRPage() {
       </div>
 
       {/* Main layout: 3 columns */}
-      <div className="grid grid-cols-1 gap-4 xl:h-[calc(100vh-160px)] xl:grid-cols-[280px_minmax(0,1fr)_300px]">
+      <div className="grid grid-cols-1 gap-4 xl:items-start xl:grid-cols-[280px_minmax(0,1fr)_300px]">
         {/* LEFT: EHR Panel */}
-        <div className="flex flex-col gap-4 xl:min-h-0 xl:overflow-hidden">
+        <div className="flex flex-col gap-4 xl:sticky xl:top-6">
           <div className="ehr-shell">
             <div className="ehr-shell-header">Patient Lookup</div>
             <div className="p-4">
@@ -243,21 +251,21 @@ export default function ChatEHRPage() {
               isLoading={isDataLoading}
             />
             {!isDataLoading && dataLoadError && (
-              <p className="mt-2 text-xs text-[#8C1515]">
+              <p className="mt-2 t-caption text-[#8C1515]">
                 Patient dataset error: {dataLoadError}
               </p>
             )}
             </div>
           </div>
 
-          <div className="h-[420px] md:h-[520px] xl:h-auto xl:flex-1 ehr-shell overflow-hidden min-h-0">
+          <div className="h-[420px] md:h-[520px] xl:h-[calc(100vh-270px)] ehr-shell overflow-hidden">
             <div className="ehr-shell-header">Patient Chart</div>
             <PatientChart patient={selectedPatient} />
           </div>
         </div>
 
         {/* CENTER: Chat */}
-        <div className="h-[60vh] md:h-[70vh] xl:h-auto xl:min-h-0 min-w-0 ehr-shell overflow-hidden">
+        <div className="h-[60vh] md:h-[70vh] xl:h-[calc(100vh-220px)] min-w-0 ehr-shell overflow-hidden">
           <ChatInterface
             messages={messages}
             isLoading={isLoading}
@@ -268,10 +276,10 @@ export default function ChatEHRPage() {
         </div>
 
         {/* RIGHT: Config + RAG */}
-        <div className="min-w-0 flex flex-col gap-4 overflow-y-auto xl:h-full xl:min-h-0 pr-1">
-          <div className="ehr-shell p-3 text-xs text-gray-400">
-            <p className="font-semibold text-gray-200">Student Workbench</p>
-            <p className="mt-1">
+        <div className="min-w-0 flex flex-col gap-4 pr-1">
+          <div className="ehr-shell p-3">
+            <p className="t-small font-semibold t-primary">Student Workbench</p>
+            <p className="ehr-panel-blurb mt-1">
               Configure model behavior, run safety/privacy experiments, and capture findings in the worksheet.
             </p>
           </div>
