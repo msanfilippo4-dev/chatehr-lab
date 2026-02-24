@@ -2,6 +2,11 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Search, User } from "lucide-react";
 import { Patient } from "@/lib/types";
+import {
+  ALL_PATIENTS_OPTION_ID,
+  BRONX_HOSPITAL_50_OPTION_ID,
+  getBronxHospitalCohort,
+} from "@/lib/cohort-context";
 
 interface PatientSelectorProps {
   patients: Patient[];
@@ -64,7 +69,25 @@ export default function PatientSelector({
       .slice(0, 50);
   }, [patients, search]);
 
+  const bronxCohortSize = useMemo(() => getBronxHospitalCohort(patients).length, [patients]);
+  const specialOptions = useMemo(
+    () => [
+      {
+        id: ALL_PATIENTS_OPTION_ID,
+        label: `All Patients (${patients.length.toLocaleString()})`,
+        description: "Population-level queries",
+      },
+      {
+        id: BRONX_HOSPITAL_50_OPTION_ID,
+        label: `Bronx Hospital Cohort (${bronxCohortSize})`,
+        description: "Tractable subset for group review",
+      },
+    ],
+    [patients.length, bronxCohortSize]
+  );
+
   const selected = patients.find((p) => p.id === selectedPatientId);
+  const selectedSpecial = specialOptions.find((opt) => opt.id === selectedPatientId);
 
   const handleSelect = (patientId: string) => {
     onSelect(patientId);
@@ -94,10 +117,12 @@ export default function PatientSelector({
             aria-haspopup="listbox"
             className="w-full bg-white border border-[#d6dfeb] text-left text-sm rounded-lg p-2.5 flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-[#8C1515]/60 hover:border-[#bfcde0] transition-colors"
           >
-            <span className={`truncate pr-2 ${selected ? "text-[#122033]" : "text-gray-500"}`}>
+            <span className={`truncate pr-2 ${selected || selectedSpecial ? "text-[#122033]" : "text-gray-500"}`}>
               {selected
                 ? `${selected.name} (${selected.id})`
-                : "Select a patient..."}
+                : selectedSpecial
+                ? selectedSpecial.label
+                : "Select a patient or cohort..."}
             </span>
             <svg
               className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? "rotate-180" : ""}`}
@@ -130,6 +155,23 @@ export default function PatientSelector({
                 </div>
               </div>
               <div className="max-h-72 overflow-y-auto" role="listbox">
+                <div className="p-1.5 border-b border-[#d6dfeb] bg-[#f8fbff]">
+                  {specialOptions.map((opt) => (
+                    <button
+                      type="button"
+                      key={opt.id}
+                      onClick={() => handleSelect(opt.id)}
+                      className={`w-full text-left px-2.5 py-2 rounded-md text-xs transition-colors ${
+                        opt.id === selectedPatientId
+                          ? "bg-[#8C1515]/12 text-[#6B1010]"
+                          : "hover:bg-[#f0f5fc] text-[#304762]"
+                      }`}
+                    >
+                      <p className="font-semibold">{opt.label}</p>
+                      <p className="t-micro text-[#667d99]">{opt.description}</p>
+                    </button>
+                  ))}
+                </div>
                 {filtered.length === 0 ? (
                   <div className="p-3 text-center t-small t-secondary">
                     No patients found
@@ -156,8 +198,8 @@ export default function PatientSelector({
               </div>
               <div className="px-3 py-1.5 border-t border-gray-700 bg-gray-800/50">
                 <span className="t-micro t-secondary">
-                  {patients.length.toLocaleString()} patients · showing first 50
-                  matches
+                  {patients.length.toLocaleString()} total patients · cohort + first
+                  50 matches shown
                 </span>
               </div>
             </div>

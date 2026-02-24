@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useSession, signOut } from "next-auth/react";
 import PatientSelector from "@/components/PatientSelector";
 import PatientChart from "@/components/PatientChart";
@@ -9,6 +9,13 @@ import RAGPanel from "@/components/RAGPanel";
 import LabWorksheetPanel from "@/components/LabWorksheetPanel";
 import { Patient, Message, LabConfig, RAGChunk } from "@/lib/types";
 import { buildPatientContext } from "@/lib/patient-context";
+import {
+  ALL_PATIENTS_OPTION_ID,
+  BRONX_HOSPITAL_50_OPTION_ID,
+  buildCohortContext,
+  buildCohortKeywords,
+  getBronxHospitalCohort,
+} from "@/lib/cohort-context";
 
 const DEFAULT_CONFIG: LabConfig = {
   modelName: "gemini-flash-latest",
@@ -68,21 +75,93 @@ export default function ChatEHRPage() {
       });
   }, []);
 
-  const selectedPatient = patients.find((p) => p.id === selectedPatientId) || null;
+  const bronxCohortPatients = useMemo(() => getBronxHospitalCohort(patients), [patients]);
+  const selectedPatient = useMemo(() => {
+    if (
+      selectedPatientId === ALL_PATIENTS_OPTION_ID ||
+      selectedPatientId === BRONX_HOSPITAL_50_OPTION_ID
+    ) {
+      return null;
+    }
+    return patients.find((p) => p.id === selectedPatientId) || null;
+  }, [patients, selectedPatientId]);
+  const selectedCohortPatients = useMemo(() => {
+    if (selectedPatientId === ALL_PATIENTS_OPTION_ID) return patients;
+    if (selectedPatientId === BRONX_HOSPITAL_50_OPTION_ID) return bronxCohortPatients;
+    return null;
+  }, [selectedPatientId, patients, bronxCohortPatients]);
+  const selectedTargetLabel = useMemo(() => {
+    if (selectedPatient) return `${selectedPatient.name} (${selectedPatient.id})`;
+    if (selectedPatientId === ALL_PATIENTS_OPTION_ID) {
+      return `All Patients (${patients.length.toLocaleString()})`;
+    }
+    if (selectedPatientId === BRONX_HOSPITAL_50_OPTION_ID) {
+      return `Bronx Hospital Cohort (${bronxCohortPatients.length})`;
+    }
+    return null;
+  }, [selectedPatient, selectedPatientId, patients.length, bronxCohortPatients.length]);
+  const canSendMessages = Boolean(selectedPatient || selectedCohortPatients);
+  const samplePrompts = useMemo(() => {
+    if (selectedPatientId === ALL_PATIENTS_OPTION_ID) {
+      return [
+        "How many patients have a documented influenza immunization?",
+        "What percentage of patients have Hemoglobin A1c >= 8.0?",
+        "Summarize the top chronic conditions in this full population.",
+      ];
+    }
+    if (selectedPatientId === BRONX_HOSPITAL_50_OPTION_ID) {
+      return [
+        "How many Bronx cohort patients have flu shots, and how many do not?",
+        "List Bronx cohort patient IDs with Hemoglobin A1c >= 8.0.",
+        "Which Bronx cohort patient IDs have no documented conditions?",
+      ];
+    }
+    if (selectedPatient) {
+      return [
+        `Summarize ${selectedPatient.name}'s key diagnoses, meds, and high-risk labs.`,
+        "What is the top safety risk today and what chart evidence supports it?",
+        "What follow-up checks should happen next and why?",
+      ];
+    }
+    return [
+      "Select a patient or cohort, then ask a chart-grounded question.",
+      "Compare answers with RAG OFF vs RAG ON.",
+      "Use context levels to test minimum-necessary data sharing.",
+    ];
+  }, [selectedPatientId, selectedPatient]);
 
   const handlePatientSelect = (patientId: string) => {
     const currentScrollY = window.scrollY;
     setSelectedPatientId(patientId);
-    const patient = patients.find((p) => p.id === patientId);
-    if (patient) {
+    setRagChunks([]);
+
+    if (patientId === ALL_PATIENTS_OPTION_ID) {
       setMessages([
         {
           id: Date.now().toString(),
           role: "assistant",
-          content: `Chart loaded for **${patient.name}** (${patient.id}).\n\nAge: ${patient.age} · Gender: ${patient.gender} · ${patient.conditions.length} condition${patient.conditions.length !== 1 ? "s" : ""} · ${patient.medications.filter((m) => m.status === "Active").length} active med${patient.medications.filter((m) => m.status === "Active").length !== 1 ? "s" : ""}\n\nHow can I help you with this patient?`,
+          content: `Cohort loaded: **All Patients** (${patients.length.toLocaleString()}).\n\nUse this for population-level questions and aggregate findings.\n\nTry:\n1. How many patients have documented influenza immunization?\n2. What percentage have Hemoglobin A1c >= 8.0?\n3. What are the top chronic conditions?`,
         },
       ]);
-      setRagChunks([]);
+    } else if (patientId === BRONX_HOSPITAL_50_OPTION_ID) {
+      setMessages([
+        {
+          id: Date.now().toString(),
+          role: "assistant",
+          content: `Cohort loaded: **Bronx Hospital Cohort** (${bronxCohortPatients.length} patients).\n\nThis subset is designed for tractable group review.\n\nTry:\n1. How many have flu shots?\n2. Which IDs have A1c >= 8.0?\n3. Which IDs have no documented conditions?`,
+        },
+      ]);
+    } else {
+      const patient = patients.find((p) => p.id === patientId);
+      if (patient) {
+        setMessages([
+          {
+            id: Date.now().toString(),
+            role: "assistant",
+            content: `Chart loaded for **${patient.name}** (${patient.id}).\n\nAge: ${patient.age} · Gender: ${patient.gender} · ${patient.conditions.length} condition${patient.conditions.length !== 1 ? "s" : ""} · ${patient.medications.filter((m) => m.status === "Active").length} active med${patient.medications.filter((m) => m.status === "Active").length !== 1 ? "s" : ""}\n\nHow can I help you with this patient?`,
+          },
+        ]);
+      }
     }
     requestAnimationFrame(() => {
       window.scrollTo({ top: currentScrollY, left: 0, behavior: "auto" });
@@ -91,7 +170,7 @@ export default function ChatEHRPage() {
 
   const handleSendMessage = useCallback(
     async (content: string) => {
-      if (!selectedPatient) return;
+      if (!canSendMessages) return;
 
       const userMsg: Message = {
         id: Date.now().toString(),
@@ -103,23 +182,29 @@ export default function ChatEHRPage() {
       setRagChunks([]);
 
       try {
-        // Build patient context at selected level
-        const patientContext = buildPatientContext(
-          selectedPatient,
-          config.contextLevel
-        );
+        const patientContext = selectedPatient
+          ? buildPatientContext(selectedPatient, config.contextLevel)
+          : selectedCohortPatients
+          ? buildCohortContext(selectedCohortPatients, selectedTargetLabel || "Cohort", {
+              includeRoster: selectedPatientId === BRONX_HOSPITAL_50_OPTION_ID,
+            })
+          : "No patient selected.";
 
         let currentRagChunks: RAGChunk[] = [];
 
-        const patientKeywords = [
-          ...selectedPatient.conditions.map((c) => c.display),
-          ...selectedPatient.medications
-            .filter((m) => m.status === "Active")
-            .map((m) => m.name),
-          ...selectedPatient.labs.map((l) => l.name),
-          ...selectedPatient.allergies.map((a) => a.allergen),
-          ...selectedPatient.immunizations.map((i) => i.name),
-        ];
+        const patientKeywords = selectedPatient
+          ? [
+              ...selectedPatient.conditions.map((c) => c.display),
+              ...selectedPatient.medications
+                .filter((m) => m.status === "Active")
+                .map((m) => m.name),
+              ...selectedPatient.labs.map((l) => l.name),
+              ...selectedPatient.allergies.map((a) => a.allergen),
+              ...selectedPatient.immunizations.map((i) => i.name),
+            ]
+          : selectedCohortPatients
+          ? buildCohortKeywords(selectedCohortPatients)
+          : [];
 
         // RAG retrieval via API
         if (config.ragEnabled) {
@@ -207,7 +292,15 @@ export default function ChatEHRPage() {
         setIsLoading(false);
       }
     },
-    [selectedPatient, config, messages]
+    [
+      canSendMessages,
+      selectedPatient,
+      selectedCohortPatients,
+      selectedTargetLabel,
+      selectedPatientId,
+      config,
+      messages,
+    ]
   );
 
   // Token/cost totals
@@ -247,6 +340,14 @@ export default function ChatEHRPage() {
               className="text-[#8C1515] underline underline-offset-2 hover:text-[#6B1010]"
             >
               Ready to submit? Open benchmark + judge feedback.
+            </a>
+          </p>
+          <p className="text-xs mt-1">
+            <a
+              href="/fordham-health-bench"
+              className="text-[#8C1515] underline underline-offset-2 hover:text-[#6B1010]"
+            >
+              Try the Fordham Health Bench (5 cases).
             </a>
           </p>
         </div>
@@ -298,6 +399,11 @@ export default function ChatEHRPage() {
               onSelect={handlePatientSelect}
               isLoading={isDataLoading}
             />
+            {selectedCohortPatients && (
+              <p className="mt-2 t-caption text-[#4c637f]">
+                Cohort mode active. Ask count/list questions for this group.
+              </p>
+            )}
             {!isDataLoading && dataLoadError && (
               <p className="mt-2 t-caption text-[#8C1515]">
                 Patient dataset error: {dataLoadError}
@@ -319,14 +425,12 @@ export default function ChatEHRPage() {
               messages={messages}
               isLoading={isLoading}
               onSendMessage={handleSendMessage}
-              patientName={selectedPatient?.name || null}
-              disabled={!selectedPatient}
+              patientName={selectedTargetLabel}
+              disabled={!canSendMessages}
             />
           </div>
           <LabWorksheetPanel
-            selectedPatientLabel={
-              selectedPatient ? `${selectedPatient.name} (${selectedPatient.id})` : "No patient selected"
-            }
+            selectedPatientLabel={selectedTargetLabel || "No patient selected"}
             totalTokens={totals.tokens}
             totalCost={totals.cost}
           />
@@ -339,6 +443,14 @@ export default function ChatEHRPage() {
             <p className="ehr-panel-blurb mt-1">
               Configure model behavior, run safety/privacy experiments, and capture findings in the worksheet.
             </p>
+          </div>
+          <div className="ehr-shell p-3">
+            <p className="t-small font-semibold t-primary">Sample Prompts</p>
+            <ul className="list-disc pl-5 mt-1.5 space-y-1 t-caption t-secondary">
+              {samplePrompts.map((prompt, idx) => (
+                <li key={idx}>{prompt}</li>
+              ))}
+            </ul>
           </div>
           <LabConfigPanel config={config} onChange={setConfig} />
           <RAGPanel

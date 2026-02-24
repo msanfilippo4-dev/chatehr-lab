@@ -115,7 +115,9 @@ export default function LabInstructionsPage() {
         <h2 className="t-heading t-primary">Deliverables Before You Leave</h2>
         <ul className="list-disc pl-5 mt-2 space-y-1 t-body t-secondary">
           <li>Completed worksheet notes for all mission tasks and comparisons.</li>
+          <li>Use the in-app <strong>Submit Worksheet Response</strong> button to save your worksheet.</li>
           <li>Completed benchmark submission in <strong>/submissions</strong>.</li>
+          <li>(Optional) Complete the 5-case <strong>Fordham Health Bench</strong>.</li>
           <li>Patient IDs used and the prompts you tested.</li>
           <li>Total session tokens and estimated cost.</li>
         </ul>
@@ -125,6 +127,13 @@ export default function LabInstructionsPage() {
             className="font-semibold text-[#8C1515] underline underline-offset-2 hover:text-[#6B1010]"
           >
             Open /submissions for benchmark + LLM judge feedback
+          </a>
+          {" · "}
+          <a
+            href="/fordham-health-bench"
+            className="font-semibold text-[#8C1515] underline underline-offset-2 hover:text-[#6B1010]"
+          >
+            Open /fordham-health-bench
           </a>
         </p>
       </section>
