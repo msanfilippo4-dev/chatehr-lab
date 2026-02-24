@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import SessionProvider from "@/components/SessionProvider";
 
 export const metadata: Metadata = {
   title: "ChatEHR Lab — HINF 6117",
@@ -32,7 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </div>
         </header>
         <main className="max-w-screen-2xl mx-auto px-4 py-5 md:py-6">
-          {children}
+          <SessionProvider>{children}</SessionProvider>
         </main>
       </body>
     </html>

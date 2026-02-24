@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { readFile } from "fs/promises";
 import path from "path";
 import { retrieveChunks } from "@/lib/rag-retrieval";
@@ -38,6 +40,11 @@ async function loadAllChunksCached(): Promise<RAGChunk[]> {
 }
 
 export async function POST(req: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { query, patientKeywords, patientConditions } = await req.json();
 

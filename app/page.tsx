@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useCallback } from "react";
+import { useSession, signOut } from "next-auth/react";
 import PatientSelector from "@/components/PatientSelector";
 import PatientChart from "@/components/PatientChart";
 import ChatInterface from "@/components/ChatInterface";
@@ -25,6 +26,7 @@ const WELCOME_MESSAGE: Message = {
 };
 
 export default function ChatEHRPage() {
+  const { data: session } = useSession();
   const [patients, setPatients] = useState<Patient[]>([]);
   const [isDataLoading, setIsDataLoading] = useState(true);
   const [dataLoadError, setDataLoadError] = useState<string | null>(null);
@@ -225,16 +227,39 @@ export default function ChatEHRPage() {
             </a>
           </p>
         </div>
-        {totals.tokens > 0 && (
-          <div className="text-left sm:text-right bg-[#f3f7fd] border border-[#d6dfeb] rounded-lg px-3 py-2">
-            <p className="text-xs text-gray-300 font-mono">
-              Session: {totals.tokens.toLocaleString()} tokens
-            </p>
-            <p className="text-xs text-gray-500 font-mono">
-              ~${totals.cost.toFixed(5)} est. cost
-            </p>
-          </div>
-        )}
+        <div className="flex flex-col items-end gap-2">
+          {totals.tokens > 0 && (
+            <div className="text-left sm:text-right bg-[#f3f7fd] border border-[#d6dfeb] rounded-lg px-3 py-2">
+              <p className="text-xs text-gray-300 font-mono">
+                Session: {totals.tokens.toLocaleString()} tokens
+              </p>
+              <p className="text-xs text-gray-500 font-mono">
+                ~${totals.cost.toFixed(5)} est. cost
+              </p>
+            </div>
+          )}
+          {session?.user && (
+            <div className="flex items-center gap-2">
+              {session.user.image && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={session.user.image}
+                  alt={session.user.name ?? "User"}
+                  className="w-7 h-7 rounded-full border border-[#d6dfeb]"
+                />
+              )}
+              <span className="text-xs text-gray-500 hidden sm:inline">
+                {session.user.name ?? session.user.email}
+              </span>
+              <button
+                onClick={() => signOut({ callbackUrl: "/login" })}
+                className="text-xs text-[#8C1515] underline underline-offset-2 hover:text-[#6B1010]"
+              >
+                Sign out
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Main layout: 3 columns */}
