@@ -1,0 +1,44 @@
+[
+  {
+    "id": "hf-001",
+    "source": "ACC/AHA Heart Failure Guidelines 2022",
+    "title": "Classification of Heart Failure",
+    "text": "Heart failure (HF) is classified by left ventricular ejection fraction (LVEF). Heart failure with reduced ejection fraction (HFrEF): LVEF ≤40%. Heart failure with mildly reduced ejection fraction (HFmrEF): LVEF 41-49%. Heart failure with preserved ejection fraction (HFpEF): LVEF ≥50%. Heart failure with improved ejection fraction (HFimpEF): previously documented LVEF ≤40% that has improved to >40% on repeat measurement. Stages of heart failure: Stage A (At risk) — risk factors without structural disease or symptoms; Stage B (Pre-HF) — structural disease or elevated filling pressures without symptoms; Stage C (Symptomatic HF) — structural disease with current or prior HF symptoms; Stage D (Advanced HF) — severe, refractory symptoms at rest requiring specialized interventions. New York Heart Association (NYHA) functional classification: Class I (no limitation), Class II (slight limitation), Class III (marked limitation), Class IV (symptoms at rest). BNP ≥35 pg/mL or NT-proBNP ≥125 pg/mL supportive of HF diagnosis.",
+    "keywords": ["heart failure", "HFrEF", "HFpEF", "ejection fraction", "LVEF", "BNP", "NT-proBNP", "NYHA", "classification", "cardiomyopathy", "LV dysfunction"]
+  },
+  {
+    "id": "hf-002",
+    "source": "ACC/AHA Heart Failure Guidelines 2022",
+    "title": "Guideline-Directed Medical Therapy for HFrEF",
+    "text": "Four drug classes form the cornerstone of guideline-directed medical therapy (GDMT) for HFrEF: (1) ACE inhibitors or ARBs — reduce mortality ~20%; first choice if ARNI not tolerated. (2) Angiotensin receptor-neprilysin inhibitors (ARNI, sacubitril/valsartan [Entresto]) — superior to ACE inhibitor (enalapril) in PARADIGM-HF trial; reduces CV mortality by 20% and HF hospitalization by 21% vs enalapril. Preferred over ACE inhibitor in chronic HFrEF. (3) Beta-blockers — only three are evidence-based in HFrEF: carvedilol, metoprolol succinate (XL), and bisoprolol. Reduce mortality ~35%. (4) Mineralocorticoid receptor antagonists (MRA): spironolactone or eplerenone — reduce mortality ~25%. Add SGLT2 inhibitors (dapagliflozin, empagliflozin) for additional mortality and hospitalization reduction independent of diabetes status. Hydralazine + isosorbide dinitrate: alternative if intolerant to ACE-I/ARB/ARNI (especially in self-identified Black patients).",
+    "keywords": ["HFrEF", "GDMT", "sacubitril", "valsartan", "Entresto", "ARNI", "carvedilol", "metoprolol succinate", "spironolactone", "eplerenone", "SGLT2", "dapagliflozin", "empagliflozin", "ACE inhibitor", "heart failure medications"]
+  },
+  {
+    "id": "hf-003",
+    "source": "ACC/AHA Heart Failure Guidelines 2022",
+    "title": "Diuretic Therapy and Volume Management in Heart Failure",
+    "text": "Diuretics are recommended for all patients with HF and evidence of fluid overload to improve symptoms. Loop diuretics (furosemide, torsemide, bumetanide) are the primary diuretic class in HF. Furosemide IV has more reliable bioavailability than oral in acute decompensation. Torsemide has superior bioavailability (~80%) vs furosemide (~50%) and may be preferred chronically. Starting oral furosemide: 20-40 mg/day for new HF; titrate for daily weight ≤2.5 lb variation and urine output. Signs of congestion: orthopnea, paroxysmal nocturnal dyspnea, peripheral edema, S3 gallop, elevated JVP, pulmonary crackles, ascites. Patient self-monitoring: daily weight at same time each morning; weight gain >2 lbs in 24 hours or >4 lbs in 1 week warrants provider contact or predetermined diuretic dose increase. Sodium restriction: <2 g/day sodium; fluid restriction 1.5-2 L/day for hyponatremia or severe congestion. Electrolyte monitoring essential: hypokalemia and hypomagnesemia increase arrhythmia risk.",
+    "keywords": ["diuretic", "furosemide", "torsemide", "loop diuretic", "edema", "volume overload", "congestion", "daily weight", "fluid restriction", "sodium restriction", "heart failure decompensation"]
+  },
+  {
+    "id": "hf-004",
+    "source": "ACC/AHA Heart Failure Guidelines 2022",
+    "title": "Device Therapy in Heart Failure",
+    "text": "Implantable cardioverter-defibrillator (ICD) is recommended for primary prevention of sudden cardiac death in patients with: HFrEF (LVEF ≤35%) on GDMT for ≥3 months who are NYHA Class II-III, with expected meaningful survival >1 year. ICD reduces sudden cardiac death by ~25% in this population. Cardiac resynchronization therapy (CRT) is recommended for NYHA Class II-IV patients with LVEF ≤35%, sinus rhythm, and LBBB with QRS ≥150 ms on GDMT for ≥3 months. CRT-D (with defibrillator) or CRT-P (pacemaker only) depending on ICD indication. CRT reduces mortality, improves symptoms, and can improve LVEF. CRT response better in LBBB morphology vs non-LBBB and QRS ≥150 ms vs 130-149 ms. Wearable cardioverter-defibrillator (LifeVest) for patients at high risk who are not yet candidates for ICD (e.g., newly diagnosed HFrEF, recent revascularization, waiting for re-evaluation of LVEF). Remote monitoring with implanted devices improves outcomes through early detection of decompensation.",
+    "keywords": ["ICD", "implantable defibrillator", "CRT", "cardiac resynchronization", "device therapy", "LVEF ≤35", "LBBB", "QRS", "sudden cardiac death", "arrhythmia", "heart failure devices"]
+  },
+  {
+    "id": "hf-005",
+    "source": "ACC/AHA Heart Failure Guidelines 2022",
+    "title": "Heart Failure with Preserved Ejection Fraction (HFpEF)",
+    "text": "HFpEF (LVEF ≥50%) accounts for nearly half of all HF cases and carries similar prognosis to HFrEF. Common comorbidities driving HFpEF: hypertension, obesity, diabetes, CKD, atrial fibrillation, and sleep apnea. Diagnosis requires: symptoms/signs of HF, LVEF ≥50%, evidence of cardiac structural disease or impaired LV relaxation on echo (elevated E/e' ratio, enlarged LA), and elevated BNP/NT-proBNP. Treatment targets underlying comorbidities: aggressive BP control (goal <130/80), weight loss, treatment of sleep apnea, glucose control. SGLT2 inhibitors (empagliflozin [EMPEROR-Preserved], dapagliflozin [DELIVER]) reduce HF hospitalizations in HFpEF regardless of EF and are now recommended (Class IIa). MRA (spironolactone) may reduce HF hospitalizations in HFpEF with LVEF <57%. Diuretics for symptom management of congestion. Nitrates are not beneficial in HFpEF (NEAT-HFpEF trial). Exercise training improves functional capacity.",
+    "keywords": ["HFpEF", "preserved ejection fraction", "diastolic dysfunction", "SGLT2", "empagliflozin", "dapagliflozin", "spironolactone", "hypertension", "obesity", "atrial fibrillation", "BNP", "echo", "heart failure preserved EF"]
+  },
+  {
+    "id": "hf-006",
+    "source": "ACC/AHA Heart Failure Guidelines 2022",
+    "title": "Patient Monitoring and Self-Care in Heart Failure",
+    "text": "Structured heart failure disease management programs reduce hospitalization and mortality. Essential patient education topics: (1) Daily weight monitoring — weigh every morning after urinating, before breakfast, in same clothing. Alert provider for >2 lb gain in 24 hours or >4-5 lbs in 1 week. (2) Sodium restriction — limit to <2 g/day (avoid adding salt, limit processed foods, canned goods). (3) Fluid management — 1.5-2 L/day if hyponatremic or severely congested. (4) Medication adherence — emphasize that GDMT medications have mortality benefit, not just symptom relief; titrate to target doses. (5) Activity — regular moderate exercise improves functional capacity; avoid extreme cold/heat; report symptoms with activity. (6) Alcohol — avoid completely in alcoholic cardiomyopathy; limit to ≤1 drink/day for other HF etiologies. (7) Symptom monitoring — recognize worsening dyspnea, orthopnea, increased edema, decreased exercise tolerance. Cardiac rehabilitation for stable HF patients. Palliative care integration for advanced (Stage D) HF.",
+    "keywords": ["daily weight", "sodium restriction", "fluid restriction", "medication adherence", "heart failure self care", "patient education", "cardiac rehab", "dyspnea", "edema monitoring", "palliative care", "disease management"]
+  }
+]

@@ -1,0 +1,44 @@
+[
+  {
+    "id": "imm-001",
+    "source": "CDC Adult Immunization Schedule 2024",
+    "title": "Annual Influenza Vaccination",
+    "text": "Annual influenza vaccination is recommended for all adults ≥19 years unless contraindicated. Influenza causes approximately 140,000-170,000 hospitalizations and 12,000-52,000 deaths annually in the US. Vaccination reduces influenza illness, hospitalization, and mortality. Adults aged ≥65 should preferably receive high-dose (Fluzone High-Dose Quadrivalent) or recombinant (Flublok Quadrivalent) influenza vaccine, which provides superior immunogenicity in older adults compared to standard-dose vaccines. Adults with egg allergy: any age-appropriate influenza vaccine may be given regardless of egg allergy severity — no longer requires special observation period. Timing: administer before or early in the influenza season (ideally by end of October). Live attenuated influenza vaccine (LAIV, nasal spray) is an alternative for healthy non-pregnant adults aged 2-49. Contraindications: severe allergic reaction to previous dose or vaccine component.",
+    "keywords": ["influenza", "flu vaccine", "annual vaccination", "Fluzone", "Flublok", "seasonal flu", "high dose flu", "immunization", "prevention", "respiratory"]
+  },
+  {
+    "id": "imm-002",
+    "source": "CDC Adult Immunization Schedule 2024",
+    "title": "COVID-19 Vaccine Recommendations 2024",
+    "text": "The CDC recommends an updated 2024-2025 COVID-19 vaccine for everyone aged 6 months and older. Adults 18 years and older who are immunocompetent should receive 1 updated 2024-2025 COVID-19 vaccine dose regardless of prior COVID-19 vaccination history. Adults 65 years and older or those who are immunocompromised may receive an additional dose of updated 2024-2025 COVID-19 vaccine at least 6 months after their most recent COVID-19 vaccine if recommended by their healthcare provider. mRNA vaccines (Moderna, Pfizer-BioNTech) remain available. Timing: can be given at the same time as influenza vaccine. Effectiveness is reduced by new SARS-CoV-2 variants, which is why formula is updated annually. Documentation of prior vaccinations and natural infection history should be considered when counseling patients.",
+    "keywords": ["COVID-19", "COVID vaccine", "mRNA vaccine", "SARS-CoV-2", "Moderna", "Pfizer", "booster", "updated vaccine", "immunocompromised", "coronavirus"]
+  },
+  {
+    "id": "imm-003",
+    "source": "CDC Adult Immunization Schedule 2024",
+    "title": "Tdap and Td Vaccine Recommendations",
+    "text": "All adults who have not previously received a dose of Tdap should receive one dose of Tdap (tetanus, diphtheria, and pertussis) vaccine. Adults who received Tdap at age 11-12 years require a Td booster every 10 years. Pregnant adults should receive one dose of Tdap during each pregnancy, preferably in the early part of gestational weeks 27-36, to protect newborns from pertussis (whooping cough) before they can be vaccinated. Adults working with infants (<12 months) or who are caregivers of infants should ensure up-to-date Tdap status. After initial Tdap dose, Td boosters should be given every 10 years for tetanus/diphtheria protection. Td (without pertussis) is used for subsequent boosters. Adults with wound management may need tetanus toxoid if >5 years since last tetanus-containing vaccine for dirty/contaminated wounds or >10 years for clean wounds.",
+    "keywords": ["Tdap", "tetanus", "diphtheria", "pertussis", "whooping cough", "booster", "pregnancy", "Td", "wound management", "immunization"]
+  },
+  {
+    "id": "imm-004",
+    "source": "CDC Adult Immunization Schedule 2024",
+    "title": "Shingles (Zoster) Vaccine — Shingrix",
+    "text": "Recombinant zoster vaccine (RZV, Shingrix) is recommended for all immunocompetent adults aged ≥50 years to prevent herpes zoster (shingles) and its complications, including postherpetic neuralgia. Shingrix is given as 2-dose series: second dose 2-6 months after first dose (minimum 4 weeks if immunocompromised). Shingrix is preferred over the older live zoster vaccine (Zostavax, which is no longer available in US). Efficacy of Shingrix: >97% against shingles in adults 50-69 years, >91% in adults ≥70. Adults who previously received Zostavax should still receive 2-dose Shingrix series. Immunocompromised adults aged ≥19 (e.g., on immunosuppressive therapy, post-transplant, HIV) should also receive 2-dose RZV series. Common side effects: injection site pain, myalgia, fatigue (stronger than most vaccines — normal immune response). Contraindication: current shingles outbreak (not contraindicated by prior shingles episode).",
+    "keywords": ["shingles", "zoster", "Shingrix", "herpes zoster", "postherpetic neuralgia", "RZV", "Zostavax", "adults over 50", "vaccine", "immunization"]
+  },
+  {
+    "id": "imm-005",
+    "source": "CDC Adult Immunization Schedule 2024",
+    "title": "Pneumococcal Vaccines for Adults",
+    "text": "Pneumococcal vaccination is recommended for several adult populations. PCV15 (Vaxneuvance) or PCV20 (Prevnar 20) for: all adults ≥65 years; adults 19-64 with certain conditions including immunocompromising conditions (HIV, leukemia, lymphoma, asplenia, immunosuppressive therapy), chronic kidney disease, cochlear implant or CSF leak, or functional or anatomic asplenia. Adults 19-64 with diabetes mellitus, chronic heart disease, chronic liver disease, chronic lung disease (including COPD and asthma treated with high-dose steroids), or current smokers should receive pneumococcal vaccine. Preferred approach for vaccine-naive adults ≥65: PCV20 alone, OR PCV15 followed by PPSV23 (≥1 year later). If prior PPSV23 given without PCV: give PCV15 or PCV20 ≥1 year after PPSV23. Pneumococcal vaccines protect against pneumonia, bacteremia, and meningitis caused by Streptococcus pneumoniae.",
+    "keywords": ["pneumococcal", "PCV20", "PCV15", "PPSV23", "Prevnar", "pneumonia", "Streptococcus pneumoniae", "asplenia", "diabetes", "immunocompromised", "COPD", "over 65"]
+  },
+  {
+    "id": "imm-006",
+    "source": "CDC Adult Immunization Schedule 2024",
+    "title": "Hepatitis B and Hepatitis A Vaccines",
+    "text": "Hepatitis B vaccine: recommended for all adults aged 19-59 years who are unvaccinated. Adults ≥60 years may receive vaccine based on individual clinical decision-making or risk. High-risk adults ≥60 should receive vaccine: diabetes, chronic liver disease, CKD/hemodialysis, HIV, incarceration, injection drug users, MSM, sex partners of HBsAg-positive persons. 2-dose Heplisav-B (0, 1 month) or 3-dose Engerix-B/Recombivax HB (0, 1, 6 months); 3-dose Twinrix (Hep A + B) available. Hepatitis A vaccine: 2-dose series (0, 6-18 months) recommended for: chronic liver disease (including hepatitis C, fatty liver), clotting factor disorders, HIV, travelers to endemic countries, injection drug users, MSM, persons experiencing homelessness, close contacts of adoptees from endemic countries. Combination vaccine Twinrix provides Hep A + Hep B in 3-dose series. Screen all adults for HBV with triple panel (HBsAg, anti-HBs, anti-HBc) at least once.",
+    "keywords": ["hepatitis B", "hepatitis A", "Heplisav", "Engerix", "Recombivax", "Twinrix", "liver disease", "HBsAg", "vaccination", "chronic liver disease", "HIV", "MSM", "diabetes"]
+  }
+]

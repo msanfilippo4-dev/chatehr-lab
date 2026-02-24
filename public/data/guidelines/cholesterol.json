@@ -1,0 +1,44 @@
+[
+  {
+    "id": "chol-001",
+    "source": "ACC/AHA Cholesterol Guidelines 2018",
+    "title": "ASCVD Risk Assessment and Statin Benefit Groups",
+    "text": "The 2018 ACC/AHA Cholesterol Guidelines emphasize atherosclerotic cardiovascular disease (ASCVD) risk-based approach to statin therapy. Four groups benefit from statin therapy: (1) Patients with clinical ASCVD (prior MI, stable angina, ACS, coronary revascularization, stroke, TIA, or PAD); (2) Primary elevation of LDL-C ≥190 mg/dL; (3) Adults aged 40-75 with diabetes and LDL-C 70-189 mg/dL; (4) Adults aged 40-75 without diabetes or ASCVD, LDL-C 70-189 mg/dL, and 10-year ASCVD risk ≥7.5%. The Pooled Cohort Equations (PCE) calculator estimates 10-year ASCVD risk using age, sex, race, total cholesterol, HDL-C, systolic BP, antihypertensive treatment, diabetes, and smoking status. Risk-enhancing factors that favor statin initiation: family history of premature ASCVD, persistently elevated LDL-C ≥160 mg/dL, metabolic syndrome, CKD, inflammatory conditions (RA, psoriasis), history of preeclampsia.",
+    "keywords": ["ASCVD", "statin", "LDL", "cardiovascular risk", "Pooled Cohort Equations", "10-year risk", "cholesterol", "hyperlipidemia", "primary prevention"]
+  },
+  {
+    "id": "chol-002",
+    "source": "ACC/AHA Cholesterol Guidelines 2018",
+    "title": "Statin Intensity and LDL Reduction Targets",
+    "text": "Statin therapy is classified by LDL-lowering intensity. High-intensity statins lower LDL by ≥50%: atorvastatin 40-80 mg/day, rosuvastatin 20-40 mg/day. Moderate-intensity statins lower LDL by 30-49%: atorvastatin 10-20 mg, rosuvastatin 5-10 mg, simvastatin 20-40 mg, pravastatin 40-80 mg, lovastatin 40 mg. Low-intensity statins lower LDL by <30%: simvastatin 10 mg, pravastatin 10-20 mg. LDL-C treatment targets: For very high-risk ASCVD patients, LDL-C goal <55 mg/dL; if LDL ≥70 on maximally tolerated statin, add ezetimibe. For high-risk ASCVD patients, LDL-C goal <70 mg/dL. For primary prevention with 10-year risk 7.5-19.9%, treat with moderate-intensity statin; goal LDL reduction ≥30%. For primary prevention with 10-year risk ≥20%, high-intensity statin; goal LDL <100 mg/dL or ≥50% reduction.",
+    "keywords": ["atorvastatin", "rosuvastatin", "simvastatin", "statin intensity", "LDL goal", "LDL target", "high intensity statin", "moderate intensity statin", "cholesterol lowering"]
+  },
+  {
+    "id": "chol-003",
+    "source": "ACC/AHA Cholesterol Guidelines 2018",
+    "title": "Non-Statin Therapies for Hyperlipidemia",
+    "text": "When statin therapy alone is insufficient to achieve adequate LDL reduction, non-statin agents may be added. Ezetimibe (Zetia) 10 mg daily inhibits intestinal cholesterol absorption; reduces LDL by additional 15-25% when added to statin. IMPROVE-IT trial demonstrated modest CV event reduction with statin + ezetimibe vs statin alone in ACS patients. PCSK9 inhibitors (evolocumab, alirocumab) are monoclonal antibodies that reduce LDL by 50-60% on top of statin + ezetimibe; indicated for ASCVD patients with LDL ≥70 mg/dL on maximally tolerated therapy, or familial hypercholesterolemia. Icosapent ethyl (Vascepa) 4 g/day — purified EPA omega-3 — reduces triglycerides and reduces MACE in patients with TG ≥150 on statin (REDUCE-IT trial, 25% RRR in CV events). Bile acid sequestrants (cholestyramine) reduce LDL ~15%. Fibrates (fenofibrate) primarily lower triglycerides 35-50% and raise HDL; limited cardiovascular outcome benefit.",
+    "keywords": ["ezetimibe", "PCSK9 inhibitor", "evolocumab", "alirocumab", "non-statin", "fenofibrate", "fibrate", "bile acid", "omega-3", "icosapent ethyl", "triglycerides", "HDL"]
+  },
+  {
+    "id": "chol-004",
+    "source": "ACC/AHA Cholesterol Guidelines 2018",
+    "title": "Management of Elevated Triglycerides",
+    "text": "Triglyceride classification: Normal <150 mg/dL; Borderline-high 150-199 mg/dL; High 200-499 mg/dL; Very high ≥500 mg/dL. Very high triglycerides (≥500 mg/dL) require treatment to prevent pancreatitis. Causes of hypertriglyceridemia: obesity, insulin resistance/diabetes, metabolic syndrome, excessive alcohol, hypothyroidism, CKD, genetic disorders, medications (steroids, beta-blockers, thiazides, oral estrogens). Lifestyle modification is first-line: weight loss, reduce simple carbohydrates and refined sugars, limit alcohol, increase physical activity, achieve glycemic control. For TG ≥500 mg/dL: fibrates (fenofibrate) or omega-3 fatty acids (4 g/day) to prevent pancreatitis. For TG 200-499 mg/dL with ASCVD or diabetes and other risk factors on statin: icosapent ethyl 4 g/day has demonstrated CV event reduction (REDUCE-IT). Niacin is no longer routinely recommended due to lack of CV benefit when added to statin.",
+    "keywords": ["triglycerides", "hypertriglyceridemia", "fenofibrate", "fibrate", "pancreatitis", "omega-3", "VLDL", "metabolic syndrome", "alcohol", "diabetes", "niacin"]
+  },
+  {
+    "id": "chol-005",
+    "source": "ACC/AHA Cholesterol Guidelines 2018",
+    "title": "Familial Hypercholesterolemia",
+    "text": "Familial hypercholesterolemia (FH) is an autosomal dominant disorder causing severely elevated LDL-C from birth. Heterozygous FH affects approximately 1 in 250 individuals; homozygous FH affects 1 in 300,000. Untreated, FH results in premature ASCVD (MI in males by age 50, females by age 60). Clinical criteria (Dutch Lipid Clinic Network): LDL-C ≥190 mg/dL (untreated), family history of premature CVD or hypercholesterolemia, xanthomas or xanthelasma, premature corneal arcus. All FH patients should receive high-intensity statin therapy. LDL goal: <100 mg/dL for those without ASCVD; <70 mg/dL for those with ASCVD. Add ezetimibe if LDL not at goal on maximal statin. Add PCSK9 inhibitor if still above goal (FDA approved for heterozygous FH). Cascade screening of first-degree relatives is essential.",
+    "keywords": ["familial hypercholesterolemia", "FH", "LDL >190", "genetic", "PCSK9 inhibitor", "xanthoma", "premature cardiovascular disease", "cascade screening", "statin"]
+  },
+  {
+    "id": "chol-006",
+    "source": "ACC/AHA Cholesterol Guidelines 2018",
+    "title": "Lifestyle Interventions for Cholesterol Management",
+    "text": "Therapeutic lifestyle changes are the foundation of lipid management and should accompany pharmacotherapy. Dietary modifications: Reduce saturated fat intake to <6% of total calories; reduce trans fat to near zero. Increase soluble fiber (oats, psyllium, fruits, vegetables, legumes) — each 5-10 g/day reduces LDL ~3-5%. Plant sterols/stanols 2 g/day reduce LDL ~10%. Mediterranean dietary pattern associated with 30% reduction in major CV events (PREDIMED trial). Plant-based diets effectively lower LDL. Limit dietary cholesterol (eggs: ≤1/day). Physical activity: 3-4 sessions per week of moderate-to-vigorous aerobic activity (40 minutes each) reduces LDL modestly but improves HDL and triglycerides significantly. Weight loss: 10 kg weight loss reduces LDL ~8 mg/dL and TG ~20 mg/dL, raises HDL ~4 mg/dL. Smoking cessation raises HDL ~4 mg/dL. Alcohol in moderation raises HDL but increases triglycerides.",
+    "keywords": ["diet", "saturated fat", "Mediterranean diet", "plant-based", "fiber", "plant sterols", "weight loss", "exercise", "physical activity", "HDL", "LDL", "lifestyle"]
+  }
+]

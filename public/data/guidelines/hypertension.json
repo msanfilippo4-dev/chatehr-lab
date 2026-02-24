@@ -1,0 +1,44 @@
+[
+  {
+    "id": "htn-001",
+    "source": "ACC/AHA Hypertension Guidelines 2017",
+    "title": "Blood Pressure Classification and Staging",
+    "text": "The 2017 ACC/AHA Hypertension Guidelines revised the classification of blood pressure in adults. Normal blood pressure: systolic <120 mmHg AND diastolic <80 mmHg. Elevated blood pressure: systolic 120-129 mmHg AND diastolic <80 mmHg (formerly 'prehypertension'). Stage 1 hypertension: systolic 130-139 mmHg OR diastolic 80-89 mmHg. Stage 2 hypertension: systolic ≥140 mmHg OR diastolic ≥90 mmHg. A hypertensive crisis includes hypertensive urgency (BP >180/120 without acute organ damage) and hypertensive emergency (BP >180/120 with acute target organ damage). Blood pressure should be measured properly: patient seated 5 minutes, no caffeine or tobacco 30 minutes prior, two readings averaged. Diagnosis requires confirmation on ≥2 readings on ≥2 occasions.",
+    "keywords": ["blood pressure", "hypertension", "Stage 1", "Stage 2", "systolic", "diastolic", "BP classification", "hypertensive crisis", "elevated blood pressure", "prehypertension"]
+  },
+  {
+    "id": "htn-002",
+    "source": "ACC/AHA Hypertension Guidelines 2017",
+    "title": "Blood Pressure Treatment Goals",
+    "text": "Treatment goals for hypertension vary by patient population. For most adults with confirmed hypertension, the recommended BP target is <130/80 mmHg. This applies to patients with: diabetes mellitus, chronic kidney disease, stable ischemic heart disease, heart failure, secondary stroke prevention, and peripheral arterial disease. The SPRINT trial demonstrated that targeting systolic BP <120 mmHg in high-risk adults without diabetes reduced cardiovascular events by 25% and all-cause mortality by 27%. However, overly aggressive treatment in frail elderly patients may increase fall risk. For patients aged ≥65 with hypertension, the recommended target remains <130 mmHg systolic based on SPRINT data. Individualize therapy for frail elderly, patients with orthostatic hypotension, or those with poor tolerance. Home blood pressure monitoring is valuable for confirming white-coat or masked hypertension.",
+    "keywords": ["blood pressure target", "BP goal", "130/80", "SPRINT", "cardiovascular risk", "systolic target", "hypertension treatment", "elderly hypertension"]
+  },
+  {
+    "id": "htn-003",
+    "source": "ACC/AHA Hypertension Guidelines 2017",
+    "title": "First-Line Antihypertensive Drug Classes",
+    "text": "Four drug classes are recommended as first-line agents for hypertension: (1) Thiazide or thiazide-like diuretics (chlorthalidone preferred over hydrochlorothiazide for greater CV event reduction). (2) ACE inhibitors (lisinopril, enalapril, ramipril) — first choice in diabetes, CKD with proteinuria, heart failure with reduced EF. (3) Angiotensin receptor blockers (ARBs: losartan, valsartan) — equivalent to ACE inhibitors but tolerated better (less cough); do NOT combine ACE-I + ARB. (4) Calcium channel blockers (CCBs: amlodipine preferred dihydropyridine; diltiazem/verapamil for rate control in AF). Beta-blockers are no longer recommended as first-line unless compelling indication (HF, post-MI, angina, AF). For Stage 2 HTN (BP ≥140/90), combination of two first-line agents is recommended. Single-pill combinations improve adherence.",
+    "keywords": ["ACE inhibitor", "lisinopril", "ARB", "losartan", "calcium channel blocker", "amlodipine", "thiazide", "diuretic", "antihypertensive", "hydrochlorothiazide", "chlorthalidone", "first-line"]
+  },
+  {
+    "id": "htn-004",
+    "source": "ACC/AHA Hypertension Guidelines 2017",
+    "title": "Lifestyle Modifications for Hypertension",
+    "text": "Lifestyle modifications are recommended for all patients with elevated blood pressure or hypertension and as adjunct to pharmacotherapy. The DASH (Dietary Approaches to Stop Hypertension) diet reduces systolic BP by 11 mmHg: high in fruits, vegetables, whole grains, low-fat dairy; low in saturated fat, red meat, sweets, and sodium. Sodium restriction to <1.5 g/day (or at least 1 g/day reduction) reduces systolic BP by 2-8 mmHg. Weight reduction: each kilogram of body weight loss reduces systolic BP by approximately 1 mmHg. Physical activity: 90-150 min/week of aerobic activity reduces systolic BP by 5-8 mmHg. Limit alcohol: ≤1 drink/day for women, ≤2 drinks/day for men (reducing reduces SBP 3-4 mmHg). Smoking cessation: essential for overall cardiovascular risk reduction. Non-pharmacologic therapy alone may achieve BP <130/80 in Stage 1 HTN without high CV risk.",
+    "keywords": ["DASH diet", "sodium", "lifestyle", "weight loss", "exercise", "alcohol", "smoking", "diet", "physical activity", "non-pharmacologic", "salt restriction"]
+  },
+  {
+    "id": "htn-005",
+    "source": "ACC/AHA Hypertension Guidelines 2017",
+    "title": "Hypertensive Urgency and Emergency",
+    "text": "Hypertensive crisis is defined as blood pressure severely elevated above 180/120 mmHg. Hypertensive urgency: severely elevated BP without acute target organ damage. Symptoms may include headache, shortness of breath, or epistaxis. Oral antihypertensive therapy with gradual BP reduction over 24-48 hours is appropriate. Avoid rapid BP reduction that may precipitate stroke or MI. Hypertensive emergency: severely elevated BP WITH acute target organ damage. Manifestations include: hypertensive encephalopathy, acute coronary syndrome, acute aortic dissection, acute pulmonary edema, acute kidney injury, or eclampsia. Requires immediate IV antihypertensive therapy with continuous monitoring in ICU. Target: reduce mean arterial pressure by no more than 25% in first hour, then to 160/100 over next 2-6 hours. Agents: IV labetalol, nicardipine, or sodium nitroprusside depending on clinical presentation.",
+    "keywords": ["hypertensive crisis", "hypertensive urgency", "hypertensive emergency", "BP >180", "severe hypertension", "encephalopathy", "stroke", "IV antihypertensive"]
+  },
+  {
+    "id": "htn-006",
+    "source": "ACC/AHA Hypertension Guidelines 2017",
+    "title": "Secondary Causes of Hypertension",
+    "text": "Secondary hypertension accounts for 5-10% of all hypertension cases and should be suspected in younger patients, those with resistant hypertension, or those with specific clinical clues. Common secondary causes include: Chronic kidney disease (most common secondary cause) — check creatinine, eGFR, urinalysis. Primary hyperaldosteronism — suspect with hypokalemia, adrenal incidentaloma, or resistant HTN; screen with plasma aldosterone-to-renin ratio. Renovascular hypertension — suspect in young women (fibromuscular dysplasia) or older patients with atherosclerosis and abdominal bruit; screen with renal artery duplex ultrasound. Obstructive sleep apnea — very common, especially in obese patients; nocturnal BP rise. Pheochromocytoma — headache, diaphoresis, palpitations triad; screen with plasma metanephrines. Thyroid disorders (both hypo and hyperthyroidism). Drug-induced: NSAIDs, oral contraceptives, stimulants, decongestants, licorice.",
+    "keywords": ["secondary hypertension", "resistant hypertension", "hyperaldosteronism", "renovascular", "renal artery stenosis", "sleep apnea", "pheochromocytoma", "thyroid", "NSAIDs", "drug-induced hypertension"]
+  }
+]

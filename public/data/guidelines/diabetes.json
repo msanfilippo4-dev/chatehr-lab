@@ -1,0 +1,44 @@
+[
+  {
+    "id": "dm-001",
+    "source": "ADA Standards of Care in Diabetes 2024",
+    "title": "Glycemic Targets for Adults with Diabetes",
+    "text": "The American Diabetes Association recommends an A1C goal of less than 7% (53 mmol/mol) for many nonpregnant adults with diabetes. Less stringent A1C goals (e.g., <8%) may be appropriate for patients with a history of severe hypoglycemia, limited life expectancy, advanced microvascular or macrovascular complications, extensive comorbid conditions, or long-standing diabetes in whom the goal is difficult to achieve despite diabetes self-management education, appropriate glucose monitoring, and effective doses of multiple glucose-lowering agents including insulin. More stringent A1C goals (such as <6.5%) may be considered for select patients if they can be achieved without significant hypoglycemia or other adverse effects of treatment. Fasting glucose target: 80-130 mg/dL. 2-hour postprandial target: <180 mg/dL. CGM metrics: time-in-range goal >70% (70-180 mg/dL), time below range <4% (<70 mg/dL), time above range <25% (>180 mg/dL).",
+    "keywords": ["A1C", "HbA1c", "glycemic", "glucose", "diabetes", "blood sugar", "hyperglycemia", "hypoglycemia", "CGM", "time in range"]
+  },
+  {
+    "id": "dm-002",
+    "source": "ADA Standards of Care in Diabetes 2024",
+    "title": "Pharmacologic Therapy for Type 2 Diabetes",
+    "text": "Metformin remains the preferred initial pharmacologic agent for type 2 diabetes management due to its efficacy, safety, and low cost. For patients with established atherosclerotic cardiovascular disease (ASCVD), heart failure, or chronic kidney disease, an SGLT2 inhibitor (empagliflozin, canagliflozin, dapagliflozin) or GLP-1 receptor agonist (semaglutide, liraglutide) with proven cardiovascular benefit is recommended independent of A1C. SGLT2 inhibitors are preferred for patients with heart failure with reduced ejection fraction or CKD to reduce progression. GLP-1 receptor agonists promote weight loss and have demonstrated cardiovascular mortality reduction. Second-line agents include sulfonylureas (glipizide, glimepiride), DPP-4 inhibitors (sitagliptin, saxagliptin), and thiazolidinediones. Insulin therapy should be initiated when hyperglycemia is severe or A1C >10%. Basal insulin (glargine, detemir) is generally preferred.",
+    "keywords": ["metformin", "SGLT2", "GLP-1", "semaglutide", "empagliflozin", "insulin", "sulfonylurea", "glipizide", "diabetes medications", "A1C", "type 2 diabetes", "pharmacotherapy"]
+  },
+  {
+    "id": "dm-003",
+    "source": "ADA Standards of Care in Diabetes 2024",
+    "title": "Cardiovascular Risk Management in Diabetes",
+    "text": "Patients with diabetes have significantly elevated cardiovascular risk. Statin therapy is recommended for all patients with diabetes aged 40-75 years. High-intensity statin therapy (atorvastatin 40-80 mg, rosuvastatin 20-40 mg) is recommended for patients with ASCVD; LDL goal <70 mg/dL or ≥50% LDL reduction. Moderate-intensity statin therapy appropriate for patients 40-75 without ASCVD. Blood pressure target for most patients with diabetes is <130/80 mmHg. ACE inhibitors or ARBs are first-line antihypertensive agents in patients with diabetes and hypertension or CKD. Antiplatelet therapy with aspirin (75-162 mg/day) is recommended for secondary prevention but not primary prevention due to bleeding risk. GLP-1 agonists with proven CV benefit (semaglutide, liraglutide) are recommended in patients with ASCVD or high CV risk.",
+    "keywords": ["cardiovascular", "statin", "LDL", "blood pressure", "ACE inhibitor", "ARB", "aspirin", "ASCVD", "diabetes complications", "heart disease"]
+  },
+  {
+    "id": "dm-004",
+    "source": "ADA Standards of Care in Diabetes 2024",
+    "title": "Diabetic Kidney Disease Monitoring and Treatment",
+    "text": "Annual screening for diabetic kidney disease (DKD) is recommended for all patients with type 2 diabetes starting at diagnosis. Screening includes urine albumin-to-creatinine ratio (UACR) and estimated GFR (eGFR). UACR ≥30 mg/g creatinine indicates albuminuria. Persistent albuminuria (UACR ≥30 mg/g) on two of three specimens over 3-6 months warrants treatment. ACE inhibitors or ARBs are recommended for patients with diabetes and hypertension who have a UACR ≥30 mg/g. SGLT2 inhibitors (specifically dapagliflozin, canagliflozin) have demonstrated kidney-protective effects and are recommended for patients with eGFR ≥20 mL/min/1.73m² and UACR ≥200 mg/g. Finerenone (a mineralocorticoid receptor antagonist) reduces CKD progression in patients with T2DM and CKD. Protein restriction to 0.8 g/kg/day is recommended for non-dialysis patients with CKD.",
+    "keywords": ["kidney", "CKD", "eGFR", "creatinine", "albuminuria", "UACR", "nephropathy", "renal", "ACE inhibitor", "ARB", "SGLT2", "diabetic nephropathy"]
+  },
+  {
+    "id": "dm-005",
+    "source": "ADA Standards of Care in Diabetes 2024",
+    "title": "Preventive Care and Screening in Diabetes",
+    "text": "Comprehensive diabetes management includes annual dilated eye exam for diabetic retinopathy. Annual foot examination including assessment of loss of protective sensation (monofilament test), foot pulses, and inspection for deformities or ulcers. Annual UACR and eGFR for kidney disease monitoring. Dental care: twice-yearly cleaning recommended as diabetes increases periodontal disease risk. Hepatitis B vaccination is recommended for unvaccinated adults with diabetes (increased risk due to shared blood glucose monitoring equipment). Influenza and pneumococcal vaccines recommended. Annual depression screening with validated tool. Sleep apnea screening appropriate given high prevalence in T2DM. Referral to structured diabetes self-management education (DSME) program at diagnosis and annually.",
+    "keywords": ["diabetic retinopathy", "neuropathy", "foot exam", "nephropathy", "vaccination", "screening", "diabetes complications", "eye exam", "monofilament", "DSME", "preventive care"]
+  },
+  {
+    "id": "dm-006",
+    "source": "ADA Standards of Care in Diabetes 2024",
+    "title": "Lifestyle Management and Weight in Type 2 Diabetes",
+    "text": "Lifestyle management is foundational in type 2 diabetes treatment. Medical nutrition therapy (MNT) delivered by a registered dietitian is recommended for all patients with diabetes. No single dietary pattern is universally recommended; Mediterranean, DASH, low-carbohydrate, and plant-based diets all have evidence. Carbohydrate quality and quantity matters: favor non-starchy vegetables, whole grains, legumes, and fruit over refined carbohydrates and sugars. Physical activity goal: ≥150 minutes per week of moderate-intensity aerobic activity; resistance training 2-3 times/week. Weight loss of 5-10% improves glycemic control, blood pressure, and lipids. More intensive weight loss (15-20%) through structured programs or GLP-1/GIP agonists may achieve T2DM remission. Reduce sedentary behavior with brief activity breaks every 30 minutes.",
+    "keywords": ["diet", "nutrition", "weight loss", "exercise", "physical activity", "lifestyle", "carbohydrate", "Mediterranean diet", "DASH diet", "obesity", "weight management"]
+  }
+]
