@@ -300,6 +300,31 @@ export default function PatientChart({ patient }: PatientChartProps) {
                           BP {v.vitals.bp} · HR {v.vitals.hr} · SpO₂{" "}
                           {v.vitals.spo2}% · Wt {v.vitals.weight}
                         </p>
+                        {v.plan && (
+                          <div className="mt-1.5 pt-1.5 border-t border-gray-700/30">
+                            <p className="text-gray-300 text-xs">
+                              <span className="text-gray-500 font-medium">
+                                Plan:
+                              </span>{" "}
+                              {v.plan.split("\n").map((line: string, li: number) => (
+                                <span key={li}>
+                                  {li > 0 && <br />}
+                                  {line}
+                                </span>
+                              ))}
+                            </p>
+                          </div>
+                        )}
+                        {v.notes && (
+                          <div className="mt-1.5 pt-1.5 border-t border-gray-700/30">
+                            <p className="text-gray-400 text-xs italic">
+                              <span className="text-gray-500 font-medium not-italic">
+                                Notes:
+                              </span>{" "}
+                              {v.notes}
+                            </p>
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))
