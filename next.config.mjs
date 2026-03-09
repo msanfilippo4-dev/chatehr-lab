@@ -1,1 +1,2 @@
-const nextConfig = {}; export default nextConfig;
+const nextConfig = {};
+export default nextConfig;

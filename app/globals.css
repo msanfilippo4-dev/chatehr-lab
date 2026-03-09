@@ -15,9 +15,7 @@
   --font-mono: "SF Mono", "IBM Plex Mono", "Menlo", "Consolas", monospace;
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 body {
   background:
@@ -29,10 +27,7 @@ body {
   line-height: 1.4;
 }
 
-code,
-.font-mono {
-  font-family: var(--font-mono), monospace;
-}
+code, .font-mono { font-family: var(--font-mono), monospace; }
 
 @layer components {
   .ehr-shell {
@@ -40,8 +35,6 @@ code,
     border-color: #d6dfeb;
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(247, 250, 254, 0.97) 100%);
   }
-
-  /* Consistent section header used in every panel */
   .ehr-shell-header {
     @apply px-4 py-2.5 border-b font-semibold uppercase tracking-wider;
     font-size: 10px;
@@ -50,8 +43,6 @@ code,
     color: #546a88;
     background: rgba(244, 247, 252, 0.95);
   }
-
-  /* Panel sub-label — e.g. "Student Workbench" blurb */
   .ehr-panel-blurb {
     font-size: 11px;
     line-height: 1.5;
@@ -60,122 +51,18 @@ code,
 }
 
 @layer utilities {
-  /* ── Type scale ──────────────────────────────────────────────────────── */
-  /* Use these instead of arbitrary text-[10px] / text-[11px] variants.    */
-
-  /* 10 px — token counts, badge chips, very secondary metadata */
-  .t-micro {
-    font-size: 10px;
-    line-height: 1.5;
-  }
-
-  /* 11 px — field labels, section captions, inline hints */
-  .t-caption {
-    font-size: 11px;
-    line-height: 1.45;
-  }
-
-  /* 12 px — standard small body (same as Tailwind text-xs) */
-  .t-small {
-    font-size: 12px;
-    line-height: 1.5;
-  }
-
-  /* 13 px — card body text, chat messages detail */
-  .t-body {
-    font-size: 13px;
-    line-height: 1.55;
-  }
-
-  /* 15 px — panel headings, patient name */
-  .t-heading {
-    font-size: 15px;
-    line-height: 1.35;
-    font-weight: 600;
-  }
-
-  /* ── Semantic colors ─────────────────────────────────────────────────── */
-  .t-primary   { color: var(--ehr-text); }        /* #122033 */
-  .t-secondary { color: var(--ehr-text-muted); }  /* #4c637f */
-  .t-tertiary  { color: #7f93ab; }
-  .t-maroon    { color: var(--fordham-maroon); }
-
-  /* ── Mono shorthand ──────────────────────────────────────────────────── */
+  .t-micro { font-size: 10px; line-height: 1.5; }
+  .t-caption { font-size: 11px; line-height: 1.45; }
+  .t-small { font-size: 12px; line-height: 1.5; }
+  .t-body { font-size: 13px; line-height: 1.55; }
+  .t-heading { font-size: 15px; line-height: 1.35; font-weight: 600; }
+  .t-primary { color: var(--ehr-text); }
+  .t-secondary { color: var(--ehr-text-muted); }
+  .t-tertiary { color: #7f93ab; }
+  .t-maroon { color: var(--fordham-maroon); }
   .t-mono { font-family: var(--font-mono), monospace; }
 }
 
-/* Light palette compatibility for legacy dark utility classes */
-.bg-gray-950,
-.bg-gray-950\/60 {
-  background-color: #f7f9fc !important;
-}
-
-.bg-gray-900,
-.bg-gray-900\/60,
-.bg-gray-900\/50,
-.bg-gray-900\/40,
-.bg-gray-900\/30,
-.bg-gray-900\/20 {
-  background-color: #ffffff !important;
-}
-
-.bg-gray-800,
-.bg-gray-800\/80,
-.bg-gray-800\/70,
-.bg-gray-800\/60,
-.bg-gray-800\/50,
-.bg-gray-800\/40,
-.bg-gray-800\/30,
-.bg-gray-800\/20 {
-  background-color: #f2f6fb !important;
-}
-
-.bg-gray-700,
-.bg-gray-700\/60,
-.bg-gray-700\/50,
-.bg-gray-700\/40,
-.bg-gray-700\/30 {
-  background-color: #dde6f1 !important;
-}
-
-.border-gray-800,
-.border-gray-700,
-.border-gray-700\/60,
-.border-gray-700\/50,
-.border-gray-700\/40,
-.border-gray-700\/30 {
-  border-color: #d6dfeb !important;
-}
-
-.text-gray-100 {
-  color: #13233a !important;
-}
-
-.text-gray-200 {
-  color: #21344d !important;
-}
-
-.text-gray-300 {
-  color: #304762 !important;
-}
-
-.text-gray-400 {
-  color: #4c637f !important;
-}
-
-.text-gray-500 {
-  color: #667d99 !important;
-}
-
-.text-gray-600 {
-  color: #7f93ab !important;
-}
-
-.text-gray-700 {
-  color: #8fa0b6 !important;
-}
-
-/* Custom scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: #eef3f9; }
 ::-webkit-scrollbar-thumb { background: #c3d0e1; border-radius: 3px; }

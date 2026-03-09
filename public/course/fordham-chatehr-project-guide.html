@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HINF 6117 ChatEHR Project Guide</title>
+    <style>
+      :root {
+        --fordham-maroon: #8c1d40;
+        --ink: #172033;
+        --muted: #53627a;
+        --border: #d7e0ea;
+        --panel: #f6f9fc;
+        --accent: #dbe7f3;
+      }
+
+      @page {
+        size: letter;
+        margin: 0.45in;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Avenir Next", "Helvetica Neue", Helvetica, Arial, sans-serif;
+        color: var(--ink);
+        background: white;
+        line-height: 1.34;
+      }
+
+      main {
+        width: 100%;
+      }
+
+      .sheet {
+        padding: 0.06in 0;
+      }
+
+      .sheet + .sheet {
+        page-break-before: always;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: 1.7fr 1fr;
+        gap: 0.18in;
+        align-items: start;
+      }
+
+      .eyebrow {
+        color: var(--fordham-maroon);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 6px 0 8px;
+        font-size: 24px;
+        line-height: 1.05;
+      }
+
+      h2 {
+        margin: 0 0 8px;
+        font-size: 14px;
+        line-height: 1.1;
+      }
+
+      p {
+        margin: 0;
+        font-size: 11px;
+      }
+
+      .lede {
+        color: var(--muted);
+        font-size: 12px;
+        max-width: 6.9in;
+      }
+
+      .badge-card,
+      .panel,
+      .rubric-table {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: white;
+      }
+
+      .badge-card {
+        padding: 14px;
+        background: linear-gradient(180deg, #ffffff 0%, #f7f9fc 100%);
+      }
+
+      .badge-card strong {
+        display: block;
+        margin-bottom: 4px;
+        font-size: 10px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--fordham-maroon);
+      }
+
+      .badge-card span {
+        display: block;
+        font-size: 15px;
+        font-weight: 700;
+      }
+
+      .grid {
+        display: grid;
+        gap: 0.16in;
+        margin-top: 0.18in;
+      }
+
+      .grid.two {
+        grid-template-columns: 1.15fr 1fr;
+      }
+
+      .grid.equal {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .panel {
+        padding: 14px 14px 12px;
+        background: var(--panel);
+      }
+
+      ul,
+      ol {
+        margin: 8px 0 0 16px;
+        padding: 0;
+      }
+
+      li {
+        margin: 0 0 5px;
+        font-size: 10.5px;
+      }
+
+      .mini-list li {
+        margin-bottom: 4px;
+      }
+
+      .timeline {
+        display: grid;
+        gap: 8px;
+        margin-top: 8px;
+      }
+
+      .timeline-row {
+        display: grid;
+        grid-template-columns: 0.9in 1fr;
+        gap: 10px;
+        align-items: start;
+        padding: 9px 10px;
+        border-radius: 10px;
+        background: white;
+        border: 1px solid var(--border);
+      }
+
+      .timeline-row .date {
+        font-size: 10px;
+        font-weight: 700;
+        color: var(--fordham-maroon);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .timeline-row .text {
+        font-size: 10.5px;
+      }
+
+      .callout {
+        margin-top: 0.16in;
+        padding: 12px 14px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, #f7ecef 0%, #eef4fb 100%);
+        border: 1px solid #d5c1c8;
+      }
+
+      .rubric-table {
+        overflow: hidden;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        padding: 8px 10px;
+        vertical-align: top;
+        font-size: 10px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      th {
+        background: #eef3f9;
+        text-align: left;
+        font-size: 9.5px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      tr:last-child td {
+        border-bottom: none;
+      }
+
+      .total-row td {
+        font-weight: 700;
+        background: #f9fbfd;
+      }
+
+      .small {
+        font-size: 9.6px;
+        color: var(--muted);
+      }
+
+      .footer-note {
+        margin-top: 10px;
+        font-size: 9.6px;
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="sheet">
+        <div class="hero">
+          <div>
+            <div class="eyebrow">Fordham HINF 6117 • Spring 2026</div>
+            <h1>ChatEHR Main Project Guide</h1>
+            <p class="lede">
+              Teams of 3-4 will use a realistic synthetic EHR to compare AI
+              models and settings, document evidence in the Team Notebook, and
+              defend one recommended configuration for clinical use.
+            </p>
+          </div>
+          <div class="badge-card">
+            <strong>Expected Effort</strong>
+            <span>4-8 hours per person</span>
+            <p class="small">
+              Spread across configuration experiments, benchmarking,
+              observability review, and final presentation prep.
+            </p>
+          </div>
+        </div>
+
+        <div class="grid equal">
+          <div class="panel">
+            <h2>What You Must Learn to Explain</h2>
+            <ul class="mini-list">
+              <li>Why different models produce different clinical answers.</li>
+              <li>How temperature, context size, and response style affect reliability.</li>
+              <li>When RAG helps and when it adds noise.</li>
+              <li>How input tokens, output tokens, latency, and cost change by setup.</li>
+              <li>How to assess safety, bias, health equity, and deployment risk.</li>
+            </ul>
+          </div>
+          <div class="panel">
+            <h2>Core Team Roles</h2>
+            <ul class="mini-list">
+              <li><strong>Clinical lead:</strong> checks chart evidence and patient safety.</li>
+              <li><strong>Experiment lead:</strong> changes one variable at a time.</li>
+              <li><strong>Observability lead:</strong> tracks tokens, cost, latency, and retrieved context.</li>
+              <li><strong>Equity and governance lead:</strong> documents bias, language, access, and fairness concerns.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="grid two">
+          <div class="panel">
+            <h2>Required Workflow</h2>
+            <ol>
+              <li>Create or join your team and save at least 3 configurations.</li>
+              <li>Run guided comparisons on the same patient and prompt while changing one setting at a time.</li>
+              <li>Record hypotheses and results in the Team Notebook after each experiment.</li>
+              <li>Complete the practice benchmark, then one checkpoint benchmark by March 24, 2026.</li>
+              <li>Review observability data: tokens, cost, latency, and RAG evidence.</li>
+              <li>Complete the final benchmark and submit the in-app reflection before the presentation.</li>
+            </ol>
+          </div>
+          <div class="panel">
+            <h2>What to Compare</h2>
+            <ul>
+              <li>Small vs larger models on note synthesis and medication reconciliation.</li>
+              <li>Low vs high temperature on consistency and hallucination risk.</li>
+              <li>Minimal vs broad context on accuracy, privacy, and token cost.</li>
+              <li>RAG off vs on for guideline-grounded prompts.</li>
+              <li>Different response styles for clinician-facing vs patient-facing output.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-top: 0.16in;">
+          <h2>Project Milestones</h2>
+          <div class="timeline">
+            <div class="timeline-row">
+              <div class="date">Week 1</div>
+              <div class="text">Onboard, assign roles, save baseline configs, and complete 2 guided experiments.</div>
+            </div>
+            <div class="timeline-row">
+              <div class="date">Week 2</div>
+              <div class="text">Run practice benchmark, review observability, and capture at least 4 notebook entries with evidence.</div>
+            </div>
+            <div class="timeline-row">
+              <div class="date">Mar 24</div>
+              <div class="text">Checkpoint benchmark due. Be ready to show an early recommendation and explain tradeoffs.</div>
+            </div>
+            <div class="timeline-row">
+              <div class="date">Apr 7</div>
+              <div class="text">Final benchmark, final reflection, and team presentation due.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout">
+          <h2>Minimum Deliverables</h2>
+          <p>
+            3 saved configurations, 4 notebook entries, 1 practice benchmark,
+            1 checkpoint benchmark, 1 final benchmark, 1 final reflection, and
+            a short team presentation defending your recommended deployment
+            choice.
+          </p>
+        </div>
+      </section>
+
+      <section class="sheet">
+        <div class="hero">
+          <div>
+            <div class="eyebrow">Assessment</div>
+            <h1>Project Rubric</h1>
+            <p class="lede">
+              Strong projects do not simply chase the highest score. They show
+              controlled experimentation, correct use of evidence, clear cost
+              awareness, and thoughtful discussion of bias, equity, and safety.
+            </p>
+          </div>
+          <div class="badge-card">
+            <strong>Submission Standard</strong>
+            <span>Evidence over intuition</span>
+            <p class="small">
+              Support every recommendation with benchmark results, notebook
+              observations, and chart evidence.
+            </p>
+          </div>
+        </div>
+
+        <div class="rubric-table" style="margin-top: 0.16in;">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 24%;">Category</th>
+                <th style="width: 11%;">Weight</th>
+                <th>What earns full credit</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Experimental design</strong></td>
+                <td>25%</td>
+                <td>Compares settings systematically, changes one variable at a time, and explains why each comparison matters.</td>
+              </tr>
+              <tr>
+                <td><strong>Benchmark evidence</strong></td>
+                <td>20%</td>
+                <td>Uses practice, checkpoint, and final benchmark results accurately; shows what improved and what remained weak.</td>
+              </tr>
+              <tr>
+                <td><strong>Cost and observability</strong></td>
+                <td>15%</td>
+                <td>Correctly interprets token use, latency, retrieved context, and cost implications for real deployment.</td>
+              </tr>
+              <tr>
+                <td><strong>Safety and clinical reasoning</strong></td>
+                <td>15%</td>
+                <td>Identifies unsafe outputs, overconfidence, hallucinations, or chart-grounding failures and proposes guardrails.</td>
+              </tr>
+              <tr>
+                <td><strong>Bias and equity analysis</strong></td>
+                <td>15%</td>
+                <td>Examines language, insurance, SDOH, race/ethnicity, and access-sensitive cases and explains equity risks clearly.</td>
+              </tr>
+              <tr>
+                <td><strong>Final recommendation and presentation</strong></td>
+                <td>10%</td>
+                <td>Presents one defensible configuration for a realistic clinical use case and communicates tradeoffs clearly.</td>
+              </tr>
+              <tr class="total-row">
+                <td>Total</td>
+                <td>100%</td>
+                <td>Recommendation is evidence-based, realistic, and safe enough to discuss as a prototype deployment choice.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="grid equal" style="margin-top: 0.16in;">
+          <div class="panel">
+            <h2>Presentation Checklist</h2>
+            <ul class="mini-list">
+              <li>Clinical use case and target user.</li>
+              <li>Best configuration and why it won.</li>
+              <li>One example where the model performed well.</li>
+              <li>One example where the model failed or created risk.</li>
+              <li>Token, cost, or latency tradeoff worth noting.</li>
+              <li>One bias/equity concern and one mitigation step.</li>
+            </ul>
+          </div>
+          <div class="panel">
+            <h2>Avoid These Mistakes</h2>
+            <ul class="mini-list">
+              <li>Changing several settings at once and claiming one caused the improvement.</li>
+              <li>Using benchmark scores without checking the actual chart evidence.</li>
+              <li>Ignoring cost because the classroom models are free tier.</li>
+              <li>Describing equity only in general terms without case-specific analysis.</li>
+              <li>Recommending deployment without naming guardrails, monitoring, or human review.</li>
+            </ul>
+          </div>
+        </div>
+
+        <p class="footer-note">
+          Tool use is allowed, including AI assistants, but your team is
+          responsible for verifying clinical accuracy and citing where AI
+          assisted your process. Use the in-app Team Notebook and reflection as
+          the official record of your work.
+        </p>
+      </section>
+    </main>
+  </body>
+</html>

@@ -1,355 +1,396 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { authOptions } from "@/lib/auth";
-import {
-  clampNumber,
-  normalizeStringArray,
-  readJsonBodyWithLimit,
-  trimString,
-} from "@/lib/api-request";
-import { loadRagCorpusCached } from "@/lib/rag-corpus";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { readJsonBodyWithLimit } from "@/lib/api-request";
+import { DEFAULT_CONFIG } from "@/lib/constants";
+import { mapDbRowToConfig } from "@/lib/config-mapper";
+import { createModelAdapter } from "@/lib/models";
+import type { ModelRequest } from "@/lib/models/types";
+import { tracedModelCall } from "@/lib/langfuse/trace";
+import { estimateCost } from "@/lib/pricing";
+import { retrieveChunks } from "@/lib/rag-retrieval";
+import type { ConfigSnapshot, RAGChunk } from "@/lib/types";
+import { getSessionContext } from "@/lib/server-context";
 
-interface IncomingMessage {
-  role: "user" | "assistant";
-  content: string;
+interface ChatRequestBody {
+  messages: Array<{ role: "user" | "assistant"; content: string }>;
+  context?: string;
+  configId?: string;
+  patientId?: string;
 }
 
-type GeminiResponse = {
-  text: () => string;
-  usageMetadata?: {
-    promptTokenCount?: number;
-    candidatesTokenCount?: number;
-  };
-};
-
-type ChatPayload = {
-  messages?: unknown;
-  context?: unknown;
-  modelName?: unknown;
-  systemInstruction?: unknown;
-  temperature?: unknown;
-  ragChunkIds?: unknown;
-};
-
-const MAX_HISTORY_MESSAGES = Math.max(
-  6,
-  Number.parseInt(process.env.CHAT_HISTORY_MESSAGES || "18", 10) || 18
-);
-const MAX_BODY_BYTES = Math.max(
-  100_000,
-  Number.parseInt(process.env.CHAT_MAX_BODY_BYTES || "220000", 10) || 220_000
-);
-const MAX_MESSAGE_CHARS = Math.max(
-  200,
-  Number.parseInt(process.env.CHAT_MAX_MESSAGE_CHARS || "1600", 10) || 1600
-);
-const MAX_CONTEXT_CHARS = Math.max(
-  3000,
-  Number.parseInt(process.env.CHAT_MAX_CONTEXT_CHARS || "14000", 10) || 14_000
-);
-const MAX_SYSTEM_INSTRUCTION_CHARS = Math.max(
-  200,
-  Number.parseInt(process.env.CHAT_MAX_SYSTEM_INSTRUCTION_CHARS || "2000", 10) || 2000
-);
-const MAX_RAG_CHUNKS = 3;
-const RETRY_ATTEMPTS = Math.max(
-  0,
-  Number.parseInt(process.env.CHAT_RETRY_ATTEMPTS || "2", 10) || 2
-);
-const RETRY_BASE_DELAY_MS = Math.max(
-  100,
-  Number.parseInt(process.env.CHAT_RETRY_BASE_DELAY_MS || "350", 10) || 350
-);
-const DEFAULT_ALLOWED_MODELS = [
-  "gemini-3-flash-preview",
-  "gemini-flash-latest",
-  "gemini-flash-lite-latest",
-];
-const ALLOWED_CHAT_MODELS = new Set(
-  (process.env.ALLOWED_CHAT_MODELS || DEFAULT_ALLOWED_MODELS.join(","))
-    .split(",")
-    .map((model) => model.trim())
-    .filter((model) => model.length > 0)
-);
-
-function normalizeMessages(input: unknown): IncomingMessage[] {
-  if (!Array.isArray(input)) return [];
-  return input
-    .slice(-MAX_HISTORY_MESSAGES)
-    .map((msg: unknown) => {
-      const candidate = msg as Partial<IncomingMessage>;
-      const role: IncomingMessage["role"] =
-        candidate.role === "user" ? "user" : "assistant";
-      const content = trimString(candidate.content, MAX_MESSAGE_CHARS);
-      return { role, content };
-    })
-    .filter((msg) => msg.content.length > 0);
+interface ChatUsage {
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+  estimatedCost: number;
+  model: string;
+  latencyMs: number;
 }
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+function buildSystemInstruction(config: ConfigSnapshot) {
+  const sections = [config.systemInstruction];
 
-function isTransientProviderError(message: string): boolean {
-  const lower = message.toLowerCase();
-  return (
-    lower.includes("503") ||
-    lower.includes("service unavailable") ||
-    lower.includes("high demand") ||
-    lower.includes("429") ||
-    lower.includes("rate limit")
-  );
-}
-
-function isModelConfigError(message: string): boolean {
-  const lower = message.toLowerCase();
-  return lower.includes("not found") || lower.includes("invalid") || lower.includes("models/");
-}
-
-function buildModelCandidates(primary: string): string[] {
-  const candidates: string[] = [primary];
-  const fallback = "gemini-flash-lite-latest";
-  if (primary !== fallback && ALLOWED_CHAT_MODELS.has(fallback)) {
-    candidates.push(fallback);
+  if (config.safetyPreambleEnabled) {
+    sections.unshift(
+      "You are an educational clinical AI assistant in a simulated EHR. Do not present yourself as a licensed clinician. Highlight uncertainty, safety risks, and when a human review is required."
+    );
   }
-  return candidates;
+
+  if (config.styleProfile === "terse") {
+    sections.push(
+      "Use concise bullet points and avoid filler. Keep the answer short unless the user asks for detail."
+    );
+  } else if (config.styleProfile === "conversational") {
+    sections.push(
+      "Use plain language appropriate for a non-technical graduate student audience."
+    );
+  } else {
+    sections.push(
+      "Use professional clinical language while remaining readable to graduate health informatics students."
+    );
+  }
+
+  if (config.responseFormat === "structured") {
+    sections.push(
+      "Structure the answer with short headings: Assessment, Evidence, Risks, and Next Step."
+    );
+  } else if (config.responseFormat === "chain-of-thought") {
+    sections.push(
+      "Briefly explain your reasoning using chart evidence before the recommendation. Do not expose hidden chain-of-thought."
+    );
+  }
+
+  if (config.citationRequired) {
+    sections.push(
+      "Cite concrete chart evidence using values, dates, medication names, or note details."
+    );
+  }
+
+  if (config.abstainRule) {
+    sections.push(config.abstainRule);
+  }
+
+  if (config.confidenceFloor > 0) {
+    sections.push(
+      `If your confidence is below ${(config.confidenceFloor * 100).toFixed(0)}%, say that directly and recommend verification.`
+    );
+  }
+
+  return sections.filter(Boolean).join("\n\n");
 }
 
-async function sendMessageResiliently({
-  genAI,
-  modelCandidates,
-  resolvedSystemInstruction,
-  resolvedTemperature,
-  history,
-  prompt,
-}: {
-  genAI: GoogleGenerativeAI;
-  modelCandidates: string[];
-  resolvedSystemInstruction: string;
-  resolvedTemperature: number;
-  history: Array<{ role: "user" | "model"; parts: Array<{ text: string }> }>;
-  prompt: string;
-}): Promise<{
-  response: GeminiResponse;
-  modelUsed: string;
-  attempts: number;
-}> {
-  let lastError: unknown = null;
-  let totalAttempts = 0;
+async function loadConfig(
+  supabase: ReturnType<typeof createAdminClient>,
+  configId?: string
+): Promise<ConfigSnapshot> {
+  if (!configId) return { ...DEFAULT_CONFIG, name: "Default Config" };
 
-  for (const candidateModel of modelCandidates) {
-    const model = genAI.getGenerativeModel({
-      model: candidateModel,
-      generationConfig: {
-        temperature: resolvedTemperature,
-        maxOutputTokens: 1024,
-      },
-      ...(resolvedSystemInstruction ? { systemInstruction: resolvedSystemInstruction } : {}),
+  const { data: dbConfig, error } = await supabase
+    .from("configurations")
+    .select("*")
+    .eq("id", configId)
+    .single();
+
+  if (error || !dbConfig) {
+    throw new Error("Configuration not found.");
+  }
+
+  return mapDbRowToConfig(dbConfig);
+}
+
+async function loadPatientConditionLabels(
+  supabase: ReturnType<typeof createAdminClient>,
+  patientId?: string
+) {
+  if (!patientId) return [];
+
+  const { data } = await supabase
+    .from("conditions")
+    .select("display")
+    .eq("patient_id", patientId);
+
+  return (data ?? []).map((row) => row.display);
+}
+
+async function maybeRetrieveGuidelines(args: {
+  supabase: ReturnType<typeof createAdminClient>;
+  config: ConfigSnapshot;
+  patientId?: string;
+  userQuery: string;
+  teamId?: string | null;
+}) {
+  const { supabase, config, patientId, userQuery, teamId } = args;
+
+  if (!config.ragEnabled) return [] as RAGChunk[];
+
+  const [{ data: chunks }, patientConditions] = await Promise.all([
+    supabase
+      .from("guideline_chunks")
+      .select("id, source, title, text, keywords")
+      .limit(500),
+    loadPatientConditionLabels(supabase, patientId),
+  ]);
+
+  const chunkRows = (chunks ?? []) as RAGChunk[];
+  const method = config.ragMethod === "hybrid" ? "keyword" : config.ragMethod;
+  const retrieved = await retrieveChunks(
+    chunkRows,
+    userQuery,
+    patientConditions,
+    method === "embedding" ? "semantic" : "keyword",
+    config.ragTopK
+  );
+
+  if (teamId && retrieved.length > 0) {
+    await supabase.from("retrieval_logs").insert({
+      team_id: teamId,
+      query: userQuery,
+      method: config.ragMethod,
+      chunks_returned: retrieved.map((chunk) => chunk.id),
+      scores: retrieved.reduce<Record<string, number>>((acc, chunk) => {
+        acc[chunk.id] = chunk.score;
+        return acc;
+      }, {}),
     });
-    const chat = model.startChat({ history });
+  }
 
-    for (let attempt = 0; attempt <= RETRY_ATTEMPTS; attempt++) {
-      totalAttempts += 1;
-      try {
-        const result = await chat.sendMessage(prompt);
-        return {
-          response: result.response,
-          modelUsed: candidateModel,
-          attempts: totalAttempts,
-        };
-      } catch (error: unknown) {
-        lastError = error;
-        const message = (error as { message?: string }).message || "";
-        if (!isTransientProviderError(message)) {
-          throw error;
-        }
+  return retrieved.map(({ score: _score, ...chunk }) => chunk);
+}
 
-        const canRetrySameModel = attempt < RETRY_ATTEMPTS;
-        if (canRetrySameModel) {
-          const delayMs = RETRY_BASE_DELAY_MS * (attempt + 1);
-          await sleep(delayMs);
-          continue;
-        }
-        break;
-      }
+function buildPromptRequest(args: {
+  messages: Array<{ role: "user" | "assistant"; content: string }>;
+  config: ConfigSnapshot;
+  context?: string;
+  ragChunks: RAGChunk[];
+}) {
+  const { messages, config, context, ragChunks } = args;
+  const systemInstruction = buildSystemInstruction(config);
+  const trimmedMessages =
+    config.historyDepth > 0 && messages.length > config.historyDepth
+      ? messages.slice(-config.historyDepth)
+      : messages;
+
+  const contextBlocks: string[] = [];
+  if (context) {
+    contextBlocks.push(`PATIENT EHR CONTEXT:\n${context}`);
+  }
+  if (ragChunks.length > 0) {
+    contextBlocks.push(
+      `RETRIEVED GUIDELINES:\n${ragChunks
+        .map(
+          (chunk, index) =>
+            `[${index + 1}] ${chunk.title} (${chunk.source})\n${chunk.text}`
+        )
+        .join("\n\n")}`
+    );
+  }
+
+  const requestMessages = [...trimmedMessages];
+  const lastUserIndex = requestMessages.map((msg) => msg.role).lastIndexOf("user");
+  if (lastUserIndex >= 0 && contextBlocks.length > 0) {
+    requestMessages[lastUserIndex] = {
+      ...requestMessages[lastUserIndex],
+      content: `${contextBlocks.join("\n\n")}\n\nUSER QUESTION:\n${requestMessages[lastUserIndex].content}`,
+    };
+  }
+
+  const request: ModelRequest = {
+    messages: requestMessages,
+    systemInstruction,
+    temperature: config.temperature,
+    maxOutputTokens: config.maxOutputTokens,
+    topP: config.topP,
+    topK: config.topK,
+  };
+
+  return request;
+}
+
+async function callWithFallback(args: {
+  config: ConfigSnapshot;
+  request: ModelRequest;
+  teamId?: string | null;
+  userId: string;
+}) {
+  const attempts = [args.config.modelName];
+  if (args.config.fallbackModel) attempts.push(args.config.fallbackModel);
+
+  let lastError: unknown;
+  for (const modelName of attempts) {
+    try {
+      const adapter = createModelAdapter(modelName);
+      return await tracedModelCall(adapter, args.request, {
+        teamId: args.teamId ?? "no-team",
+        userId: args.userId,
+        sessionId: `${args.teamId ?? "solo"}:chat`,
+        context: "chat",
+      });
+    } catch (error) {
+      lastError = error;
     }
   }
 
-  throw lastError || new Error("Unable to generate response.");
+  throw lastError instanceof Error ? lastError : new Error("Model call failed.");
 }
 
-async function buildRagContextFromIds(rawIds: unknown): Promise<{ text: string; chunkCount: number }> {
-  const ids = normalizeStringArray(rawIds, {
-    maxItems: MAX_RAG_CHUNKS,
-    maxItemChars: 80,
-  });
-  if (ids.length === 0) return { text: "", chunkCount: 0 };
-
-  const { chunks } = await loadRagCorpusCached();
-  if (chunks.length === 0) return { text: "", chunkCount: 0 };
-
-  const byId = new Map(chunks.map((chunk) => [chunk.id, chunk] as const));
-  const uniqueIds = Array.from(new Set(ids));
-  const selected = uniqueIds
-    .map((id) => byId.get(id))
-    .filter((chunk): chunk is NonNullable<typeof chunk> => Boolean(chunk))
-    .slice(0, MAX_RAG_CHUNKS);
-
-  if (selected.length === 0) return { text: "", chunkCount: 0 };
-
-  const text =
-    "\n\nRELEVANT CLINICAL GUIDELINES:\n" +
-    selected
-      .map((chunk) => `[${chunk.source}] ${chunk.title}:\n${trimString(chunk.text, 800)}`)
-      .join("\n\n");
-
-  return { text, chunkCount: selected.length };
-}
-
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
-  if (!session) {
+  if (!session?.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  try {
-    const routeStartMs = Date.now();
-    const parsed = await readJsonBodyWithLimit<ChatPayload>(req, MAX_BODY_BYTES);
-    if (!parsed.ok) {
-      return NextResponse.json({ error: parsed.error }, { status: parsed.status });
-    }
-    const body = parsed.data;
+  const body = await readJsonBodyWithLimit<ChatRequestBody>(req);
+  if (!body.ok) {
+    return NextResponse.json({ error: body.error }, { status: body.status });
+  }
 
-    const normalizedMessages = normalizeMessages(body.messages);
-    if (normalizedMessages.length === 0) {
-      return NextResponse.json(
-        { error: "At least one non-empty message is required" },
-        { status: 400 }
-      );
-    }
-
-    const lastMessage = normalizedMessages[normalizedMessages.length - 1];
-    if (lastMessage.role !== "user") {
-      return NextResponse.json(
-        { error: "Last message must be a user prompt" },
-        { status: 400 }
-      );
-    }
-
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json(
-        {
-          error: "GEMINI_API_KEY is not configured",
-          hint: "Add GEMINI_API_KEY=your_key to .env.local and restart the dev server",
-        },
-        { status: 500 }
-      );
-    }
-
-    const resolvedModel = trimString(body.modelName, 120);
-    if (!resolvedModel) {
-      return NextResponse.json(
-        {
-          error: "Model name is required",
-          hint: "Choose a model in Lab Configuration (for example, gemini-flash-latest).",
-        },
-        { status: 400 }
-      );
-    }
-    if (!ALLOWED_CHAT_MODELS.has(resolvedModel)) {
-      return NextResponse.json(
-        {
-          error: `Model '${resolvedModel}' is not allowed in this lab environment.`,
-          hint: `Use one of: ${Array.from(ALLOWED_CHAT_MODELS).join(", ")}`,
-        },
-        { status: 400 }
-      );
-    }
-
-    const resolvedSystemInstruction = trimString(
-      body.systemInstruction,
-      MAX_SYSTEM_INSTRUCTION_CHARS
+  const { messages, context, configId, patientId } = body.data;
+  if (!Array.isArray(messages) || messages.length === 0) {
+    return NextResponse.json(
+      { error: "At least one message is required." },
+      { status: 400 }
     );
-    const context = trimString(body.context, MAX_CONTEXT_CHARS);
-    const resolvedTemperature = clampNumber(body.temperature, 0, 1, 0.2);
-    const rag = await buildRagContextFromIds(body.ragChunkIds);
+  }
 
-    const contextBlock = `PATIENT EHR CONTEXT:\n${context || "No patient selected."}${rag.text}`;
+  const lastMessage = messages[messages.length - 1];
+  if (!lastMessage || lastMessage.role !== "user") {
+    return NextResponse.json(
+      { error: "The last message must be from the user." },
+      { status: 400 }
+    );
+  }
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const modelCandidates = buildModelCandidates(resolvedModel);
-    const mappedHistory = normalizedMessages.slice(0, -1).map((msg: IncomingMessage) => ({
-      role: (msg.role === "user" ? "user" : "model") as "user" | "model",
-      parts: [{ text: msg.content }],
-    }));
-    // Gemini requires history to start with a user turn; drop leading model messages (welcome text).
-    const firstUserIdx = mappedHistory.findIndex((m) => m.role === "user");
-    const history = firstUserIdx >= 0 ? mappedHistory.slice(firstUserIdx) : [];
+  const supabase = createAdminClient();
+  const ctx = await getSessionContext(supabase, session);
 
-    const contextualizedPrompt = `${contextBlock}\n\nPATIENT QUESTION:\n${lastMessage.content}`;
+  let config: ConfigSnapshot;
+  try {
+    config = await loadConfig(supabase, configId);
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Failed to load configuration." },
+      { status: 404 }
+    );
+  }
 
-    const modelStartMs = Date.now();
-    const { response, modelUsed, attempts } = await sendMessageResiliently({
-      genAI,
-      modelCandidates,
-      resolvedSystemInstruction,
-      resolvedTemperature,
-      history,
-      prompt: contextualizedPrompt,
+  if (config.teamId && ctx.team?.teamId && config.teamId !== ctx.team.teamId) {
+    return NextResponse.json(
+      { error: "This configuration does not belong to your team." },
+      { status: 403 }
+    );
+  }
+
+  const ragChunks = await maybeRetrieveGuidelines({
+    supabase,
+    config,
+    patientId,
+    userQuery: lastMessage.content,
+    teamId: ctx.team?.teamId,
+  });
+
+  const request = buildPromptRequest({
+    messages,
+    config,
+    context,
+    ragChunks,
+  });
+
+  let response;
+  try {
+    response = await callWithFallback({
+      config,
+      request,
+      teamId: ctx.team?.teamId,
+      userId: ctx.user.id,
     });
-    const modelLatencyMs = Date.now() - modelStartMs;
-    const responseText = response.text();
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Unknown model call failure.";
 
-    const usageMetadata = response.usageMetadata;
-    const inputTokens = usageMetadata?.promptTokenCount || 0;
-    const outputTokens = usageMetadata?.candidatesTokenCount || 0;
-    const estimatedCost =
-      (inputTokens / 1_000_000) * 0.075 +
-      (outputTokens / 1_000_000) * 0.3;
-
-    return NextResponse.json({
-      text: responseText,
-      usage: {
-        inputTokens,
-        outputTokens,
-        totalTokens: inputTokens + outputTokens,
-        estimatedCost,
-        model: modelUsed,
-        modelLatencyMs,
-        totalLatencyMs: Date.now() - routeStartMs,
-        historyMessagesUsed: normalizedMessages.length,
-        ragChunksUsed: rag.chunkCount,
-        requestAttempts: attempts,
-      },
-    });
-  } catch (error: unknown) {
-    console.error("Chat API error:", error);
-
-    const err = error as { message?: string };
-    const errorMessage = err.message || "Failed to process chat request";
-    let hint = "";
-
-    if (isTransientProviderError(errorMessage)) {
-      hint =
-        "Gemini is under temporary load. Retry in a few seconds or switch to 'gemini-flash-lite-latest'.";
+    if (message.includes("429") || message.toLowerCase().includes("rate limit")) {
       return NextResponse.json(
-        { error: errorMessage, hint },
-        { status: 503 }
+        { error: "Rate limit exceeded. Please wait a moment and try again." },
+        { status: 429 }
       );
-    }
-
-    if (isModelConfigError(errorMessage)) {
-      hint =
-        "Check the model selected in Lab Configuration. Try 'gemini-flash-latest'.";
-    } else if (err.message?.includes("API key")) {
-      hint = "Check that GEMINI_API_KEY is set in .env.local";
     }
 
     return NextResponse.json(
-      { error: errorMessage, hint },
-      { status: 500 }
+      { error: `Model call failed: ${message}` },
+      { status: 502 }
     );
   }
+
+  const costBreakdown = estimateCost(
+    response.model,
+    response.inputTokens,
+    response.outputTokens
+  );
+
+  if (ctx.team) {
+    await supabase.from("chat_messages").insert([
+      {
+        team_id: ctx.team.teamId,
+        user_id: ctx.user.id,
+        patient_id: patientId ?? null,
+        config_id: configId ?? null,
+        role: "user",
+        content: lastMessage.content,
+        model_name: null,
+        input_tokens: null,
+        output_tokens: null,
+        latency_ms: null,
+        cost_usd: null,
+        langfuse_trace_id: null,
+      },
+      {
+        team_id: ctx.team.teamId,
+        user_id: ctx.user.id,
+        patient_id: patientId ?? null,
+        config_id: configId ?? null,
+        role: "assistant",
+        content: response.text,
+        model_name: response.model,
+        input_tokens: response.inputTokens,
+        output_tokens: response.outputTokens,
+        latency_ms: response.latencyMs,
+        cost_usd: costBreakdown.totalCost,
+        langfuse_trace_id: response.traceId,
+      },
+    ]);
+
+    await supabase.from("team_observability_snapshots").insert({
+      team_id: ctx.team.teamId,
+      source_type: "chat",
+      source_id: response.traceId || `${Date.now()}`,
+      model_name: response.model,
+      provider: config.modelProvider,
+      input_tokens: response.inputTokens,
+      output_tokens: response.outputTokens,
+      total_tokens: response.inputTokens + response.outputTokens,
+      estimated_cost_usd: costBreakdown.totalCost,
+      latency_ms: response.latencyMs,
+      metadata: {
+        patientId: patientId ?? null,
+        configId: configId ?? null,
+        ragChunks: ragChunks.map((chunk) => chunk.id),
+      },
+    });
+  }
+
+  const usage: ChatUsage = {
+    inputTokens: response.inputTokens,
+    outputTokens: response.outputTokens,
+    totalTokens: response.inputTokens + response.outputTokens,
+    estimatedCost: costBreakdown.totalCost,
+    model: response.model,
+    latencyMs: response.latencyMs,
+  };
+
+  return NextResponse.json({
+    text: response.text,
+    usage,
+    ragChunks,
+  });
 }

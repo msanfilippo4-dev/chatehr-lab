@@ -1,3 +1,7 @@
+// ---------------------------------------------------------------------------
+// Request-body helpers shared across all API routes
+// ---------------------------------------------------------------------------
+
 const DEFAULT_MAX_BODY_BYTES = 120_000;
 
 export type JsonBodyResult<T = unknown> =

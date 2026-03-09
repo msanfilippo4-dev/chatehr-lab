@@ -1,24 +1,15 @@
-import { withAuth } from "next-auth/middleware";
-
-export default withAuth({
-  pages: {
-    signIn: "/login",
-  },
-});
+export { default } from "next-auth/middleware";
 
 export const config = {
   matcher: [
-    /*
-     * Protect everything except:
-     * - /login
-     * - /lab and /lab/* (public lab instructions)
-     * - /results and /results/* (PIN-protected, no Gemini API usage)
-     * - /labresults and /labresults/*
-     * - /api/auth/* (NextAuth routes)
-     * - /_next/* (Next.js internals)
-     * - /favicon.ico
-     * - /data/* (static JSON patient/guideline data)
-     */
-    "/((?!login|lab|results|labresults|api/auth|_next|favicon\\.ico|data).*)",
+    "/join-team/:path*",
+    "/workspace/:path*",
+    "/dashboard/:path*",
+    "/benchmark/:path*",
+    "/leaderboard/:path*",
+    "/observability/:path*",
+    "/experiments/:path*",
+    "/settings/:path*",
+    "/instructor/:path*",
   ],
 };
