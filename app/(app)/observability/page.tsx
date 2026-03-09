@@ -65,10 +65,12 @@ interface RAGInsight {
   queryTerms?: string[];
   patientConditionTerms?: string[];
   retrievedChunkCount?: number;
+  injectedContext?: string;
   retrievedChunks?: Array<{
     id: string;
     title: string;
     source: string;
+    text?: string;
     score?: number;
     preview?: string;
     matchedTerms?: string[];
@@ -89,6 +91,12 @@ interface RAGInsight {
     promptPreview: string;
     retrievedChunkCount: number;
   }>;
+  sampleInjectedContexts?: Array<{
+    caseId: string;
+    promptPreview: string;
+    retrievedChunkCount: number;
+    injectedContext: string;
+  }>;
 }
 
 function formatDate(value: string) {
@@ -108,6 +116,23 @@ function getRagInsight(metadata: Record<string, unknown>) {
   const value = metadata.rag;
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   return value as RAGInsight;
+}
+
+function buildFallbackInjectedContext(rag: RAGInsight) {
+  if (rag.injectedContext) {
+    return { content: rag.injectedContext, exact: true };
+  }
+
+  if (!rag.retrievedChunks || rag.retrievedChunks.length === 0) {
+    return null;
+  }
+
+  return {
+    exact: false,
+    content: `RETRIEVED GUIDELINES:\n${rag.retrievedChunks
+      .map((chunk, index) => `[${index + 1}] ${chunk.title} (${chunk.source})\n${chunk.text ?? chunk.preview ?? ""}`)
+      .join("\n\n")}`,
+  };
 }
 
 export default function ObservabilityPage() {
@@ -364,6 +389,9 @@ export default function ObservabilityPage() {
                   >
                     {(() => {
                       const rag = getRagInsight(snapshot.metadata);
+                      const injectedContext = rag
+                        ? buildFallbackInjectedContext(rag)
+                        : null;
                       return (
                         <>
                     <div className="flex flex-wrap items-center justify-between gap-2">
@@ -485,6 +513,24 @@ export default function ObservabilityPage() {
                           </div>
                         )}
 
+                        {injectedContext && (
+                          <details className="mt-3 rounded-lg border border-[#dfe7ef] bg-white">
+                            <summary className="cursor-pointer list-none px-3 py-2 t-small font-semibold text-[#223142]">
+                              Show {injectedContext.exact ? "exact" : "reconstructed"} injected RAG context
+                            </summary>
+                            <div className="border-t border-[#eef3f8] px-3 py-3">
+                              <p className="t-small t-secondary">
+                                {injectedContext.exact
+                                  ? "This is the literal retrieved-guideline block appended to the prompt."
+                                  : "Older traces did not save the literal block, so this view is reconstructed from the saved chunks."}
+                              </p>
+                              <pre className="mt-3 max-h-80 overflow-auto whitespace-pre-wrap rounded-lg bg-[#f7fafc] p-3 text-[11px] leading-5 text-[#223142]">
+                                {injectedContext.content}
+                              </pre>
+                            </div>
+                          </details>
+                        )}
+
                         {rag.topRetrievedChunks && rag.topRetrievedChunks.length > 0 && (
                           <div className="mt-3">
                             <p className="t-micro font-semibold uppercase tracking-wider t-secondary">
@@ -507,6 +553,38 @@ export default function ObservabilityPage() {
                             </div>
                           </div>
                         )}
+
+                        {rag.sampleInjectedContexts &&
+                          rag.sampleInjectedContexts.length > 0 && (
+                            <div className="mt-3 space-y-2">
+                              <p className="t-micro font-semibold uppercase tracking-wider t-secondary">
+                                Sample exact injected benchmark contexts
+                              </p>
+                              {rag.sampleInjectedContexts.map((sample) => (
+                                <details
+                                  key={sample.caseId}
+                                  className="rounded-lg border border-[#dfe7ef] bg-white"
+                                >
+                                  <summary className="cursor-pointer list-none px-3 py-2">
+                                    <p className="t-small font-semibold">
+                                      Case {sample.caseId}
+                                    </p>
+                                    <p className="mt-1 t-micro t-tertiary">
+                                      {sample.retrievedChunkCount} retrieved · {sample.promptPreview}
+                                    </p>
+                                  </summary>
+                                  <div className="border-t border-[#eef3f8] px-3 py-3">
+                                    <p className="t-small t-secondary">
+                                      This is the exact guideline block injected for that benchmark case.
+                                    </p>
+                                    <pre className="mt-3 max-h-80 overflow-auto whitespace-pre-wrap rounded-lg bg-[#f7fafc] p-3 text-[11px] leading-5 text-[#223142]">
+                                      {sample.injectedContext}
+                                    </pre>
+                                  </div>
+                                </details>
+                              ))}
+                            </div>
+                          )}
                       </div>
                     )}
                         </>

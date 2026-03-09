@@ -7,7 +7,10 @@ import { estimateCost } from "../pricing";
 import { computeLatencyPercentiles } from "../langfuse/metrics";
 import { loadPatientRecord } from "../patient-loader";
 import { retrieveChunks } from "../rag-retrieval";
-import { summarizeBenchmarkRagUsage } from "../rag-observability";
+import {
+  buildInjectedGuidelineContext,
+  summarizeBenchmarkRagUsage,
+} from "../rag-observability";
 import {
   DEFAULT_CONFIG,
   TOURNAMENT_WEIGHTS,
@@ -169,9 +172,7 @@ export async function executeBenchmarkRun(
       }
       if (ragChunks.length > 0) {
         promptSections.push(
-          `RETRIEVED GUIDELINES:\n${ragChunks
-            .map((chunk, index) => `[${index + 1}] ${chunk.title}\n${chunk.text}`)
-            .join("\n\n")}`
+          buildInjectedGuidelineContext(ragChunks, { includeSource: false })
         );
       }
       promptSections.push(`BENCHMARK QUESTION:\n${benchCase.prompt}`);
@@ -343,6 +344,7 @@ export async function executeBenchmarkRun(
           method: config.ragMethod,
           topK: config.ragTopK,
           caseCount: cases.length,
+          includeSourceInInjectedContext: false,
           retrievedCases: benchmarkRagCases,
         }),
       },

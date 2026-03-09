@@ -10,7 +10,10 @@ import type { ModelRequest } from "@/lib/models/types";
 import { tracedModelCall } from "@/lib/langfuse/trace";
 import { estimateCost } from "@/lib/pricing";
 import { retrieveChunks } from "@/lib/rag-retrieval";
-import { buildRagObservabilityMetadata } from "@/lib/rag-observability";
+import {
+  buildInjectedGuidelineContext,
+  buildRagObservabilityMetadata,
+} from "@/lib/rag-observability";
 import type { ConfigSnapshot, RAGChunk } from "@/lib/types";
 import { getSessionContext } from "@/lib/server-context";
 
@@ -180,14 +183,7 @@ function buildPromptRequest(args: {
     contextBlocks.push(`PATIENT EHR CONTEXT:\n${context}`);
   }
   if (ragChunks.length > 0) {
-    contextBlocks.push(
-      `RETRIEVED GUIDELINES:\n${ragChunks
-        .map(
-          (chunk, index) =>
-            `[${index + 1}] ${chunk.title} (${chunk.source})\n${chunk.text}`
-        )
-        .join("\n\n")}`
-    );
+    contextBlocks.push(buildInjectedGuidelineContext(ragChunks));
   }
 
   const requestMessages = [...trimmedMessages];
@@ -303,6 +299,7 @@ export async function POST(req: Request) {
     userQuery: lastMessage.content,
     patientConditions: await loadPatientConditionLabels(supabase, patientId),
     retrievedChunks: ragChunks,
+    includeSourceInInjectedContext: true,
   });
 
   const { request, historyMessagesUsed } = buildPromptRequest({

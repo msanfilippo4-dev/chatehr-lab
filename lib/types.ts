@@ -135,6 +135,7 @@ export interface RAGObservabilityMetadata {
   patientConditionTerms: string[];
   retrievedChunkCount: number;
   retrievedChunks: RAGRetrievalInsight[];
+  injectedContext?: string;
 }
 
 // ── Messages ──────────────────────────────────────────────────────────────

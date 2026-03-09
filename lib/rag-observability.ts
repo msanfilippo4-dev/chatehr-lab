@@ -7,6 +7,24 @@ import { extractTerms } from "./rag-retrieval";
 
 type RetrievedChunk = RAGChunk & { score: number };
 
+export function buildInjectedGuidelineContext(
+  chunks: Array<Pick<RAGChunk, "title" | "source" | "text">>,
+  options?: { includeSource?: boolean }
+) {
+  if (chunks.length === 0) return "";
+
+  const includeSource = options?.includeSource ?? true;
+  return `RETRIEVED GUIDELINES:\n${chunks
+    .map((chunk, index) => {
+      const heading = includeSource
+        ? `[${index + 1}] ${chunk.title} (${chunk.source})`
+        : `[${index + 1}] ${chunk.title}`;
+
+      return `${heading}\n${chunk.text}`;
+    })
+    .join("\n\n")}`;
+}
+
 function makePreview(text: string, maxLength = 180) {
   const normalized = text.replace(/\s+/g, " ").trim();
   if (normalized.length <= maxLength) return normalized;
@@ -69,6 +87,7 @@ export function buildRagObservabilityMetadata(args: {
   userQuery: string;
   patientConditions?: string[];
   retrievedChunks: RetrievedChunk[];
+  includeSourceInInjectedContext?: boolean;
 }): RAGObservabilityMetadata {
   const patientConditions = args.patientConditions ?? [];
   const queryTerms = extractTerms(
@@ -90,6 +109,9 @@ export function buildRagObservabilityMetadata(args: {
     retrievedChunks: args.retrievedChunks.map((chunk) =>
       buildChunkInsight(chunk, queryTerms)
     ),
+    injectedContext: buildInjectedGuidelineContext(args.retrievedChunks, {
+      includeSource: args.includeSourceInInjectedContext,
+    }),
   };
 }
 
@@ -98,6 +120,7 @@ export function summarizeBenchmarkRagUsage(args: {
   method: "keyword" | "embedding" | "hybrid";
   topK: number;
   caseCount: number;
+  includeSourceInInjectedContext?: boolean;
   retrievedCases: Array<{
     caseId: string;
     prompt: string;
@@ -148,6 +171,14 @@ export function summarizeBenchmarkRagUsage(args: {
       caseId: entry.caseId,
       promptPreview: makePreview(entry.prompt, 120),
       retrievedChunkCount: entry.chunks.length,
+    })),
+    sampleInjectedContexts: args.retrievedCases.slice(0, 3).map((entry) => ({
+      caseId: entry.caseId,
+      promptPreview: makePreview(entry.prompt, 120),
+      retrievedChunkCount: entry.chunks.length,
+      injectedContext: buildInjectedGuidelineContext(entry.chunks, {
+        includeSource: args.includeSourceInInjectedContext,
+      }),
     })),
   };
 }
