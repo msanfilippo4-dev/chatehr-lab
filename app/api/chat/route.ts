@@ -10,6 +10,7 @@ import type { ModelRequest } from "@/lib/models/types";
 import { tracedModelCall } from "@/lib/langfuse/trace";
 import { estimateCost } from "@/lib/pricing";
 import { retrieveChunks } from "@/lib/rag-retrieval";
+import { buildRagObservabilityMetadata } from "@/lib/rag-observability";
 import type { ConfigSnapshot, RAGChunk } from "@/lib/types";
 import { getSessionContext } from "@/lib/server-context";
 
@@ -27,6 +28,8 @@ interface ChatUsage {
   estimatedCost: number;
   model: string;
   latencyMs: number;
+  historyMessagesUsed: number;
+  ragChunksUsed: number;
 }
 
 function buildSystemInstruction(config: ConfigSnapshot) {
@@ -123,7 +126,7 @@ async function maybeRetrieveGuidelines(args: {
 }) {
   const { supabase, config, patientId, userQuery, teamId } = args;
 
-  if (!config.ragEnabled) return [] as RAGChunk[];
+  if (!config.ragEnabled) return [] as Array<RAGChunk & { score: number }>;
 
   const [{ data: chunks }, patientConditions] = await Promise.all([
     supabase
@@ -156,7 +159,7 @@ async function maybeRetrieveGuidelines(args: {
     });
   }
 
-  return retrieved.map(({ score: _score, ...chunk }) => chunk);
+  return retrieved;
 }
 
 function buildPromptRequest(args: {
@@ -205,7 +208,10 @@ function buildPromptRequest(args: {
     topK: config.topK,
   };
 
-  return request;
+  return {
+    request,
+    historyMessagesUsed: trimmedMessages.length,
+  };
 }
 
 async function callWithFallback(args: {
@@ -290,7 +296,16 @@ export async function POST(req: Request) {
     teamId: ctx.team?.teamId,
   });
 
-  const request = buildPromptRequest({
+  const ragMetadata = buildRagObservabilityMetadata({
+    enabled: config.ragEnabled,
+    method: config.ragMethod,
+    topK: config.ragTopK,
+    userQuery: lastMessage.content,
+    patientConditions: await loadPatientConditionLabels(supabase, patientId),
+    retrievedChunks: ragChunks,
+  });
+
+  const { request, historyMessagesUsed } = buildPromptRequest({
     messages,
     config,
     context,
@@ -374,7 +389,7 @@ export async function POST(req: Request) {
       metadata: {
         patientId: patientId ?? null,
         configId: configId ?? null,
-        ragChunks: ragChunks.map((chunk) => chunk.id),
+        rag: ragMetadata,
       },
     });
   }
@@ -386,6 +401,8 @@ export async function POST(req: Request) {
     estimatedCost: costBreakdown.totalCost,
     model: response.model,
     latencyMs: response.latencyMs,
+    historyMessagesUsed,
+    ragChunksUsed: ragChunks.length,
   };
 
   return NextResponse.json({

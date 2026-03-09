@@ -4,6 +4,16 @@ import { authOptions } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getSessionContext } from "@/lib/server-context";
 
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+function asNumber(value: unknown) {
+  return typeof value === "number" ? value : Number(value ?? 0);
+}
+
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
@@ -15,6 +25,7 @@ export async function GET(req: Request) {
   if (!ctx.team) {
     return NextResponse.json({
       summary: null,
+      ragSummary: null,
       chatEvents: [],
       snapshots: [],
     });
@@ -62,6 +73,44 @@ export async function GET(req: Request) {
         )
       : 0;
 
+  const chunkCountByTitle = new Map<string, { title: string; hits: number }>();
+  let ragEnabledTraces = 0;
+  let tracesWithRetrievedContext = 0;
+  let retrievedChunkTotal = 0;
+
+  for (const snapshot of snapshots) {
+    const metadata = asRecord(snapshot.metadata);
+    const rag = metadata ? asRecord(metadata.rag) : null;
+    if (!rag || rag.enabled !== true) continue;
+
+    ragEnabledTraces += 1;
+
+    const retrievedChunkCount =
+      asNumber(rag.retrievedChunkCount) ||
+      asNumber(rag.totalRetrievedChunks) ||
+      asNumber(rag.casesWithRetrievedGuidelines);
+
+    if (retrievedChunkCount > 0) {
+      tracesWithRetrievedContext += 1;
+      retrievedChunkTotal += retrievedChunkCount;
+    }
+
+    const retrievedChunks = Array.isArray(rag.retrievedChunks)
+      ? rag.retrievedChunks
+      : Array.isArray(rag.topRetrievedChunks)
+        ? rag.topRetrievedChunks
+        : [];
+
+    for (const chunk of retrievedChunks) {
+      const chunkRecord = asRecord(chunk);
+      if (!chunkRecord?.title || typeof chunkRecord.title !== "string") continue;
+      const key = chunkRecord.title;
+      const current = chunkCountByTitle.get(key) ?? { title: key, hits: 0 };
+      current.hits += asNumber(chunkRecord.hits) || 1;
+      chunkCountByTitle.set(key, current);
+    }
+  }
+
   return NextResponse.json({
     summary: {
       totalTraces: assistantMessages.length + snapshots.length,
@@ -74,6 +123,17 @@ export async function GET(req: Request) {
           )).toFixed(6)
       ),
       avgLatencyMs: avgLatency,
+    },
+    ragSummary: {
+      ragEnabledTraces,
+      tracesWithRetrievedContext,
+      averageRetrievedChunks:
+        tracesWithRetrievedContext > 0
+          ? Number((retrievedChunkTotal / tracesWithRetrievedContext).toFixed(2))
+          : 0,
+      topRetrievedTitles: Array.from(chunkCountByTitle.values())
+        .sort((a, b) => b.hits - a.hits)
+        .slice(0, 5),
     },
     chatEvents: assistantMessages,
     snapshots,

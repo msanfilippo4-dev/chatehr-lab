@@ -11,6 +11,9 @@ import { createModelAdapter } from "@/lib/models";
 import { tracedModelCall } from "@/lib/langfuse/trace";
 import { estimateCost } from "@/lib/pricing";
 import { retrieveChunks } from "@/lib/rag-retrieval";
+import {
+  buildRagObservabilityMetadata,
+} from "@/lib/rag-observability";
 import type { ConfigSnapshot, RAGChunk } from "@/lib/types";
 
 interface ExperimentRunBody {
@@ -107,9 +110,18 @@ export async function POST(req: Request) {
             body.data.prompt,
             patientConditions,
             config.ragMethod === "embedding" ? "semantic" : "keyword",
-            config.ragTopK
+        config.ragTopK
           )
         : [];
+
+    const ragMetadata = buildRagObservabilityMetadata({
+      enabled: config.ragEnabled,
+      method: config.ragMethod,
+      topK: config.ragTopK,
+      userQuery: body.data.prompt,
+      patientConditions,
+      retrievedChunks: ragChunks,
+    });
 
     const promptSections = [
       `PATIENT CONTEXT:\n${buildPatientContext(patient, {
@@ -150,20 +162,21 @@ export async function POST(req: Request) {
 
     const cost = estimateCost(response.model, response.inputTokens, response.outputTokens);
 
-    slotResults.push({
-      configId: config.id!,
-      configName: config.name || "Saved Config",
+      slotResults.push({
+        configId: config.id!,
+        configName: config.name || "Saved Config",
       modelName: response.model,
       modelProvider: config.modelProvider,
       output: response.text,
       inputTokens: response.inputTokens,
-      outputTokens: response.outputTokens,
-      totalTokens: response.inputTokens + response.outputTokens,
-      estimatedCost: cost.totalCost,
-      latencyMs: response.latencyMs,
-      ragChunks: ragChunks.map(({ score: _score, ...chunk }) => chunk),
-    });
-  }
+        outputTokens: response.outputTokens,
+        totalTokens: response.inputTokens + response.outputTokens,
+        estimatedCost: cost.totalCost,
+        latencyMs: response.latencyMs,
+        ragChunks,
+        ragMetadata,
+      });
+    }
 
   const { data, error } = await supabase
     .from("experiment_runs")
@@ -202,6 +215,7 @@ export async function POST(req: Request) {
       metadata: {
         patientId: patient.id,
         configId: slot.configId,
+        rag: slot.ragMetadata,
       },
     }))
   );

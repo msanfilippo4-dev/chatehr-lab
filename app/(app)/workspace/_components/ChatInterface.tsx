@@ -203,12 +203,24 @@ export default function ChatInterface({
                 {msg.role === "assistant" &&
                   msg.ragChunks &&
                   msg.ragChunks.length > 0 && (
-                    <div className="flex items-center gap-1.5 px-1 t-micro t-tertiary">
-                      <BookOpen className="w-3 h-3" />
-                      <span>
-                        {msg.ragChunks.length} guideline
-                        {msg.ragChunks.length !== 1 ? "s" : ""} retrieved
-                      </span>
+                    <div className="px-1 t-micro t-tertiary">
+                      <div className="flex items-center gap-1.5">
+                        <BookOpen className="w-3 h-3" />
+                        <span>
+                          {msg.ragChunks.length} guideline
+                          {msg.ragChunks.length !== 1 ? "s" : ""} retrieved
+                        </span>
+                      </div>
+                      <div className="mt-1 flex flex-wrap gap-1.5">
+                        {msg.ragChunks.slice(0, 3).map((chunk) => (
+                          <span
+                            key={chunk.id}
+                            className="rounded-full bg-[#f4f7fb] px-2 py-0.5"
+                          >
+                            {chunk.title}
+                          </span>
+                        ))}
+                      </div>
                     </div>
                   )}
 

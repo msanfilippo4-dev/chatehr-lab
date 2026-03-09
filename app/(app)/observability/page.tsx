@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Activity,
+  BookOpen,
   Clock3,
   Coins,
   ExternalLink,
@@ -46,8 +47,48 @@ interface SummaryResponse {
     totalCost: number;
     avgLatencyMs: number;
   } | null;
+  ragSummary: {
+    ragEnabledTraces: number;
+    tracesWithRetrievedContext: number;
+    averageRetrievedChunks: number;
+    topRetrievedTitles: Array<{ title: string; hits: number }>;
+  } | null;
   chatEvents: ChatEvent[];
   snapshots: SnapshotEvent[];
+}
+
+interface RAGInsight {
+  enabled: boolean;
+  method?: string;
+  topK?: number;
+  query?: string;
+  queryTerms?: string[];
+  patientConditionTerms?: string[];
+  retrievedChunkCount?: number;
+  retrievedChunks?: Array<{
+    id: string;
+    title: string;
+    source: string;
+    score?: number;
+    preview?: string;
+    matchedTerms?: string[];
+    matchedKeywords?: string[];
+    rationale?: string;
+  }>;
+  casesWithRetrievedGuidelines?: number;
+  totalRetrievedChunks?: number;
+  topRetrievedChunks?: Array<{
+    id: string;
+    title: string;
+    source: string;
+    hits: number;
+    bestScore?: number;
+  }>;
+  sampleCases?: Array<{
+    caseId: string;
+    promptPreview: string;
+    retrievedChunkCount: number;
+  }>;
 }
 
 function formatDate(value: string) {
@@ -61,6 +102,12 @@ function formatDate(value: string) {
 
 function formatCurrency(value: number) {
   return `$${value.toFixed(4)}`;
+}
+
+function getRagInsight(metadata: Record<string, unknown>) {
+  const value = metadata.rag;
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  return value as RAGInsight;
 }
 
 export default function ObservabilityPage() {
@@ -200,6 +247,58 @@ export default function ObservabilityPage() {
         })}
       </section>
 
+      <section className="grid gap-4 md:grid-cols-3">
+        {[
+          {
+            label: "RAG-enabled traces",
+            value: String(data?.ragSummary?.ragEnabledTraces ?? 0),
+            help: "How many saved traces had RAG turned on.",
+          },
+          {
+            label: "Traces with retrieved context",
+            value: String(data?.ragSummary?.tracesWithRetrievedContext ?? 0),
+            help: "How often RAG actually found something relevant enough to include.",
+          },
+          {
+            label: "Average retrieved chunks",
+            value: `${data?.ragSummary?.averageRetrievedChunks ?? 0}`,
+            help: "Typical amount of external context added when RAG retrieved something.",
+          },
+        ].map((card) => (
+          <div key={card.label} className="ehr-shell p-4">
+            <p className="t-micro font-semibold uppercase tracking-wider t-secondary">
+              {card.label}
+            </p>
+            <p className="mt-2 text-xl font-semibold">{card.value}</p>
+            <p className="mt-2 t-small t-secondary">{card.help}</p>
+          </div>
+        ))}
+      </section>
+
+      <section className="ehr-shell p-4">
+        <div className="flex items-center gap-2">
+          <BookOpen size={14} className="text-fordham-maroon" />
+          <span className="t-small font-semibold">Top retrieved guideline titles</span>
+        </div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {(data?.ragSummary?.topRetrievedTitles ?? []).length > 0 ? (
+            data?.ragSummary?.topRetrievedTitles.map((item) => (
+              <div
+                key={item.title}
+                className="rounded-full border border-[#d6dfeb] bg-white px-3 py-1.5"
+              >
+                <span className="t-small font-medium">{item.title}</span>
+                <span className="ml-2 t-micro t-tertiary">{item.hits} hits</span>
+              </div>
+            ))
+          ) : (
+            <p className="t-small t-secondary">
+              No retrieved-context traces yet. Run a few RAG-on chats or experiments to see what the system actually pulls in.
+            </p>
+          )}
+        </div>
+      </section>
+
       {isLoading && !data ? (
         <div className="flex h-[40vh] items-center justify-center">
           <Loader2 className="h-5 w-5 animate-spin text-fordham-maroon" />
@@ -255,7 +354,7 @@ export default function ObservabilityPage() {
           </div>
 
           <div className="ehr-shell">
-            <div className="ehr-shell-header">Experiment and benchmark snapshots</div>
+            <div className="ehr-shell-header">Snapshots and RAG lens</div>
             <div className="space-y-3 p-4">
               {filteredSnapshots.length > 0 ? (
                 filteredSnapshots.map((snapshot) => (
@@ -263,6 +362,10 @@ export default function ObservabilityPage() {
                     key={snapshot.id}
                     className="rounded-xl border border-[#d6dfeb] bg-white p-4"
                   >
+                    {(() => {
+                      const rag = getRagInsight(snapshot.metadata);
+                      return (
+                        <>
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <p className="t-small font-semibold">
                         {snapshot.source_type} · {snapshot.model_name}
@@ -300,6 +403,115 @@ export default function ObservabilityPage() {
                     <p className="mt-3 t-micro t-tertiary">
                       Source ID: {snapshot.source_id} · provider {snapshot.provider}
                     </p>
+                    {rag && (
+                      <div className="mt-4 rounded-xl border border-[#e4ebf3] bg-[#f9fbfe] p-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="rounded-full bg-fordham-maroon/10 px-2.5 py-1 t-micro font-semibold text-fordham-maroon">
+                            RAG {rag.enabled ? "enabled" : "off"}
+                          </span>
+                          {rag.method && (
+                            <span className="t-micro t-tertiary">
+                              method {rag.method}
+                            </span>
+                          )}
+                          {typeof rag.topK === "number" && (
+                            <span className="t-micro t-tertiary">
+                              topK {rag.topK}
+                            </span>
+                          )}
+                          {typeof rag.retrievedChunkCount === "number" && (
+                            <span className="t-micro t-tertiary">
+                              {rag.retrievedChunkCount} retrieved
+                            </span>
+                          )}
+                          {typeof rag.casesWithRetrievedGuidelines === "number" && (
+                            <span className="t-micro t-tertiary">
+                              {rag.casesWithRetrievedGuidelines} benchmark cases used retrieval
+                            </span>
+                          )}
+                        </div>
+
+                        {rag.queryTerms && rag.queryTerms.length > 0 && (
+                          <div className="mt-3">
+                            <p className="t-micro font-semibold uppercase tracking-wider t-secondary">
+                              Terms driving retrieval
+                            </p>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {rag.queryTerms.slice(0, 8).map((term) => (
+                                <span
+                                  key={term}
+                                  className="rounded-full bg-white px-2 py-1 t-micro text-[#60768f]"
+                                >
+                                  {term}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {rag.retrievedChunks && rag.retrievedChunks.length > 0 && (
+                          <div className="mt-3 space-y-2">
+                            <p className="t-micro font-semibold uppercase tracking-wider t-secondary">
+                              Retrieved chunks
+                            </p>
+                            {rag.retrievedChunks.map((chunk) => (
+                              <div
+                                key={chunk.id}
+                                className="rounded-lg border border-[#dfe7ef] bg-white p-3"
+                              >
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                  <p className="t-small font-semibold">
+                                    {chunk.title}
+                                  </p>
+                                  <span className="t-micro t-tertiary">
+                                    {chunk.source}
+                                    {typeof chunk.score === "number"
+                                      ? ` · score ${chunk.score.toFixed(1)}`
+                                      : ""}
+                                  </span>
+                                </div>
+                                {chunk.rationale && (
+                                  <p className="mt-2 t-small t-secondary">
+                                    {chunk.rationale}
+                                  </p>
+                                )}
+                                {chunk.preview && (
+                                  <p className="mt-2 t-small text-[#60768f]">
+                                    {chunk.preview}
+                                  </p>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {rag.topRetrievedChunks && rag.topRetrievedChunks.length > 0 && (
+                          <div className="mt-3">
+                            <p className="t-micro font-semibold uppercase tracking-wider t-secondary">
+                              Most reused benchmark retrievals
+                            </p>
+                            <div className="mt-2 space-y-2">
+                              {rag.topRetrievedChunks.map((chunk) => (
+                                <div
+                                  key={chunk.id}
+                                  className="rounded-lg border border-[#dfe7ef] bg-white px-3 py-2"
+                                >
+                                  <p className="t-small font-semibold">
+                                    {chunk.title}
+                                  </p>
+                                  <p className="mt-1 t-micro t-tertiary">
+                                    {chunk.source} · {chunk.hits} hits
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                        </>
+                      );
+                    })()}
                   </div>
                 ))
               ) : (

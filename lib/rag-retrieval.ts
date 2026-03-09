@@ -27,7 +27,7 @@ const STOP_WORDS = new Set([
 
 // ─── Keyword scoring ──────────────────────────────────────────────────────────
 
-function extractTerms(text: string): string[] {
+export function extractTerms(text: string): string[] {
   return text
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, " ")

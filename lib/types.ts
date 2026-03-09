@@ -118,6 +118,25 @@ export interface RAGChunk {
   keywords: string[];
 }
 
+export interface RAGRetrievalInsight extends RAGChunk {
+  score?: number;
+  preview?: string;
+  matchedTerms?: string[];
+  matchedKeywords?: string[];
+  rationale?: string;
+}
+
+export interface RAGObservabilityMetadata {
+  enabled: boolean;
+  method: "keyword" | "embedding" | "hybrid";
+  topK: number;
+  query: string;
+  queryTerms: string[];
+  patientConditionTerms: string[];
+  retrievedChunkCount: number;
+  retrievedChunks: RAGRetrievalInsight[];
+}
+
 // ── Messages ──────────────────────────────────────────────────────────────
 
 export interface UsageMetadata {
@@ -137,7 +156,7 @@ export interface Message {
   role: "user" | "assistant";
   content: string;
   usage?: UsageMetadata;
-  ragChunks?: RAGChunk[];
+  ragChunks?: RAGRetrievalInsight[];
   isError?: boolean;
   hint?: string;
 }
@@ -409,7 +428,8 @@ export interface ExperimentSlotResult {
   totalTokens: number;
   estimatedCost: number;
   latencyMs: number;
-  ragChunks: RAGChunk[];
+  ragChunks: RAGRetrievalInsight[];
+  ragMetadata?: RAGObservabilityMetadata;
 }
 
 export interface ExperimentRun {
@@ -480,6 +500,7 @@ export interface TeamObservabilitySnapshot {
   totalTokens: number;
   estimatedCost: number;
   latencyMs: number;
+  metadata?: Record<string, unknown>;
   createdAt: string;
 }
 

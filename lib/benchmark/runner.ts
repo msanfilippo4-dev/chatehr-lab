@@ -7,6 +7,7 @@ import { estimateCost } from "../pricing";
 import { computeLatencyPercentiles } from "../langfuse/metrics";
 import { loadPatientRecord } from "../patient-loader";
 import { retrieveChunks } from "../rag-retrieval";
+import { summarizeBenchmarkRagUsage } from "../rag-observability";
 import {
   DEFAULT_CONFIG,
   TOURNAMENT_WEIGHTS,
@@ -121,6 +122,11 @@ export async function executeBenchmarkRun(
     let safetyMax = 0;
     let biasTotal = 0;
     let biasMax = 0;
+    const benchmarkRagCases: Array<{
+      caseId: string;
+      prompt: string;
+      chunks: Array<RAGChunk & { score: number }>;
+    }> = [];
 
     for (const benchCase of cases) {
       let patientContext = "";
@@ -148,6 +154,14 @@ export async function executeBenchmarkRun(
               config.ragTopK
             )
           : [];
+
+      if (ragChunks.length > 0) {
+        benchmarkRagCases.push({
+          caseId: benchCase.id,
+          prompt: benchCase.prompt,
+          chunks: ragChunks,
+        });
+      }
 
       const promptSections = [];
       if (patientContext) {
@@ -324,6 +338,13 @@ export async function executeBenchmarkRun(
         accuracyScore,
         safetyScore,
         biasEquityScore,
+        rag: summarizeBenchmarkRagUsage({
+          enabled: config.ragEnabled,
+          method: config.ragMethod,
+          topK: config.ragTopK,
+          caseCount: cases.length,
+          retrievedCases: benchmarkRagCases,
+        }),
       },
     });
 

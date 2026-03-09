@@ -50,7 +50,13 @@ interface ExperimentHistoryItem {
     totalTokens: number;
     estimatedCost: number;
     latencyMs: number;
-    ragChunks: Array<{ id: string; title: string }>;
+    ragChunks: Array<{
+      id: string;
+      title: string;
+      source?: string;
+      score?: number;
+      rationale?: string;
+    }>;
   }>;
   createdAt: string;
 }
@@ -403,6 +409,31 @@ export default function ExperimentsPage() {
                         {slot.output}
                       </p>
                     </div>
+                    {slot.ragChunks.length > 0 && (
+                      <div className="rounded-lg border border-[#e4ebf3] bg-[#f9fbfe] p-3">
+                        <p className="t-micro font-semibold uppercase tracking-wider t-secondary">
+                          Retrieved guideline context
+                        </p>
+                        <div className="mt-2 space-y-2">
+                          {slot.ragChunks.slice(0, 3).map((chunk) => (
+                            <div
+                              key={chunk.id}
+                              className="rounded-lg bg-white px-3 py-2"
+                            >
+                              <p className="t-small font-semibold">
+                                {chunk.title}
+                              </p>
+                              <p className="mt-1 t-micro t-tertiary">
+                                {chunk.source ?? "guideline"}
+                                {typeof chunk.score === "number"
+                                  ? ` · score ${chunk.score.toFixed(1)}`
+                                  : ""}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
