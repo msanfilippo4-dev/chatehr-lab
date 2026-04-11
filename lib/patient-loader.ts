@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { isSupabaseNoRowsError, toApiRouteError } from "@/lib/api-error";
 import type { Patient } from "./types";
 
 export async function loadPatientRecord(
@@ -11,7 +12,12 @@ export async function loadPatientRecord(
     .eq("id", patientId)
     .single();
 
-  if (patientError || !patient) return null;
+  if (patientError) {
+    if (isSupabaseNoRowsError(patientError)) return null;
+    throw toApiRouteError(patientError, "Failed to load patient.");
+  }
+
+  if (!patient) return null;
 
   const [
     conditionsResult,
@@ -75,6 +81,22 @@ export async function loadPatientRecord(
       .eq("patient_id", patientId)
       .order("date", { ascending: false }),
   ]);
+
+  for (const result of [
+    conditionsResult,
+    labsResult,
+    medsResult,
+    allergiesResult,
+    immunizationsResult,
+    encountersResult,
+    imagingResult,
+    socialHistoryResult,
+    clinicalNotesResult,
+  ]) {
+    if (result.error && !isSupabaseNoRowsError(result.error)) {
+      throw toApiRouteError(result.error, "Failed to load patient details.");
+    }
+  }
 
   const notesByEncounter = new Map<string, string[]>();
   for (const note of clinicalNotesResult.data ?? []) {

@@ -72,6 +72,7 @@ export async function POST(
 
   // Build a ConfigSnapshot from the DB row to compute hash
   const snapshot: ConfigSnapshot = {
+    presetId: config.preset_id ?? null,
     modelProvider: config.model_provider,
     modelName: config.model_name,
     fallbackModel: config.fallback_model,

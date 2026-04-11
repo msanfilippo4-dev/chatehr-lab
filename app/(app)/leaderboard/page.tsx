@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { Medal, Radio, ShieldCheck, Timer } from "lucide-react";
+import StatusPanel from "@/components/feedback/StatusPanel";
+import { fetchApiJson, getApiErrorMessage } from "@/lib/client-api";
 
 interface LeaderboardEntry {
   rank: number;
@@ -29,14 +31,23 @@ function formatDate(value: string) {
 export default function LeaderboardPage() {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadLeaderboard = async () => {
       setIsLoading(true);
+      setLoadError(null);
       try {
-        const res = await fetch("/api/leaderboard");
-        const json = await res.json();
-        if (res.ok) setEntries(json);
+        const json = await fetchApiJson<LeaderboardEntry[]>("/api/leaderboard");
+        setEntries(json);
+      } catch (error) {
+        setLoadError(
+          getApiErrorMessage(error, {
+            backendUnavailable:
+              "Leaderboard data is unavailable right now. Check the backend connection and try again.",
+            default: "Failed to load leaderboard.",
+          })
+        );
       } finally {
         setIsLoading(false);
       }
@@ -47,6 +58,15 @@ export default function LeaderboardPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
+      {loadError && (
+        <StatusPanel
+          title="Leaderboard unavailable"
+          message={loadError}
+          tone="info"
+          action={{ label: "Retry", onClick: () => window.location.reload() }}
+        />
+      )}
+
       <section className="ehr-shell">
         <div className="ehr-shell-header flex items-center gap-2">
           <Medal size={12} />
@@ -179,6 +199,8 @@ export default function LeaderboardPage() {
                   >
                     {isLoading
                       ? "Loading leaderboard..."
+                      : loadError
+                      ? "Leaderboard data is unavailable right now."
                       : "No official final runs yet."}
                   </td>
                 </tr>

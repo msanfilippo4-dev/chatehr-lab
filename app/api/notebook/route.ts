@@ -7,6 +7,7 @@ import {
   readJsonBodyWithLimit,
   trimString,
 } from "@/lib/api-request";
+import { errorResponse, routeErrorResponse } from "@/lib/api-response";
 import { getSessionContext } from "@/lib/server-context";
 import type { NotebookEntry } from "@/lib/types";
 
@@ -21,10 +22,15 @@ interface NotebookBody {
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return errorResponse("Unauthorized", 401, "unauthorized");
   }
   const supabase = createAdminClient();
-  const ctx = await getSessionContext(supabase, session);
+  let ctx;
+  try {
+    ctx = await getSessionContext(supabase, session);
+  } catch (error) {
+    return routeErrorResponse(error, "Failed to load notebook entries.");
+  }
   if (!ctx.team) return NextResponse.json([]);
 
   const { data, error } = await supabase
@@ -35,10 +41,7 @@ export async function GET() {
     .limit(50);
 
   if (error) {
-    return NextResponse.json(
-      { error: "Failed to load notebook entries." },
-      { status: 500 }
-    );
+    return routeErrorResponse(error, "Failed to load notebook entries.");
   }
 
   return NextResponse.json(
@@ -59,7 +62,7 @@ export async function GET() {
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return errorResponse("Unauthorized", 401, "unauthorized");
   }
   const body = await readJsonBodyWithLimit<NotebookBody>(req);
   if (!body.ok) {
@@ -67,11 +70,17 @@ export async function POST(req: Request) {
   }
 
   const supabase = createAdminClient();
-  const ctx = await getSessionContext(supabase, session);
+  let ctx;
+  try {
+    ctx = await getSessionContext(supabase, session);
+  } catch (error) {
+    return routeErrorResponse(error, "Failed to save notebook entry.");
+  }
   if (!ctx.team) {
-    return NextResponse.json(
-      { error: "You must be on a team to save notebook entries." },
-      { status: 403 }
+    return errorResponse(
+      "You must be on a team to save notebook entries.",
+      403,
+      "no_team"
     );
   }
 
@@ -93,10 +102,7 @@ export async function POST(req: Request) {
     .single();
 
   if (error) {
-    return NextResponse.json(
-      { error: "Failed to save notebook entry." },
-      { status: 500 }
-    );
+    return routeErrorResponse(error, "Failed to save notebook entry.");
   }
 
   return NextResponse.json(data, { status: 201 });

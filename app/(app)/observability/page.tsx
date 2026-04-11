@@ -11,6 +11,8 @@ import {
   Loader2,
   Search,
 } from "lucide-react";
+import StatusPanel from "@/components/feedback/StatusPanel";
+import { fetchApiJson, getApiErrorMessage } from "@/lib/client-api";
 
 interface ChatEvent {
   id: string;
@@ -27,7 +29,7 @@ interface ChatEvent {
 
 interface SnapshotEvent {
   id: string;
-  source_type: "chat" | "experiment" | "benchmark";
+  source_type: "chat" | "experiment" | "benchmark" | "population";
   source_id: string;
   model_name: string;
   provider: string;
@@ -55,6 +57,12 @@ interface SummaryResponse {
   } | null;
   chatEvents: ChatEvent[];
   snapshots: SnapshotEvent[];
+  langfuse: {
+    configured: boolean;
+    enabled: boolean;
+    reason: string | null;
+    baseUrl: string;
+  };
 }
 
 interface RAGInsight {
@@ -140,13 +148,24 @@ export default function ObservabilityPage() {
   const [query, setQuery] = useState("");
   const [data, setData] = useState<SummaryResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const loadSummary = async (nextRange: string) => {
     setIsLoading(true);
+    setLoadError(null);
     try {
-      const res = await fetch(`/api/observability/summary?range=${nextRange}`);
-      const json = await res.json();
-      if (res.ok) setData(json);
+      const json = await fetchApiJson<SummaryResponse>(
+        `/api/observability/summary?range=${nextRange}`
+      );
+      setData(json);
+    } catch (error) {
+      setLoadError(
+        getApiErrorMessage(error, {
+          backendUnavailable:
+            "Observability data is unavailable right now. Check the backend connection and try again.",
+          default: "Failed to load observability data.",
+        })
+      );
     } finally {
       setIsLoading(false);
     }
@@ -176,8 +195,28 @@ export default function ObservabilityPage() {
     );
   }, [data?.snapshots, query]);
 
+  if (loadError && !data) {
+    return (
+      <StatusPanel
+        title="Observability unavailable"
+        message={loadError}
+        action={{ label: "Retry", onClick: () => void loadSummary(range) }}
+        className="mx-auto max-w-5xl"
+      />
+    );
+  }
+
   return (
     <div className="mx-auto max-w-7xl space-y-6">
+      {loadError && (
+        <StatusPanel
+          title="Some observability data could not be refreshed"
+          message={loadError}
+          tone="info"
+          action={{ label: "Retry", onClick: () => void loadSummary(range) }}
+        />
+      )}
+
       <section className="ehr-shell">
         <div className="ehr-shell-header flex items-center gap-2">
           <Activity size={12} />
@@ -193,7 +232,7 @@ export default function ObservabilityPage() {
           </div>
 
           <a
-            href="https://cloud.langfuse.com"
+            href={data?.langfuse?.baseUrl ?? "https://us.cloud.langfuse.com"}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 rounded-lg border border-[#d6dfeb] bg-white px-3 py-2 t-small font-semibold text-[#506680]"
@@ -201,6 +240,30 @@ export default function ObservabilityPage() {
             <ExternalLink size={14} />
             Open Langfuse
           </a>
+        </div>
+      </section>
+
+      <section className="ehr-shell p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="t-small font-semibold">Tracing status</p>
+            <p className="mt-1 t-small t-secondary">
+              {data?.langfuse?.enabled
+                ? `Langfuse is enabled at ${data.langfuse.baseUrl}.`
+                : data?.langfuse?.configured
+                  ? `Langfuse is configured but currently disabled (${data.langfuse.reason ?? "unknown_reason"}).`
+                  : "Langfuse credentials are not configured for this environment."}
+            </p>
+          </div>
+          <span
+            className={`rounded-full px-3 py-1 t-micro font-semibold ${
+              data?.langfuse?.enabled
+                ? "bg-emerald-50 text-emerald-700"
+                : "bg-amber-50 text-amber-700"
+            }`}
+          >
+            {data?.langfuse?.enabled ? "enabled" : "disabled"}
+          </span>
         </div>
       </section>
 

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { errorResponse, routeErrorResponse } from "@/lib/api-response";
 import { loadPatientRecord } from "@/lib/patient-loader";
 
 export async function GET(
@@ -10,7 +11,7 @@ export async function GET(
 ) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return errorResponse("Unauthorized", 401, "unauthorized");
   }
 
   const patientId = params.id;
@@ -22,10 +23,15 @@ export async function GET(
   }
 
   const supabase = createAdminClient();
-  const patient = await loadPatientRecord(supabase, patientId);
+  let patient;
+  try {
+    patient = await loadPatientRecord(supabase, patientId);
+  } catch (error) {
+    return routeErrorResponse(error, "Failed to load patient.");
+  }
 
   if (!patient) {
-    return NextResponse.json({ error: "Patient not found." }, { status: 404 });
+    return errorResponse("Patient not found.", 404, "not_found");
   }
 
   return NextResponse.json(patient);

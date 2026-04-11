@@ -7,6 +7,12 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { readJsonBodyWithLimit, trimString } from "@/lib/api-request";
+import { routeErrorResponse } from "@/lib/api-response";
+import {
+  applyActiveTeamCookie,
+  getSessionContext,
+  listTeamMemberships,
+} from "@/lib/server-context";
 
 interface JoinTeamBody {
   joinCode: string;
@@ -32,48 +38,27 @@ export async function POST(req: Request) {
   }
 
   const supabase = createAdminClient();
-
-  // Look up or create user by email
-  let userId: string;
-  const { data: existingUser } = await supabase
-    .from("users")
-    .select("id")
-    .eq("email", session.user.email)
-    .single();
-
-  if (existingUser) {
-    userId = existingUser.id;
-  } else {
-    const { data: newUser, error: userErr } = await supabase
-      .from("users")
-      .insert({
-        email: session.user.email,
-        name: session.user.name ?? null,
-        image: session.user.image ?? null,
-      })
-      .select("id")
-      .single();
-
-    if (userErr || !newUser) {
-      console.error("Failed to create user:", userErr);
-      return NextResponse.json({ error: "Failed to create user record" }, { status: 500 });
-    }
-    userId = newUser.id;
+  let ctx;
+  try {
+    ctx = await getSessionContext(supabase, session);
+  } catch (error) {
+    return routeErrorResponse(error, "Failed to create user record.");
   }
 
-  // Check if user is already on a team
-  const { data: existingMembership } = await supabase
-    .from("team_members")
-    .select("team_id")
-    .eq("user_id", userId)
-    .limit(1)
-    .single();
-
-  if (existingMembership) {
-    return NextResponse.json(
-      { error: "You are already on a team. Leave your current team first." },
-      { status: 409 }
-    );
+  const userId = ctx.user.id;
+  try {
+    const memberships = await listTeamMemberships(supabase, userId);
+    if (memberships.length > 0) {
+      return NextResponse.json(
+        {
+          error:
+            "You are already on a team. Switch teams from Settings instead of joining a new one.",
+        },
+        { status: 409 }
+      );
+    }
+  } catch (error) {
+    return routeErrorResponse(error, "Failed to check your team membership.");
   }
 
   // Find team by join code
@@ -106,8 +91,7 @@ export async function POST(req: Request) {
         { status: 409 }
       );
     }
-    console.error("Failed to join team:", memberErr);
-    return NextResponse.json({ error: "Failed to join team" }, { status: 500 });
+    return routeErrorResponse(memberErr, "Failed to join team.");
   }
 
   // Log audit event
@@ -118,10 +102,11 @@ export async function POST(req: Request) {
     details: { user_email: session.user.email },
   });
 
-  return NextResponse.json({
+  const response = NextResponse.json({
     id: team.id,
     name: team.name,
     createdAt: team.created_at,
     message: `Successfully joined team "${team.name}".`,
   });
+  return applyActiveTeamCookie(response, team.id);
 }

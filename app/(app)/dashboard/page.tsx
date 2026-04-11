@@ -20,6 +20,9 @@ import {
   PROJECT_MILESTONES,
   TEAM_ROLES,
 } from "@/lib/course";
+import { formatBenchmarkMetric } from "@/lib/benchmark-run-display";
+import StatusPanel from "@/components/feedback/StatusPanel";
+import { fetchApiJson, getApiErrorMessage } from "@/lib/client-api";
 
 interface OverviewResponse {
   team: {
@@ -52,6 +55,7 @@ interface OverviewResponse {
     runMode: string;
     packId: string | null;
     status: string;
+    executionErrorCount: number;
     tournamentScore: number | null;
     accuracyScore: number | null;
     safetyScore: number | null;
@@ -107,16 +111,12 @@ function formatDate(value?: string | null) {
   });
 }
 
-function formatPercent(value?: number | null) {
-  if (value == null) return "--";
-  return `${value.toFixed(1)}%`;
-}
-
 export default function DashboardPage() {
   const [overview, setOverview] = useState<OverviewResponse | null>(null);
   const [notebookEntries, setNotebookEntries] = useState<NotebookEntry[]>([]);
   const [reflection, setReflection] = useState<ReflectionSubmission | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [isSavingNote, setIsSavingNote] = useState(false);
   const [isSavingReflection, setIsSavingReflection] = useState(false);
   const [noteForm, setNoteForm] = useState({
@@ -137,20 +137,17 @@ export default function DashboardPage() {
 
   const loadDashboard = async () => {
     setIsLoading(true);
+    setLoadError(null);
     try {
-      const [overviewRes, notebookRes, reflectionRes] = await Promise.all([
-        fetch("/api/project/overview"),
-        fetch("/api/notebook"),
-        fetch("/api/reflections"),
+      const [overviewJson, notebookJson, reflectionJson] = await Promise.all([
+        fetchApiJson<OverviewResponse>("/api/project/overview"),
+        fetchApiJson<NotebookEntry[]>("/api/notebook"),
+        fetchApiJson<ReflectionSubmission[]>("/api/reflections"),
       ]);
 
-      const overviewJson = await overviewRes.json();
-      const notebookJson = await notebookRes.json();
-      const reflectionJson = await reflectionRes.json();
-
-      if (overviewRes.ok) setOverview(overviewJson);
-      if (notebookRes.ok) setNotebookEntries(notebookJson);
-      if (reflectionRes.ok && Array.isArray(reflectionJson) && reflectionJson.length > 0) {
+      setOverview(overviewJson);
+      setNotebookEntries(notebookJson);
+      if (Array.isArray(reflectionJson) && reflectionJson.length > 0) {
         const latest = reflectionJson[0];
         setReflection(latest);
         setReflectionForm({
@@ -168,7 +165,17 @@ export default function DashboardPage() {
             latest.deployment_recommendation ??
             "",
         });
+      } else {
+        setReflection(null);
       }
+    } catch (error) {
+      setLoadError(
+        getApiErrorMessage(error, {
+          backendUnavailable:
+            "Dashboard data is unavailable right now. Check the backend connection and try again.",
+          default: "Failed to load the dashboard.",
+        })
+      );
     } finally {
       setIsLoading(false);
     }
@@ -251,8 +258,28 @@ export default function DashboardPage() {
     );
   }
 
+  if (loadError && !overview) {
+    return (
+      <StatusPanel
+        title="Dashboard unavailable"
+        message={loadError}
+        action={{ label: "Retry", onClick: () => void loadDashboard() }}
+        className="mx-auto max-w-5xl"
+      />
+    );
+  }
+
   return (
     <div className="mx-auto max-w-7xl space-y-6">
+      {loadError && (
+        <StatusPanel
+          title="Some dashboard data could not be refreshed"
+          message={loadError}
+          tone="info"
+          action={{ label: "Retry", onClick: () => void loadDashboard() }}
+        />
+      )}
+
       <section className="ehr-shell overflow-hidden">
         <div className="ehr-shell-header flex items-center gap-2">
           <GraduationCap size={12} />
@@ -733,13 +760,31 @@ export default function DashboardPage() {
                       {run.tournamentScore?.toFixed(1) ?? "--"}
                     </td>
                     <td className="px-4 py-3 t-small">
-                      {formatPercent(run.accuracyScore)}
+                      {formatBenchmarkMetric({
+                        metric: "accuracy",
+                        value: run.accuracyScore,
+                        packId: run.packId,
+                        status: run.status,
+                        executionErrorCount: run.executionErrorCount,
+                      })}
                     </td>
                     <td className="px-4 py-3 t-small">
-                      {formatPercent(run.safetyScore)}
+                      {formatBenchmarkMetric({
+                        metric: "safety",
+                        value: run.safetyScore,
+                        packId: run.packId,
+                        status: run.status,
+                        executionErrorCount: run.executionErrorCount,
+                      })}
                     </td>
                     <td className="px-4 py-3 t-small">
-                      {formatPercent(run.biasEquityScore)}
+                      {formatBenchmarkMetric({
+                        metric: "biasEquity",
+                        value: run.biasEquityScore,
+                        packId: run.packId,
+                        status: run.status,
+                        executionErrorCount: run.executionErrorCount,
+                      })}
                     </td>
                     <td className="px-4 py-3 t-small t-secondary">
                       {formatDate(run.completedAt ?? run.createdAt)}

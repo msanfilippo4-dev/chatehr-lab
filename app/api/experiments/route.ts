@@ -2,16 +2,22 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { errorResponse, routeErrorResponse } from "@/lib/api-response";
 import { getSessionContext } from "@/lib/server-context";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return errorResponse("Unauthorized", 401, "unauthorized");
   }
 
   const supabase = createAdminClient();
-  const ctx = await getSessionContext(supabase, session);
+  let ctx;
+  try {
+    ctx = await getSessionContext(supabase, session);
+  } catch (error) {
+    return routeErrorResponse(error, "Failed to load experiments.");
+  }
   if (!ctx.team) return NextResponse.json([]);
 
   const { data, error } = await supabase
@@ -22,10 +28,7 @@ export async function GET() {
     .limit(20);
 
   if (error) {
-    return NextResponse.json(
-      { error: "Failed to load experiments." },
-      { status: 500 }
-    );
+    return routeErrorResponse(error, "Failed to load experiments.");
   }
 
   return NextResponse.json(

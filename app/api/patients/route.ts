@@ -6,11 +6,12 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { errorResponse, routeErrorResponse } from "@/lib/api-response";
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return errorResponse("Unauthorized", 401, "unauthorized");
   }
 
   const url = new URL(req.url);
@@ -39,8 +40,7 @@ export async function GET(req: Request) {
     .range(from, to);
 
   if (error) {
-    console.error("Failed to fetch patients:", error);
-    return NextResponse.json({ error: "Failed to load patients" }, { status: 500 });
+    return routeErrorResponse(error, "Failed to load patients.");
   }
 
   // Map snake_case to camelCase for the list view

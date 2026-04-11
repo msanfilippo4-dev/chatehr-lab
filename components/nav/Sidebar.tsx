@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   MessageSquare,
   FlaskConical,
+  Users,
   Trophy,
   Medal,
   Activity,
@@ -20,6 +21,7 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/workspace", label: "Workspace", icon: MessageSquare },
   { href: "/experiments", label: "Experiments", icon: FlaskConical },
+  { href: "/population-health", label: "Population Health", icon: Users },
   { href: "/benchmark", label: "Benchmark", icon: Trophy },
   { href: "/leaderboard", label: "Leaderboard", icon: Medal },
   { href: "/observability", label: "Observability", icon: Activity },
@@ -62,7 +64,8 @@ export default function Sidebar() {
         <ul className="space-y-0.5">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive = pathname === item.href;
+            const isActive =
+              pathname === item.href || pathname.startsWith(`${item.href}/`);
 
             return (
               <li key={item.href}>

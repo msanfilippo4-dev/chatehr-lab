@@ -8,11 +8,13 @@ import {
   MessageSquare,
   SlidersHorizontal,
   Users,
+  Loader2,
 } from "lucide-react";
 import type { Patient, Message, ConfigSnapshot } from "@/lib/types";
 import { DEFAULT_CONFIG } from "@/lib/constants";
 import { buildPatientContext } from "@/lib/patient-context";
 import { useTeam } from "@/components/providers/TeamProvider";
+import StatusPanel from "@/components/feedback/StatusPanel";
 
 import PatientSelector from "./_components/PatientSelector";
 import PatientChart from "./_components/PatientChart";
@@ -24,7 +26,13 @@ import ConfigStudio from "./_components/ConfigStudio";
 // ---------------------------------------------------------------------------
 
 export default function WorkspacePage() {
-  const { team, loading: teamLoading } = useTeam();
+  const {
+    team,
+    loading: teamLoading,
+    status: teamStatus,
+    error: teamError,
+    refresh: refreshTeam,
+  } = useTeam();
 
   // ── State ────────────────────────────────────────────────────────────────
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
@@ -227,7 +235,32 @@ export default function WorkspacePage() {
 
   // ── Layout ───────────────────────────────────────────────────────────────
 
-  if (!teamLoading && !team) {
+  if (teamLoading || teamStatus === "loading") {
+    return (
+      <div className="flex h-[60vh] items-center justify-center">
+        <Loader2 className="h-5 w-5 animate-spin text-fordham-maroon" />
+      </div>
+    );
+  }
+
+  if (teamStatus === "unavailable") {
+    return (
+      <div className="mx-auto flex h-full max-w-3xl items-center justify-center">
+        <StatusPanel
+          title="Workspace unavailable"
+          message={
+            teamError ??
+            "Team data could not be loaded, so workspace state is unavailable right now."
+          }
+          action={{ label: "Retry team lookup", onClick: () => void refreshTeam() }}
+          secondaryAction={{ label: "View leaderboard", href: "/leaderboard" }}
+          className="w-full"
+        />
+      </div>
+    );
+  }
+
+  if (!team) {
     return (
       <div className="mx-auto flex h-full max-w-3xl items-center justify-center">
         <section className="ehr-shell w-full max-w-2xl overflow-hidden">

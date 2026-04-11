@@ -9,6 +9,7 @@ export const config = {
     "/leaderboard/:path*",
     "/observability/:path*",
     "/experiments/:path*",
+    "/population-health/:path*",
     "/settings/:path*",
     "/instructor/:path*",
   ],

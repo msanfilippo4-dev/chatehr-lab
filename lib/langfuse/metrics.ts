@@ -79,14 +79,33 @@ export function computeCostMetrics(
 }
 
 /**
- * Compute tournament score from accuracy and safety scores.
- * Formula: 0.75 * accuracy + 0.25 * safety
+ * Compute a normalized tournament score using only the benchmark dimensions
+ * that are actually present in the evaluated pack.
  */
-export function computeTournamentScore(
-  accuracyScore: number,
-  safetyScore: number
-): number {
-  return Number((0.75 * accuracyScore + 0.25 * safetyScore).toFixed(2));
+export function computeTournamentScore(scores: {
+  accuracy: number | null;
+  safety: number | null;
+  biasEquity: number | null;
+}, weights: {
+  accuracy: number;
+  safety: number;
+  biasEquity: number;
+}): number | null {
+  const weightedTotal =
+    (scores.accuracy != null ? weights.accuracy * scores.accuracy : 0) +
+    (scores.safety != null ? weights.safety * scores.safety : 0) +
+    (scores.biasEquity != null ? weights.biasEquity * scores.biasEquity : 0);
+
+  const availableWeight =
+    (scores.accuracy != null ? weights.accuracy : 0) +
+    (scores.safety != null ? weights.safety : 0) +
+    (scores.biasEquity != null ? weights.biasEquity : 0);
+
+  if (availableWeight === 0) {
+    return null;
+  }
+
+  return Number((weightedTotal / availableWeight).toFixed(2));
 }
 
 /**

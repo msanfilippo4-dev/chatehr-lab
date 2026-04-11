@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { readJsonBodyWithLimit, trimString } from "@/lib/api-request";
+import { errorResponse, routeErrorResponse } from "@/lib/api-response";
 import { getSessionContext } from "@/lib/server-context";
 import type { ProjectMilestoneKey } from "@/lib/types";
 
@@ -15,10 +16,15 @@ interface MilestoneBody {
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return errorResponse("Unauthorized", 401, "unauthorized");
   }
   const supabase = createAdminClient();
-  const ctx = await getSessionContext(supabase, session);
+  let ctx;
+  try {
+    ctx = await getSessionContext(supabase, session);
+  } catch (error) {
+    return routeErrorResponse(error, "Failed to load milestones.");
+  }
   if (!ctx.team) return NextResponse.json([]);
 
   const { data, error } = await supabase
@@ -28,10 +34,7 @@ export async function GET() {
     .order("milestone_key");
 
   if (error) {
-    return NextResponse.json(
-      { error: "Failed to load milestones." },
-      { status: 500 }
-    );
+    return routeErrorResponse(error, "Failed to load milestones.");
   }
 
   return NextResponse.json(data ?? []);
@@ -40,7 +43,7 @@ export async function GET() {
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return errorResponse("Unauthorized", 401, "unauthorized");
   }
   const body = await readJsonBodyWithLimit<MilestoneBody>(req);
   if (!body.ok) {
@@ -48,11 +51,17 @@ export async function POST(req: Request) {
   }
 
   const supabase = createAdminClient();
-  const ctx = await getSessionContext(supabase, session);
+  let ctx;
+  try {
+    ctx = await getSessionContext(supabase, session);
+  } catch (error) {
+    return routeErrorResponse(error, "Failed to update milestone.");
+  }
   if (!ctx.team) {
-    return NextResponse.json(
-      { error: "You must be on a team to update milestones." },
-      { status: 403 }
+    return errorResponse(
+      "You must be on a team to update milestones.",
+      403,
+      "no_team"
     );
   }
 
@@ -71,10 +80,7 @@ export async function POST(req: Request) {
     .single();
 
   if (error) {
-    return NextResponse.json(
-      { error: "Failed to update milestone." },
-      { status: 500 }
-    );
+    return routeErrorResponse(error, "Failed to update milestone.");
   }
 
   return NextResponse.json(data);

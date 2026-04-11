@@ -1,4 +1,19 @@
-import type { ConfigSnapshot } from "./types";
+import type { ConfigSnapshot, TeachingPresetId } from "./types";
+import { TEACHING_PRESETS } from "./constants";
+
+// Legacy prod schemas can lack configurations.preset_id, so infer it from
+// the starter-preset title when possible.
+function inferPresetId(row: {
+  preset_id?: TeachingPresetId | null;
+  name?: string | null;
+}): TeachingPresetId | null {
+  if (row.preset_id) {
+    return row.preset_id;
+  }
+
+  const preset = TEACHING_PRESETS.find((item) => item.title === row.name);
+  return preset?.id ?? null;
+}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function mapDbRowToConfig(row: any): ConfigSnapshot {
@@ -8,6 +23,7 @@ export function mapDbRowToConfig(row: any): ConfigSnapshot {
     name: row.name,
     createdAt: row.created_at,
     createdBy: row.created_by,
+    presetId: inferPresetId(row),
 
     modelProvider: row.model_provider,
     modelName: row.model_name,

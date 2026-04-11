@@ -1,7 +1,18 @@
+import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
 type QueryRow = Record<string, unknown>;
+
+function loadLocalEnv() {
+  const root = process.cwd();
+  for (const candidate of [".env.local", ".env"]) {
+    const absolutePath = path.join(root, candidate);
+    if (existsSync(absolutePath)) {
+      process.loadEnvFile(absolutePath);
+    }
+  }
+}
 
 function resolveProjectRef() {
   const explicitRef = process.env.SUPABASE_PROJECT_REF?.trim();
@@ -107,6 +118,8 @@ async function repairMigrationHistory(
 }
 
 async function main() {
+  loadLocalEnv();
+
   const projectRef = resolveProjectRef();
   if (!projectRef) {
     throw new Error(
@@ -150,24 +163,47 @@ async function main() {
   );
 
   const shouldBootstrap = !bootstrapCheck[0]?.configurations_exists;
-  const migrations = shouldBootstrap
-    ? [
+  const defaultMigrations = shouldBootstrap
+      ? [
         "supabase/migrations/001_initial_schema.sql",
         "supabase/migrations/002_rls_policies.sql",
         "supabase/migrations/003_functions.sql",
         "supabase/migrations/004_realtime.sql",
         "supabase/migrations/005_course_product_upgrade.sql",
         "supabase/migrations/006_course_product_rls_and_functions.sql",
+        "supabase/migrations/007_judge_population_and_grading.sql",
+        "supabase/migrations/008_active_team_and_preset_repairs.sql",
+        "supabase/migrations/009_smoke_teams_and_benchmark_failures.sql",
+        "supabase/migrations/010_repair_stale_starter_preset_models.sql",
+        "supabase/migrations/011_repair_benchmark_pack_scores.sql",
+        "supabase/migrations/012_repair_stale_openrouter_clone_models.sql",
+        "supabase/migrations/013_async_benchmark_jobs.sql",
       ]
     : [
         "supabase/migrations/005_course_product_upgrade.sql",
         "supabase/migrations/006_course_product_rls_and_functions.sql",
+        "supabase/migrations/007_judge_population_and_grading.sql",
+        "supabase/migrations/008_active_team_and_preset_repairs.sql",
+        "supabase/migrations/009_smoke_teams_and_benchmark_failures.sql",
+        "supabase/migrations/010_repair_stale_starter_preset_models.sql",
+        "supabase/migrations/011_repair_benchmark_pack_scores.sql",
+        "supabase/migrations/012_repair_stale_openrouter_clone_models.sql",
+        "supabase/migrations/013_async_benchmark_jobs.sql",
       ];
+
+  const requestedMigrations = (
+    process.env.MIGRATION_PATHS?.split(",") ?? []
+  )
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+
+  const migrations =
+    requestedMigrations.length > 0 ? requestedMigrations : defaultMigrations;
 
   console.log(
     shouldBootstrap
-      ? "Live project has no base schema. Bootstrapping 001-006."
-      : "Live project has the base schema. Applying 005-006 only."
+      ? "Live project has no base schema. Bootstrapping default migration set."
+      : "Live project has the base schema. Applying default post-bootstrap migrations."
   );
 
   for (const migrationPath of migrations) {
@@ -192,6 +228,14 @@ async function main() {
     team_observability_snapshots_exists: boolean;
     instructor_flags_exists: boolean;
     bias_equity_column_exists: boolean;
+    population_runs_exists: boolean;
+    instructor_grades_exists: boolean;
+    preset_id_column_exists: boolean;
+    active_team_id_column_exists: boolean;
+    evaluation_cost_column_exists: boolean;
+    execution_error_count_column_exists: boolean;
+    failure_reason_column_exists: boolean;
+    smoke_team_column_exists: boolean;
   }>(
     projectRef,
     accessToken,
@@ -238,7 +282,59 @@ async function main() {
           where table_schema = 'public'
             and table_name = 'benchmark_runs'
             and column_name = 'bias_equity_score'
-        ) as bias_equity_column_exists;
+        ) as bias_equity_column_exists,
+        exists (
+          select 1
+          from information_schema.tables
+          where table_schema = 'public' and table_name = 'population_runs'
+        ) as population_runs_exists,
+        exists (
+          select 1
+          from information_schema.tables
+          where table_schema = 'public' and table_name = 'instructor_grades'
+        ) as instructor_grades_exists,
+        exists (
+          select 1
+          from information_schema.columns
+          where table_schema = 'public'
+            and table_name = 'configurations'
+            and column_name = 'preset_id'
+        ) as preset_id_column_exists,
+        exists (
+          select 1
+          from information_schema.columns
+          where table_schema = 'public'
+            and table_name = 'users'
+            and column_name = 'active_team_id'
+        ) as active_team_id_column_exists,
+        exists (
+          select 1
+          from information_schema.columns
+          where table_schema = 'public'
+            and table_name = 'benchmark_runs'
+            and column_name = 'evaluation_cost_usd'
+        ) as evaluation_cost_column_exists,
+        exists (
+          select 1
+          from information_schema.columns
+          where table_schema = 'public'
+            and table_name = 'benchmark_runs'
+            and column_name = 'execution_error_count'
+        ) as execution_error_count_column_exists,
+        exists (
+          select 1
+          from information_schema.columns
+          where table_schema = 'public'
+            and table_name = 'benchmark_runs'
+            and column_name = 'failure_reason'
+        ) as failure_reason_column_exists,
+        exists (
+          select 1
+          from information_schema.columns
+          where table_schema = 'public'
+            and table_name = 'teams'
+            and column_name = 'is_smoke_test'
+        ) as smoke_team_column_exists;
     `,
     true
   );

@@ -3,16 +3,24 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { PROJECT_MILESTONES } from "@/lib/course";
+import { errorResponse, routeErrorResponse } from "@/lib/api-response";
 import { getSessionContext } from "@/lib/server-context";
+import { hydrateBenchmarkRunExecutionMetadata } from "@/lib/benchmark-run-compat";
+import { isMissingSupabaseColumnError } from "@/lib/supabase-compat";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return errorResponse("Unauthorized", 401, "unauthorized");
   }
 
   const supabase = createAdminClient();
-  const ctx = await getSessionContext(supabase, session);
+  let ctx;
+  try {
+    ctx = await getSessionContext(supabase, session);
+  } catch (error) {
+    return routeErrorResponse(error, "Failed to load project overview.");
+  }
 
   if (!ctx.team) {
     return NextResponse.json({
@@ -37,6 +45,24 @@ export async function GET() {
   }
 
   const teamId = ctx.team.teamId;
+
+  const benchmarkRunQuery = supabase
+    .from("benchmark_runs")
+    .select(
+      "id, run_mode, pack_id, status, tournament_score, accuracy_score, safety_score, bias_equity_score, completed_at, created_at, execution_error_count"
+    )
+    .eq("team_id", teamId)
+    .order("created_at", { ascending: false })
+    .limit(10);
+
+  const fallbackBenchmarkRunQuery = supabase
+    .from("benchmark_runs")
+    .select(
+      "id, run_mode, pack_id, status, tournament_score, accuracy_score, safety_score, bias_equity_score, completed_at, created_at"
+    )
+    .eq("team_id", teamId)
+    .order("created_at", { ascending: false })
+    .limit(10);
 
   const [
     configsResult,
@@ -65,14 +91,7 @@ export async function GET() {
       .from("reflection_submissions")
       .select("id", { count: "exact", head: true })
       .eq("team_id", teamId),
-    supabase
-      .from("benchmark_runs")
-      .select(
-        "id, run_mode, pack_id, status, tournament_score, accuracy_score, safety_score, bias_equity_score, completed_at, created_at"
-      )
-      .eq("team_id", teamId)
-      .order("created_at", { ascending: false })
-      .limit(10),
+    benchmarkRunQuery,
     supabase
       .from("benchmark_runs")
       .select("id", { count: "exact", head: true })
@@ -94,15 +113,54 @@ export async function GET() {
       .eq("team_id", teamId),
   ]);
 
+  let normalizedBenchmarkResult = benchmarkResult;
+  if (
+    benchmarkResult.error &&
+    isMissingSupabaseColumnError(
+      benchmarkResult.error,
+      "benchmark_runs",
+      "execution_error_count"
+    )
+  ) {
+    normalizedBenchmarkResult = (await fallbackBenchmarkRunQuery) as typeof benchmarkResult;
+  }
+
+  for (const result of [
+    configsResult,
+    experimentsResult,
+    notebookResult,
+    reflectionsResult,
+    normalizedBenchmarkResult,
+    practiceRunCountResult,
+    checkpointRunCountResult,
+    officialRunCountResult,
+    milestonesResult,
+  ]) {
+    if (result.error) {
+      return routeErrorResponse(result.error, "Failed to load project overview.");
+    }
+  }
+
   const milestoneByKey = new Map(
     (milestonesResult.data ?? []).map((row) => [row.milestone_key, row])
   );
 
-  const recentRuns = (benchmarkResult.data ?? []).map((run) => ({
+  const benchmarkRuns = await hydrateBenchmarkRunExecutionMetadata(
+    supabase,
+    (normalizedBenchmarkResult.data ?? []) as Array<
+      Record<string, unknown> & { id: string }
+    >
+  );
+
+  const recentRuns = benchmarkRuns.map((run) => ({
     id: run.id,
     runMode: run.run_mode,
     packId: run.pack_id,
     status: run.status,
+    executionErrorCount:
+      typeof run.execution_error_count === "number"
+        ? run.execution_error_count
+        : 0,
     tournamentScore: run.tournament_score,
     accuracyScore: run.accuracy_score,
     safetyScore: run.safety_score,

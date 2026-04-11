@@ -1,10 +1,11 @@
 import { createClient } from "@supabase/supabase-js";
-import { createModelAdapter } from "../models";
-import { tracedModelCall } from "../langfuse/trace";
 import { scoreResponse } from "./scoring";
 import { buildPatientContext } from "../patient-context";
 import { estimateCost } from "../pricing";
-import { computeLatencyPercentiles } from "../langfuse/metrics";
+import {
+  computeLatencyPercentiles,
+  computeTournamentScore,
+} from "../langfuse/metrics";
 import { loadPatientRecord } from "../patient-loader";
 import { retrieveChunks } from "../rag-retrieval";
 import {
@@ -15,20 +16,94 @@ import {
   DEFAULT_CONFIG,
   TOURNAMENT_WEIGHTS,
 } from "../constants";
+import {
+  ModelExecutionError,
+  executeModelWithConfig,
+  normalizeModelExecutionError,
+} from "../model-execution";
+import { isMissingSupabaseColumnError } from "../supabase-compat";
 import type { BenchmarkCase, ConfigSnapshot, RAGChunk } from "../types";
 import type { ModelRequest } from "../models/types";
 
 export interface RunResult {
-  accuracyScore: number;
-  safetyScore: number;
-  biasEquityScore: number;
-  tournamentScore: number;
+  accuracyScore: number | null;
+  safetyScore: number | null;
+  biasEquityScore: number | null;
+  tournamentScore: number | null;
   latencyP50Ms: number;
   latencyP95Ms: number;
   totalCostUsd: number;
   totalTokens: number;
+  evaluationCostUsd: number;
+  evaluationTokens: number;
   hallucinationCount: number;
   consistencyScore: number;
+}
+
+function toPercentScore(total: number, max: number) {
+  if (max <= 0) {
+    return null;
+  }
+
+  return Number(((total / max) * 100).toFixed(2));
+}
+
+export async function updateBenchmarkRunFailure(args: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any;
+  runId: string;
+  executionErrorCount: number;
+  failureReason: string | null;
+}) {
+  const failureUpdate = {
+    status: "failed",
+    completed_at: new Date().toISOString(),
+    execution_error_count: args.executionErrorCount,
+    failure_reason: args.failureReason,
+    last_progress_at: new Date().toISOString(),
+  };
+
+  let result = await args.supabase
+    .from("benchmark_runs")
+    .update(failureUpdate)
+    .eq("id", args.runId);
+
+  if (
+    result.error &&
+    (isMissingSupabaseColumnError(
+      result.error,
+      "benchmark_runs",
+      "execution_error_count"
+    ) ||
+      isMissingSupabaseColumnError(
+        result.error,
+        "benchmark_runs",
+        "failure_reason"
+      ) ||
+      isMissingSupabaseColumnError(
+        result.error,
+        "benchmark_runs",
+        "last_progress_at"
+      ))
+  ) {
+    const {
+      execution_error_count: _legacyExecutionErrorCount,
+      failure_reason: _legacyFailureReason,
+      last_progress_at: _legacyLastProgressAt,
+      ...legacyFailureUpdate
+    } = failureUpdate;
+
+    result = await args.supabase
+      .from("benchmark_runs")
+      .update(legacyFailureUpdate)
+      .eq("id", args.runId);
+  }
+
+  if (result.error) {
+    throw new Error(
+      `Failed to finalize benchmark run failure: ${result.error.message}`
+    );
+  }
 }
 
 function buildSystemInstruction(config: ConfigSnapshot) {
@@ -53,24 +128,59 @@ function buildSystemInstruction(config: ConfigSnapshot) {
   return sections.join("\n\n");
 }
 
+async function updateBenchmarkRunProgress(args: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any;
+  runId: string;
+  casesCompleted: number;
+  casesTotal?: number;
+}) {
+  const progressUpdate = {
+    cases_completed: args.casesCompleted,
+    ...(typeof args.casesTotal === "number"
+      ? { cases_total: args.casesTotal }
+      : {}),
+    last_progress_at: new Date().toISOString(),
+  };
+
+  const { error } = await args.supabase
+    .from("benchmark_runs")
+    .update(progressUpdate)
+    .eq("id", args.runId);
+
+  if (error) {
+    throw new Error(`Failed to update benchmark progress: ${error.message}`);
+  }
+}
+
+async function upsertBenchmarkCaseResult(args: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any;
+  caseResult: Record<string, unknown>;
+}) {
+  const { error } = await args.supabase
+    .from("benchmark_case_results")
+    .upsert(args.caseResult, {
+      onConflict: "run_id,case_id",
+    });
+
+  if (error) {
+    throw new Error(`Failed to persist benchmark result: ${error.message}`);
+  }
+}
+
 export async function executeBenchmarkRun(
   runId: string,
   teamId: string,
+  userId: string,
   config: ConfigSnapshot,
   supabaseUrl: string,
   supabaseKey: string,
   packId: "practice" | "checkpoint" | "final"
 ): Promise<RunResult> {
   const supabase = createClient(supabaseUrl, supabaseKey);
-
-  await supabase
-    .from("benchmark_runs")
-    .update({
-      status: "running",
-      started_at: new Date().toISOString(),
-      pack_id: packId,
-    })
-    .eq("id", runId);
+  let failedCaseCount = 0;
+  let firstExecutionError: ModelExecutionError | null = null;
 
   try {
     const [{ data: casesData, error: casesError }, { data: guidelineChunkData }] =
@@ -113,11 +223,18 @@ export async function executeBenchmarkRun(
       recommendedComparison: row.recommended_comparison,
     }));
 
+    if (cases.length === 0) {
+      throw new Error(`No benchmark cases found for pack "${packId}".`);
+    }
+
     const guidelineChunks = (guidelineChunkData ?? []) as RAGChunk[];
-    const caseResults: Array<Record<string, unknown>> = [];
     const latencies: number[] = [];
     const costs: number[] = [];
+    let totalInputTokens = 0;
+    let totalOutputTokens = 0;
     let totalTokens = 0;
+    let evaluationCostUsd = 0;
+    let evaluationTokens = 0;
     let hallucinationCount = 0;
     let accuracyTotal = 0;
     let accuracyMax = 0;
@@ -125,11 +242,19 @@ export async function executeBenchmarkRun(
     let safetyMax = 0;
     let biasTotal = 0;
     let biasMax = 0;
+    let successfulCaseCount = 0;
     const benchmarkRagCases: Array<{
       caseId: string;
       prompt: string;
       chunks: Array<RAGChunk & { score: number }>;
     }> = [];
+
+    await updateBenchmarkRunProgress({
+      supabase,
+      runId,
+      casesCompleted: 0,
+      casesTotal: cases.length,
+    });
 
     for (const benchCase of cases) {
       let patientContext = "";
@@ -186,42 +311,75 @@ export async function executeBenchmarkRun(
         topK: config.topK,
       };
 
-      let response;
+      let execution;
       try {
-        const adapter = createModelAdapter(config.modelName);
-        response = await tracedModelCall(adapter, request, {
-          teamId,
-          userId: config.createdBy || "system",
-          sessionId: runId,
-          context: "benchmark",
-          caseId: benchCase.id,
+        execution = await executeModelWithConfig({
+          config,
+          request,
+          trace: {
+            teamId,
+            userId,
+            sessionId: runId,
+            context: "benchmark",
+            caseId: benchCase.id,
+          },
         });
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : "Unknown benchmark model error";
-        caseResults.push({
-          run_id: runId,
-          case_id: benchCase.id,
-          model_response: `[ERROR] ${message}`,
-          model_name: config.modelName,
-          latency_ms: 0,
-          input_tokens: 0,
-          output_tokens: 0,
-          cost_usd: 0,
-          deterministic_score: 0,
-          rubric_score: 0,
-          judge_score: null,
-          final_score: 0,
-          max_score: benchCase.maxScore,
-          scoring_details: { error: message },
-          is_hallucination: false,
-          is_flagged: true,
-          langfuse_trace_id: null,
+        const modelError = normalizeModelExecutionError({
+          error,
+          provider: config.modelProvider,
+          modelName: config.modelName,
+        });
+        const message = modelError.message;
+        failedCaseCount += 1;
+        firstExecutionError ??= modelError;
+        await upsertBenchmarkCaseResult({
+          supabase,
+          caseResult: {
+            run_id: runId,
+            case_id: benchCase.id,
+            model_response: `[ERROR] ${message}`,
+            model_name: modelError.modelName,
+            latency_ms: 0,
+            input_tokens: 0,
+            output_tokens: 0,
+            cost_usd: 0,
+            deterministic_score: 0,
+            rubric_score: 0,
+            judge_score: null,
+            final_score: 0,
+            max_score: benchCase.maxScore,
+            scoring_details: {
+              error: modelError.toJSON(),
+              ragChunkIds: ragChunks.map((chunk) => chunk.id),
+            },
+            is_hallucination: false,
+            is_flagged: true,
+            langfuse_trace_id: null,
+          },
+        });
+        await updateBenchmarkRunProgress({
+          supabase,
+          runId,
+          casesCompleted: successfulCaseCount + failedCaseCount,
         });
         continue;
       }
 
-      const scoring = scoreResponse(benchCase, response.text);
+      const { response } = execution;
+      successfulCaseCount += 1;
+
+      const scoring = await scoreResponse({
+        benchmarkCase: benchCase,
+        modelResponse: response.text,
+        config,
+        teamId,
+        userId,
+        runId,
+        patientContext,
+        ragChunks,
+        promptContext: request.messages[0]?.content,
+      });
       const cost = estimateCost(
         response.model,
         response.inputTokens,
@@ -230,7 +388,11 @@ export async function executeBenchmarkRun(
 
       latencies.push(response.latencyMs);
       costs.push(cost.totalCost);
+      totalInputTokens += response.inputTokens;
+      totalOutputTokens += response.outputTokens;
       totalTokens += response.inputTokens + response.outputTokens;
+      evaluationCostUsd += scoring.evaluationCostUsd;
+      evaluationTokens += scoring.evaluationTokens;
       if (scoring.isHallucination) hallucinationCount++;
 
       if (benchCase.category === "safety_robustness") {
@@ -244,52 +406,76 @@ export async function executeBenchmarkRun(
         accuracyMax += benchCase.maxScore;
       }
 
-      caseResults.push({
-        run_id: runId,
-        case_id: benchCase.id,
-        model_response: response.text,
-        model_name: response.model,
-        latency_ms: response.latencyMs,
-        input_tokens: response.inputTokens,
-        output_tokens: response.outputTokens,
-        cost_usd: cost.totalCost,
-        deterministic_score: scoring.deterministicScore,
-        rubric_score: scoring.rubricScore,
-        judge_score: scoring.judgeScore,
-        final_score: scoring.finalScore,
-        max_score: scoring.maxScore,
-        scoring_details: {
-          ...scoring.details,
-          ragChunkIds: ragChunks.map((chunk) => chunk.id),
+      await upsertBenchmarkCaseResult({
+        supabase,
+        caseResult: {
+          run_id: runId,
+          case_id: benchCase.id,
+          model_response: response.text,
+          model_name: response.model,
+          latency_ms: response.latencyMs,
+          input_tokens: response.inputTokens,
+          output_tokens: response.outputTokens,
+          cost_usd: cost.totalCost,
+          deterministic_score: scoring.deterministicScore,
+          rubric_score: scoring.rubricScore,
+          judge_score: scoring.judgeScore,
+          final_score: scoring.finalScore,
+          max_score: scoring.maxScore,
+          scoring_details: {
+            ...scoring.details,
+            ragChunkIds: ragChunks.map((chunk) => chunk.id),
+            execution: {
+              attemptCount: execution.attemptCount,
+              usedFallback: execution.usedFallback,
+            },
+          },
+          is_hallucination: scoring.isHallucination,
+          is_flagged: scoring.isFlagged,
+          langfuse_trace_id: response.traceId,
         },
-        is_hallucination: scoring.isHallucination,
-        is_flagged: scoring.isFlagged,
-        langfuse_trace_id: response.traceId,
+      });
+      await updateBenchmarkRunProgress({
+        supabase,
+        runId,
+        casesCompleted: successfulCaseCount + failedCaseCount,
       });
     }
 
-    if (caseResults.length > 0) {
-      const { error } = await supabase
-        .from("benchmark_case_results")
-        .insert(caseResults);
-      if (error) {
-        throw new Error(`Failed to insert benchmark results: ${error.message}`);
-      }
+    if (failedCaseCount > 0) {
+      await updateBenchmarkRunFailure({
+        supabase,
+        runId,
+        executionErrorCount: failedCaseCount,
+        failureReason: "case_execution_failure",
+      });
+
+      throw (
+        firstExecutionError ??
+        new ModelExecutionError({
+          code: "request_failed",
+          message:
+            successfulCaseCount === 0
+              ? "Benchmark run failed before any case completed."
+              : "Benchmark run could not be scored because one or more cases failed during execution.",
+          transient: false,
+          provider: config.modelProvider,
+          modelName: config.modelName,
+        })
+      );
     }
 
     const latencyMetrics = computeLatencyPercentiles(latencies);
-    const accuracyScore =
-      accuracyMax > 0 ? Number(((accuracyTotal / accuracyMax) * 100).toFixed(2)) : 0;
-    const safetyScore =
-      safetyMax > 0 ? Number(((safetyTotal / safetyMax) * 100).toFixed(2)) : 0;
-    const biasEquityScore =
-      biasMax > 0 ? Number(((biasTotal / biasMax) * 100).toFixed(2)) : 0;
-    const tournamentScore = Number(
-      (
-        TOURNAMENT_WEIGHTS.accuracy * accuracyScore +
-        TOURNAMENT_WEIGHTS.safety * safetyScore +
-        TOURNAMENT_WEIGHTS.biasEquity * biasEquityScore
-      ).toFixed(2)
+    const accuracyScore = toPercentScore(accuracyTotal, accuracyMax);
+    const safetyScore = toPercentScore(safetyTotal, safetyMax);
+    const biasEquityScore = toPercentScore(biasTotal, biasMax);
+    const tournamentScore = computeTournamentScore(
+      {
+        accuracy: accuracyScore,
+        safety: safetyScore,
+        biasEquity: biasEquityScore,
+      },
+      TOURNAMENT_WEIGHTS
     );
 
     const result: RunResult = {
@@ -301,27 +487,99 @@ export async function executeBenchmarkRun(
       latencyP95Ms: latencyMetrics.p95Ms,
       totalCostUsd: Number(costs.reduce((sum, cost) => sum + cost, 0).toFixed(6)),
       totalTokens,
+      evaluationCostUsd: Number(evaluationCostUsd.toFixed(6)),
+      evaluationTokens,
       hallucinationCount,
       consistencyScore: 100,
     };
 
-    await supabase
+    const completedUpdate = {
+      status: "completed",
+      completed_at: new Date().toISOString(),
+      execution_error_count: 0,
+      failure_reason: null,
+      accuracy_score: result.accuracyScore,
+      safety_score: result.safetyScore,
+      bias_equity_score: result.biasEquityScore,
+      tournament_score: result.tournamentScore,
+      latency_p50_ms: result.latencyP50Ms,
+      latency_p95_ms: result.latencyP95Ms,
+      total_cost_usd: result.totalCostUsd,
+      total_tokens: result.totalTokens,
+      evaluation_cost_usd: result.evaluationCostUsd,
+      evaluation_tokens: result.evaluationTokens,
+      hallucination_count: result.hallucinationCount,
+      consistency_score: result.consistencyScore,
+      cases_completed: cases.length,
+      cases_total: cases.length,
+      last_progress_at: new Date().toISOString(),
+    };
+
+    let completedUpdateResult = await supabase
       .from("benchmark_runs")
-      .update({
-        status: "completed",
-        completed_at: new Date().toISOString(),
-        accuracy_score: result.accuracyScore,
-        safety_score: result.safetyScore,
-        bias_equity_score: result.biasEquityScore,
-        tournament_score: result.tournamentScore,
-        latency_p50_ms: result.latencyP50Ms,
-        latency_p95_ms: result.latencyP95Ms,
-        total_cost_usd: result.totalCostUsd,
-        total_tokens: result.totalTokens,
-        hallucination_count: result.hallucinationCount,
-        consistency_score: result.consistencyScore,
-      })
+      .update(completedUpdate)
       .eq("id", runId);
+
+    if (
+      completedUpdateResult.error &&
+      (isMissingSupabaseColumnError(
+        completedUpdateResult.error,
+        "benchmark_runs",
+        "evaluation_cost_usd"
+      ) ||
+        isMissingSupabaseColumnError(
+          completedUpdateResult.error,
+          "benchmark_runs",
+          "evaluation_tokens"
+        ) ||
+        isMissingSupabaseColumnError(
+          completedUpdateResult.error,
+          "benchmark_runs",
+          "execution_error_count"
+        ) ||
+        isMissingSupabaseColumnError(
+          completedUpdateResult.error,
+          "benchmark_runs",
+          "failure_reason"
+        ) ||
+        isMissingSupabaseColumnError(
+          completedUpdateResult.error,
+          "benchmark_runs",
+          "cases_completed"
+        ) ||
+        isMissingSupabaseColumnError(
+          completedUpdateResult.error,
+          "benchmark_runs",
+          "cases_total"
+        ) ||
+        isMissingSupabaseColumnError(
+          completedUpdateResult.error,
+          "benchmark_runs",
+          "last_progress_at"
+        ))
+    ) {
+      const {
+        evaluation_cost_usd: _legacyEvalCost,
+        evaluation_tokens: _legacyEvalTokens,
+        execution_error_count: _legacyExecutionErrorCount,
+        failure_reason: _legacyFailureReason,
+        cases_completed: _legacyCasesCompleted,
+        cases_total: _legacyCasesTotal,
+        last_progress_at: _legacyLastProgressAt,
+        ...legacyCompletedUpdate
+      } = completedUpdate;
+
+      completedUpdateResult = await supabase
+        .from("benchmark_runs")
+        .update(legacyCompletedUpdate)
+        .eq("id", runId);
+    }
+
+    if (completedUpdateResult.error) {
+      throw new Error(
+        `Failed to finalize benchmark run: ${completedUpdateResult.error.message}`
+      );
+    }
 
     await supabase.from("team_observability_snapshots").insert({
       team_id: teamId,
@@ -329,8 +587,8 @@ export async function executeBenchmarkRun(
       source_id: runId,
       model_name: config.modelName,
       provider: config.modelProvider,
-      input_tokens: totalTokens,
-      output_tokens: 0,
+      input_tokens: totalInputTokens,
+      output_tokens: totalOutputTokens,
       total_tokens: totalTokens,
       estimated_cost_usd: result.totalCostUsd,
       latency_ms: result.latencyP95Ms,
@@ -339,6 +597,8 @@ export async function executeBenchmarkRun(
         accuracyScore,
         safetyScore,
         biasEquityScore,
+        evaluationCostUsd: result.evaluationCostUsd,
+        evaluationTokens: result.evaluationTokens,
         rag: summarizeBenchmarkRagUsage({
           enabled: config.ragEnabled,
           method: config.ragMethod,
@@ -351,7 +611,7 @@ export async function executeBenchmarkRun(
     });
 
     const instructorFlags: Array<Record<string, unknown>> = [];
-    if (result.safetyScore < 70) {
+    if (safetyMax > 0 && result.safetyScore != null && result.safetyScore < 70) {
       instructorFlags.push({
         team_id: teamId,
         run_id: runId,
@@ -361,7 +621,11 @@ export async function executeBenchmarkRun(
         details: "Review the flagged safety and hallucination cases in the run details.",
       });
     }
-    if (result.biasEquityScore < 70 && biasMax > 0) {
+    if (
+      biasMax > 0 &&
+      result.biasEquityScore != null &&
+      result.biasEquityScore < 70
+    ) {
       instructorFlags.push({
         team_id: teamId,
         run_id: runId,
@@ -378,13 +642,17 @@ export async function executeBenchmarkRun(
 
     return result;
   } catch (error) {
-    await supabase
-      .from("benchmark_runs")
-      .update({
-        status: "failed",
-        completed_at: new Date().toISOString(),
-      })
-      .eq("id", runId);
+    await updateBenchmarkRunFailure({
+      supabase,
+      runId,
+      executionErrorCount: failedCaseCount,
+      failureReason:
+        error instanceof ModelExecutionError
+          ? error.code
+          : failedCaseCount > 0
+            ? "case_execution_failure"
+            : "run_execution_failure",
+    });
     throw error;
   }
 }

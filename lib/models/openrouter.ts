@@ -16,22 +16,52 @@ export class OpenRouterAdapter implements ModelAdapter {
   public readonly modelName: string;
 
   private readonly client: OpenAI;
+  private readonly apiKey: string;
 
   constructor(modelName: string) {
-    const apiKey = process.env.OPEN_ROUTER_KEY;
+    const apiKey =
+      process.env.OPEN_ROUTER_KEY ?? process.env.OPENROUTER_API_KEY;
     if (!apiKey) {
-      throw new Error("OPEN_ROUTER_KEY environment variable is not set.");
+      throw new Error(
+        "OPEN_ROUTER_KEY or OPENROUTER_API_KEY environment variable is not set."
+      );
     }
 
+    this.apiKey = apiKey;
     this.modelName = modelName;
     this.client = new OpenAI({
       apiKey,
       baseURL: "https://openrouter.ai/api/v1",
       defaultHeaders: {
-        "HTTP-Referer": process.env.NEXTAUTH_URL || "http://localhost:3000",
+        "HTTP-Referer": normalizeOpenRouterReferer(process.env.NEXTAUTH_URL),
         "X-Title": "ChartEHR Project",
       },
     });
+  }
+
+  async assertAvailable() {
+    const response = await fetch("https://openrouter.ai/api/v1/models", {
+      headers: {
+        Authorization: `Bearer ${this.apiKey}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `Failed to verify OpenRouter model availability (${response.status}).`
+      );
+    }
+
+    const payload = (await response.json()) as {
+      data?: Array<{ id?: string | null }>;
+    };
+
+    const available = payload.data?.some((model) => model.id === this.modelName);
+    if (!available) {
+      throw new Error(
+        `OpenRouter model "${this.modelName}" is not currently available. Choose a different model and try again.`
+      );
+    }
   }
 
   async chat(req: ModelRequest): Promise<ModelResponse> {
@@ -79,5 +109,16 @@ export class OpenRouterAdapter implements ModelAdapter {
 
   estimateCost(inputTokens: number, outputTokens: number): CostBreakdown {
     return estimateCost(this.modelName, inputTokens, outputTokens);
+  }
+}
+
+function normalizeOpenRouterReferer(value?: string | null) {
+  const fallback = "http://localhost:3000";
+  if (!value) return fallback;
+
+  try {
+    return new URL(value).toString();
+  } catch {
+    return new URL(`https://${value}`).toString();
   }
 }

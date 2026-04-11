@@ -1,5 +1,13 @@
 import type { Session } from "next-auth";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { cookies } from "next/headers";
+import type { NextResponse } from "next/server";
+import {
+  ApiRouteError,
+  instructorRequiredError,
+  isSupabaseNoRowsError,
+  toApiRouteError,
+} from "@/lib/api-error";
 
 interface SessionUserInput {
   email?: string | null;
@@ -21,6 +29,7 @@ export interface TeamMembershipRecord {
   joinCode: string;
   role: "lead" | "member";
   memberCount: number;
+  joinedAt: string;
 }
 
 export interface SessionContext {
@@ -28,8 +37,47 @@ export interface SessionContext {
   team: TeamMembershipRecord | null;
 }
 
+const INSTRUCTOR_EMAIL_OVERRIDES = new Set(["msanfilippo4@fordham.edu"]);
+const ACTIVE_TEAM_COOKIE_NAME = "chartehr_active_team_id";
+
 function normalizeEmail(value: string) {
   return value.trim().toLowerCase();
+}
+
+function normalizeCookieValue(value: string | null | undefined) {
+  const nextValue = value?.trim();
+  return nextValue ? nextValue : null;
+}
+
+export function readActiveTeamCookie() {
+  try {
+    return normalizeCookieValue(
+      cookies().get(ACTIVE_TEAM_COOKIE_NAME)?.value ?? null
+    );
+  } catch {
+    return null;
+  }
+}
+
+export function applyActiveTeamCookie(
+  response: NextResponse,
+  teamId: string | null
+) {
+  if (!teamId) {
+    response.cookies.delete(ACTIVE_TEAM_COOKIE_NAME);
+    return response;
+  }
+
+  response.cookies.set({
+    name: ACTIVE_TEAM_COOKIE_NAME,
+    value: teamId,
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 30,
+  });
+  return response;
 }
 
 export async function ensureUserRecord(
@@ -38,7 +86,11 @@ export async function ensureUserRecord(
 ): Promise<SessionUserRecord> {
   const rawEmail = user.email?.trim();
   if (!rawEmail) {
-    throw new Error("Authenticated session is missing an email address.");
+    throw new ApiRouteError(
+      "Authenticated session is missing an email address.",
+      401,
+      "unauthorized"
+    );
   }
 
   const email = normalizeEmail(rawEmail);
@@ -49,8 +101,8 @@ export async function ensureUserRecord(
     .eq("email", email)
     .single();
 
-  if (existingError && existingError.code !== "PGRST116") {
-    throw new Error(`Failed to load user record: ${existingError.message}`);
+  if (existingError && !isSupabaseNoRowsError(existingError)) {
+    throw toApiRouteError(existingError, "Failed to load user record.");
   }
 
   if (existing) {
@@ -59,22 +111,40 @@ export async function ensureUserRecord(
     if (user.image !== undefined && user.image !== existing.image) {
       updates.image = user.image ?? null;
     }
+    if (
+      INSTRUCTOR_EMAIL_OVERRIDES.has(email) &&
+      existing.role !== "instructor"
+    ) {
+      updates.role = "instructor";
+    }
 
     if (Object.keys(updates).length > 0) {
-      await supabase.from("users").update(updates).eq("id", existing.id);
+      const { error: updateError } = await supabase
+        .from("users")
+        .update(updates)
+        .eq("id", existing.id);
+
+      if (updateError) {
+        throw toApiRouteError(updateError, "Failed to update user record.");
+      }
     }
+
+    const resolvedRole =
+      (updates.role as SessionUserRecord["role"] | undefined) ?? existing.role;
 
     return {
       id: existing.id,
       email: existing.email,
-      name: existing.name,
-      image: existing.image,
-      role: existing.role,
+      name: (updates.name as string | null | undefined) ?? existing.name,
+      image: (updates.image as string | null | undefined) ?? existing.image,
+      role: resolvedRole,
     };
   }
 
   const inferredRole =
-    email === "demo@fordham.edu" ? "instructor" : ("student" as const);
+    email === "demo@fordham.edu" || INSTRUCTOR_EMAIL_OVERRIDES.has(email)
+      ? "instructor"
+      : ("student" as const);
 
   const { data: inserted, error: insertError } = await supabase
     .from("users")
@@ -88,9 +158,7 @@ export async function ensureUserRecord(
     .single();
 
   if (insertError || !inserted) {
-    throw new Error(
-      `Failed to create user record: ${insertError?.message ?? "unknown error"}`
-    );
+    throw toApiRouteError(insertError, "Failed to create user record.");
   }
 
   return {
@@ -102,42 +170,72 @@ export async function ensureUserRecord(
   };
 }
 
-export async function getTeamMembership(
+export async function listTeamMemberships(
   supabase: SupabaseClient,
   userId: string
-): Promise<TeamMembershipRecord | null> {
-  const { data: membership, error } = await supabase
+): Promise<TeamMembershipRecord[]> {
+  const { data: memberships, error } = await supabase
     .from("team_members")
-    .select("team_id, role, teams!inner(id, name, join_code)")
+    .select("team_id, role, joined_at, teams!inner(id, name, join_code)")
     .eq("user_id", userId)
-    .limit(1)
-    .single();
+    .order("joined_at", { ascending: false });
 
   if (error) {
-    if (error.code === "PGRST116") return null;
-    throw new Error(`Failed to load team membership: ${error.message}`);
+    if (isSupabaseNoRowsError(error)) return [];
+    throw toApiRouteError(error, "Failed to load team membership.");
   }
 
-  const teamData = Array.isArray(membership.teams)
-    ? membership.teams[0]
-    : membership.teams;
+  if (!memberships?.length) {
+    return [];
+  }
 
-  const { count, error: countError } = await supabase
+  const teamIds = memberships.map((membership) => membership.team_id);
+  const { data: memberRows, error: countError } = await supabase
     .from("team_members")
-    .select("user_id", { count: "exact", head: true })
-    .eq("team_id", membership.team_id);
+    .select("team_id")
+    .in("team_id", teamIds);
 
   if (countError) {
-    throw new Error(`Failed to count team members: ${countError.message}`);
+    throw toApiRouteError(countError, "Failed to count team members.");
   }
 
-  return {
-    teamId: membership.team_id,
-    teamName: teamData.name,
-    joinCode: teamData.join_code,
-    role: membership.role,
-    memberCount: count ?? 0,
-  };
+  const memberCountByTeamId = new Map<string, number>();
+  for (const row of memberRows ?? []) {
+    memberCountByTeamId.set(
+      row.team_id,
+      (memberCountByTeamId.get(row.team_id) ?? 0) + 1
+    );
+  }
+
+  return memberships.map((membership) => {
+    const teamData = Array.isArray(membership.teams)
+      ? membership.teams[0]
+      : membership.teams;
+
+    return {
+      teamId: membership.team_id,
+      teamName: teamData.name,
+      joinCode: teamData.join_code,
+      role: membership.role,
+      memberCount: memberCountByTeamId.get(membership.team_id) ?? 0,
+      joinedAt: membership.joined_at,
+    };
+  });
+}
+
+export async function getTeamMembership(
+  supabase: SupabaseClient,
+  userId: string,
+  activeTeamId: string | null = null
+): Promise<TeamMembershipRecord | null> {
+  const memberships = await listTeamMemberships(supabase, userId);
+  if (!memberships.length) return null;
+
+  const activeMembership =
+    memberships.find((membership) => membership.teamId === activeTeamId) ??
+    memberships[0];
+
+  return activeMembership;
 }
 
 export async function getSessionContext(
@@ -145,10 +243,14 @@ export async function getSessionContext(
   session: Session
 ): Promise<SessionContext> {
   if (!session.user) {
-    throw new Error("Authenticated session is missing a user payload.");
+    throw new ApiRouteError(
+      "Authenticated session is missing a user payload.",
+      401,
+      "unauthorized"
+    );
   }
   const user = await ensureUserRecord(supabase, session.user);
-  const team = await getTeamMembership(supabase, user.id);
+  const team = await getTeamMembership(supabase, user.id, readActiveTeamCookie());
   return { user, team };
 }
 
@@ -158,7 +260,7 @@ export async function requireInstructor(
 ): Promise<SessionContext> {
   const ctx = await getSessionContext(supabase, session);
   if (!["instructor", "admin"].includes(ctx.user.role)) {
-    throw new Error("Instructor access is required.");
+    throw instructorRequiredError();
   }
   return ctx;
 }

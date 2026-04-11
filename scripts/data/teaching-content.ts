@@ -199,6 +199,12 @@ export const teachingPatients: SeedPatientData[] = [
     },
     clinicalNotes: [
       note(
+        "progress",
+        "2025-09-18",
+        "Dr. Priya Patel",
+        "Follow-up for postmenopausal spotting. Pelvic exam completed with no active bleeding seen and no cervical lesion visualized. Return precautions reviewed and gynecology follow-up placed."
+      ),
+      note(
         "consult",
         "2025-10-30",
         "Dr. Sarah Chen",
@@ -266,6 +272,12 @@ export const teachingPatients: SeedPatientData[] = [
       recordedDate: "2026-02-03",
     },
     clinicalNotes: [
+      note(
+        "progress",
+        "2026-02-03",
+        "Dr. Maria Rodriguez",
+        "Preconception visit included breast and pelvic exam. MA Ana Lopez served as chaperone during the pelvic exam, and the patient agreed with the exam plan."
+      ),
       note(
         "progress",
         "2026-02-03",
@@ -412,6 +424,12 @@ export const teachingPatients: SeedPatientData[] = [
       recordedDate: "2026-02-11",
     },
     clinicalNotes: [
+      note(
+        "progress",
+        "2025-11-18",
+        "Dr. Fatima Al-Hassan",
+        "Visit for delayed cervical cancer screening. Telephone Bengali interpreter remained on the line, and RN Samira Begum was present as chaperone for the breast and pelvic exam."
+      ),
       note(
         "progress",
         "2026-02-11",
@@ -680,6 +698,12 @@ export const teachingPatients: SeedPatientData[] = [
       recordedDate: "2026-02-08",
     },
     clinicalNotes: [
+      note(
+        "progress",
+        "2026-02-08",
+        "Dr. Anita Gupta",
+        "Annual preventive visit included breast and pelvic exam discussion. A chaperone was offered and the patient declined before the exam. Screening intervals were reviewed in plain language."
+      ),
       note(
         "progress",
         "2026-02-08",

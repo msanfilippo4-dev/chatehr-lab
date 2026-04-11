@@ -2,7 +2,7 @@
 // Gemini model adapter — wraps @google/generative-ai SDK
 // ---------------------------------------------------------------------------
 
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenerativeAI, type ResponseSchema } from "@google/generative-ai";
 import type { ModelAdapter, ModelRequest, ModelResponse, CostBreakdown } from "./types";
 import { estimateCost } from "../pricing";
 
@@ -32,6 +32,8 @@ export class GeminiAdapter implements ModelAdapter {
         topP: req.topP,
         topK: req.topK,
         maxOutputTokens: req.maxOutputTokens,
+        responseMimeType: req.responseMimeType,
+        responseSchema: req.responseJsonSchema as ResponseSchema | undefined,
       },
     });
 

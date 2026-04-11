@@ -10,9 +10,14 @@ function LoginForm() {
   const error = searchParams.get("error");
   const [loading, setLoading] = useState(false);
 
+  const getCallbackUrl = () =>
+    typeof window === "undefined"
+      ? "/workspace"
+      : new URL("/workspace", window.location.origin).toString();
+
   const handleGoogleSignIn = async () => {
     setLoading(true);
-    await signIn("google", { callbackUrl: "/workspace" });
+    await signIn("google", { callbackUrl: getCallbackUrl() });
   };
 
   return (
@@ -82,7 +87,9 @@ function LoginForm() {
           </div>
 
           <button
-            onClick={() => signIn("credentials", { callbackUrl: "/workspace" })}
+            onClick={() =>
+              signIn("credentials", { callbackUrl: getCallbackUrl() })
+            }
             className="flex w-full items-center justify-center gap-2 rounded-lg bg-fordham-maroon px-4 py-2.5 t-body font-medium text-white shadow-sm transition-all hover:bg-fordham-dark"
           >
             <LogIn size={16} />

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { readJsonBodyWithLimit, trimString } from "@/lib/api-request";
+import { errorResponse, routeErrorResponse } from "@/lib/api-response";
 import { getSessionContext } from "@/lib/server-context";
 
 interface ReflectionBody {
@@ -19,10 +20,15 @@ interface ReflectionBody {
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return errorResponse("Unauthorized", 401, "unauthorized");
   }
   const supabase = createAdminClient();
-  const ctx = await getSessionContext(supabase, session);
+  let ctx;
+  try {
+    ctx = await getSessionContext(supabase, session);
+  } catch (error) {
+    return routeErrorResponse(error, "Failed to load reflections.");
+  }
   if (!ctx.team) return NextResponse.json([]);
 
   const { data, error } = await supabase
@@ -33,10 +39,7 @@ export async function GET() {
     .limit(5);
 
   if (error) {
-    return NextResponse.json(
-      { error: "Failed to load reflections." },
-      { status: 500 }
-    );
+    return routeErrorResponse(error, "Failed to load reflections.");
   }
 
   return NextResponse.json(data ?? []);
@@ -45,7 +48,7 @@ export async function GET() {
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return errorResponse("Unauthorized", 401, "unauthorized");
   }
 
   const body = await readJsonBodyWithLimit<ReflectionBody>(req, 200_000);
@@ -54,11 +57,17 @@ export async function POST(req: Request) {
   }
 
   const supabase = createAdminClient();
-  const ctx = await getSessionContext(supabase, session);
+  let ctx;
+  try {
+    ctx = await getSessionContext(supabase, session);
+  } catch (error) {
+    return routeErrorResponse(error, "Failed to save reflection.");
+  }
   if (!ctx.team) {
-    return NextResponse.json(
-      { error: "You must be on a team to save a reflection." },
-      { status: 403 }
+    return errorResponse(
+      "You must be on a team to save a reflection.",
+      403,
+      "no_team"
     );
   }
 
@@ -86,10 +95,7 @@ export async function POST(req: Request) {
     .single();
 
   if (error) {
-    return NextResponse.json(
-      { error: "Failed to save reflection." },
-      { status: 500 }
-    );
+    return routeErrorResponse(error, "Failed to save reflection.");
   }
 
   return NextResponse.json(data, { status: 201 });

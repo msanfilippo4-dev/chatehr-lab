@@ -8,6 +8,7 @@ import type {
   ContextLevel,
   ModelProvider,
   SectionToggles,
+  TeachingPresetDefinition,
 } from "./types";
 
 // ── Model Registry ────────────────────────────────────────────────────────
@@ -23,7 +24,31 @@ export interface ModelRegistryEntry {
   tier: "stable" | "free-core" | "free-advanced";
 }
 
+export const GEMINI_CORE_MODEL_ID = "gemini-3.1-flash-lite-preview";
+export const GEMINI_BACKUP_MODEL_ID = "gemini-2.5-flash-lite";
+export const BENCHMARK_JUDGE_MODEL_ID = GEMINI_CORE_MODEL_ID;
+
 export const MODEL_REGISTRY: Record<string, ModelRegistryEntry> = {
+  "gemini-3.1-flash-lite-preview": {
+    provider: "gemini",
+    displayName: "Gemini 3.1 Flash-Lite Preview",
+    shortLabel: "Gemini 3.1 Flash-Lite",
+    maxContext: 1_048_576,
+    inputPricePerMToken: 0.1,
+    outputPricePerMToken: 0.4,
+    recommendedFor: "Core Gemini baseline for classroom runs, judging, and low-latency evidence-first output.",
+    tier: "stable",
+  },
+  "gemini-2.5-flash-lite": {
+    provider: "gemini",
+    displayName: "Gemini 2.5 Flash-Lite",
+    shortLabel: "Gemini 2.5 Flash-Lite",
+    maxContext: 1_048_576,
+    inputPricePerMToken: 0.1,
+    outputPricePerMToken: 0.4,
+    recommendedFor: "Stable Gemini fallback when Flash-Lite Preview is unavailable.",
+    tier: "stable",
+  },
   "gemini-2.0-flash": {
     provider: "gemini",
     displayName: "Gemini 2.0 Flash",
@@ -54,6 +79,16 @@ export const MODEL_REGISTRY: Record<string, ModelRegistryEntry> = {
     recommendedFor: "Fast free-tier reasoning baseline.",
     tier: "free-core",
   },
+  "openai/gpt-oss-20b": {
+    provider: "openrouter",
+    displayName: "OpenRouter · GPT-OSS 20B",
+    shortLabel: "GPT-OSS 20B",
+    maxContext: 131_072,
+    inputPricePerMToken: 0.03,
+    outputPricePerMToken: 0.11,
+    recommendedFor: "Low-cost paid baseline that avoids free-tier classroom rate limits.",
+    tier: "stable",
+  },
   "openai/gpt-oss-120b:free": {
     provider: "openrouter",
     displayName: "OpenRouter · GPT-OSS 120B (Free)",
@@ -63,6 +98,16 @@ export const MODEL_REGISTRY: Record<string, ModelRegistryEntry> = {
     outputPricePerMToken: 0.36,
     recommendedFor: "Larger free-tier reasoning model for tougher chart synthesis.",
     tier: "free-core",
+  },
+  "openai/gpt-oss-120b": {
+    provider: "openrouter",
+    displayName: "OpenRouter · GPT-OSS 120B",
+    shortLabel: "GPT-OSS 120B",
+    maxContext: 131_072,
+    inputPricePerMToken: 0.039,
+    outputPricePerMToken: 0.19,
+    recommendedFor: "More reliable paid synthesis model for benchmark and population batches.",
+    tier: "stable",
   },
   "mistralai/mistral-small-3.1-24b-instruct:free": {
     provider: "openrouter",
@@ -74,6 +119,16 @@ export const MODEL_REGISTRY: Record<string, ModelRegistryEntry> = {
     recommendedFor: "Balanced free-tier model for structured answers.",
     tier: "free-core",
   },
+  "mistralai/mistral-small-3.1-24b-instruct": {
+    provider: "openrouter",
+    displayName: "OpenRouter · Mistral Small 3.1 24B",
+    shortLabel: "Mistral Small 24B",
+    maxContext: 131_072,
+    inputPricePerMToken: 0.03,
+    outputPricePerMToken: 0.11,
+    recommendedFor: "Low-cost paid structured-answer baseline with better batch reliability.",
+    tier: "stable",
+  },
   "meta-llama/llama-3.3-70b-instruct:free": {
     provider: "openrouter",
     displayName: "OpenRouter · Llama 3.3 70B Instruct (Free)",
@@ -83,6 +138,16 @@ export const MODEL_REGISTRY: Record<string, ModelRegistryEntry> = {
     outputPricePerMToken: 0.30,
     recommendedFor: "Large free-tier generalist for nuanced chart summaries.",
     tier: "free-core",
+  },
+  "meta-llama/llama-3.3-70b-instruct": {
+    provider: "openrouter",
+    displayName: "OpenRouter · Llama 3.3 70B Instruct",
+    shortLabel: "Llama 3.3 70B",
+    maxContext: 131_072,
+    inputPricePerMToken: 0.1,
+    outputPricePerMToken: 0.32,
+    recommendedFor: "Paid high-variance comparison model without free-tier throttling.",
+    tier: "stable",
   },
   "qwen/qwen3-4b:free": {
     provider: "openrouter",
@@ -94,6 +159,16 @@ export const MODEL_REGISTRY: Record<string, ModelRegistryEntry> = {
     recommendedFor: "Smallest model to illustrate speed and capability tradeoffs.",
     tier: "free-core",
   },
+  "qwen/qwen3.5-9b": {
+    provider: "openrouter",
+    displayName: "OpenRouter · Qwen3.5 9B",
+    shortLabel: "Qwen3.5 9B",
+    maxContext: 256_000,
+    inputPricePerMToken: 0.05,
+    outputPricePerMToken: 0.15,
+    recommendedFor: "Small paid OpenRouter baseline that stays batch-runnable for low-cost comparison runs.",
+    tier: "stable",
+  },
   "qwen/qwen3-coder:free": {
     provider: "openrouter",
     displayName: "OpenRouter · Qwen3 Coder (Free)",
@@ -102,6 +177,17 @@ export const MODEL_REGISTRY: Record<string, ModelRegistryEntry> = {
     inputPricePerMToken: 0.07,
     outputPricePerMToken: 0.21,
     recommendedFor: "Advanced experiment model to compare domain mismatch.",
+    tier: "free-advanced",
+  },
+  "nvidia/nemotron-3-super-120b-a12b:free": {
+    provider: "openrouter",
+    displayName: "OpenRouter · Nemotron Super 120B A12B (Free)",
+    shortLabel: "Nemotron Super 120B",
+    maxContext: 262_144,
+    inputPricePerMToken: 0,
+    outputPricePerMToken: 0,
+    recommendedFor:
+      "Large free-tier comparison model for manual OpenRouter experiments.",
     tier: "free-advanced",
   },
   "qwen/qwen3-next-80b-a3b-instruct:free": {
@@ -115,6 +201,11 @@ export const MODEL_REGISTRY: Record<string, ModelRegistryEntry> = {
     tier: "free-advanced",
   },
 };
+
+export const KNOWN_RETIRED_MODEL_IDS = new Set([
+  "qwen/qwen3-4b:free",
+  "mistralai/mistral-small-3.1-24b-instruct:free",
+]);
 
 // ── Benchmark Categories ──────────────────────────────────────────────────
 
@@ -149,8 +240,8 @@ export const DEFAULT_SECTION_TOGGLES: SectionToggles = {
 export const DEFAULT_CONFIG: ConfigSnapshot = {
   // Provider / Model
   modelProvider: "gemini",
-  modelName: "gemini-2.0-flash",
-  fallbackModel: "",
+  modelName: GEMINI_CORE_MODEL_ID,
+  fallbackModel: GEMINI_BACKUP_MODEL_ID,
   maxOutputTokens: 1024,
   requestTimeoutMs: 30_000,
   retries: 1,
@@ -197,6 +288,7 @@ export const DEFAULT_CONFIG: ConfigSnapshot = {
   version: 1,
   configHash: "",
   isFrozen: false,
+  presetId: null,
 };
 
 // ── Context Levels ────────────────────────────────────────────────────────
@@ -257,6 +349,101 @@ export const TOURNAMENT_WEIGHTS = {
   safety: 0.25,
   biasEquity: 0.2,
 } as const;
+
+export const TEACHING_PRESETS: TeachingPresetDefinition[] = [
+  {
+    id: "small-cheap",
+    title: "Small Cheap",
+    summary: "Fastest, cheapest baseline to show what gets lost when the model is small.",
+    config: {
+      presetId: "small-cheap",
+      name: "Preset · Small Cheap",
+      modelProvider: "openrouter",
+      modelName: "qwen/qwen3.5-9b",
+      temperature: 0.2,
+      contextLevel: "STANDARD",
+      ragEnabled: false,
+      styleProfile: "terse",
+      responseFormat: "structured",
+      citationRequired: true,
+    },
+  },
+  {
+    id: "large-synthesis",
+    title: "Large Synthesis",
+    summary: "Bigger reasoning model for note-heavy chart synthesis and nuanced summaries.",
+    config: {
+      presetId: "large-synthesis",
+      name: "Preset · Large Synthesis",
+      modelProvider: "openrouter",
+      modelName: "openai/gpt-oss-120b",
+      temperature: 0.25,
+      contextLevel: "FULL",
+      ragEnabled: false,
+      styleProfile: "clinical",
+      responseFormat: "chain-of-thought",
+      citationRequired: true,
+      noteWindow: 8,
+    },
+  },
+  {
+    id: "high-variance-creative",
+    title: "High Variance",
+    summary: "Higher-temperature model for showing output variability and reasoning drift.",
+    config: {
+      presetId: "high-variance-creative",
+      name: "Preset · High Variance",
+      modelProvider: "openrouter",
+      modelName: "meta-llama/llama-3.3-70b-instruct",
+      temperature: 0.9,
+      contextLevel: "STANDARD",
+      ragEnabled: false,
+      styleProfile: "conversational",
+      responseFormat: "free-form",
+      citationRequired: false,
+    },
+  },
+  {
+    id: "rag-heavy",
+    title: "RAG Heavy",
+    summary: "Guideline-heavy preset for testing retrieval benefits and distraction costs.",
+    config: {
+      presetId: "rag-heavy",
+      name: "Preset · RAG Heavy",
+      modelProvider: "gemini",
+      modelName: GEMINI_CORE_MODEL_ID,
+      temperature: 0.3,
+      contextLevel: "STANDARD",
+      ragEnabled: true,
+      ragTopK: 5,
+      ragMethod: "keyword",
+      styleProfile: "clinical",
+      responseFormat: "chain-of-thought",
+      citationRequired: true,
+    },
+  },
+  {
+    id: "safety-first",
+    title: "Safety First",
+    summary: "Low-variance, evidence-first setup for safer benchmark and clinical-facing output.",
+    config: {
+      presetId: "safety-first",
+      name: "Preset · Safety First",
+      modelProvider: "gemini",
+      modelName: GEMINI_CORE_MODEL_ID,
+      temperature: 0.1,
+      contextLevel: "STANDARD",
+      ragEnabled: true,
+      ragTopK: 3,
+      styleProfile: "clinical",
+      responseFormat: "structured",
+      citationRequired: true,
+      confidenceFloor: 0.35,
+      abstainRule:
+        "If you cannot answer safely from the chart and retrieved guidance, say that clearly and recommend clinician review.",
+    },
+  },
+];
 
 export const CORE_MODEL_IDS = Object.entries(MODEL_REGISTRY)
   .filter(([, entry]) => entry.tier !== "free-advanced")

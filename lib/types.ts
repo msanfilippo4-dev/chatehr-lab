@@ -212,6 +212,8 @@ export interface ModelRequest {
   frequencyPenalty?: number;
   presencePenalty?: number;
   responseFormat?: string;
+  responseMimeType?: string;
+  responseJsonSchema?: Record<string, unknown>;
   timeout?: number;
 }
 
@@ -248,6 +250,7 @@ export interface ConfigSnapshot {
   name?: string;
   createdAt?: string;
   createdBy?: string;
+  presetId?: TeachingPresetId | null;
 
   // ── Provider / Model (knobs 1-6) ──
   modelProvider: ModelProvider;
@@ -353,6 +356,19 @@ export interface BenchmarkCaseResult {
   langfuseTraceId: string | null;
 }
 
+export interface JudgeEvaluation {
+  score: number;
+  verdict: "strong" | "acceptable" | "weak" | "unsafe";
+  strengths: string[];
+  missingEvidence: string[];
+  unsupportedClaims: string[];
+  safetyConcerns: string[];
+  biasEquityConcerns: string[];
+  likelyFailureCause: string;
+  recommendedSettingChange: string;
+  studentFeedback: string;
+}
+
 export interface BenchmarkRun {
   id: string;
   teamId: string;
@@ -363,6 +379,7 @@ export interface BenchmarkRun {
   status: "pending" | "running" | "completed" | "failed";
   startedAt?: string;
   completedAt?: string;
+  lastProgressAt?: string | null;
   accuracyScore?: number;
   safetyScore?: number;
   biasEquityScore?: number;
@@ -371,8 +388,14 @@ export interface BenchmarkRun {
   latencyP95Ms?: number;
   totalCostUsd?: number;
   totalTokens?: number;
+  evaluationCostUsd?: number;
+  evaluationTokens?: number;
   hallucinationCount?: number;
   consistencyScore?: number;
+  executionErrorCount?: number;
+  failureReason?: string | null;
+  casesCompleted?: number;
+  casesTotal?: number | null;
   langfuseSessionId?: string;
   results?: BenchmarkCaseResult[];
 }
@@ -423,6 +446,12 @@ export interface ExperimentSlotResult {
   configName: string;
   modelName: string;
   modelProvider: ModelProvider;
+  status?: "completed" | "failed";
+  error?: {
+    code: string;
+    message: string;
+    transient: boolean;
+  };
   output: string;
   inputTokens: number;
   outputTokens: number;
@@ -431,6 +460,7 @@ export interface ExperimentSlotResult {
   latencyMs: number;
   ragChunks: RAGRetrievalInsight[];
   ragMetadata?: RAGObservabilityMetadata;
+  groundTruthCheck?: PopulationGroundTruthCheck;
 }
 
 export interface ExperimentRun {
@@ -444,6 +474,30 @@ export interface ExperimentRun {
   variableFocus?: string | null;
   slots: ExperimentSlotResult[];
   createdAt: string;
+}
+
+export interface ExperimentRunResponse extends ExperimentRun {
+  partialFailure?: boolean;
+  completedSlotCount?: number;
+  failedSlotCount?: number;
+  persisted?: boolean;
+}
+
+export type GuidedMissionTrack = "patient" | "population";
+
+export interface GuidedMission {
+  id: string;
+  track: GuidedMissionTrack;
+  title: string;
+  summary: string;
+  variableFocus: string;
+  prompt: string;
+  recommendedPatientId?: string | null;
+  recommendedCohortId?: string | null;
+  recommendedPresetIds: TeachingPresetId[];
+  expectedObservations: string[];
+  notebookPrompt: string;
+  successCriteria: string;
 }
 
 export interface NotebookEntry {
@@ -492,7 +546,7 @@ export interface MilestoneStatus {
 export interface TeamObservabilitySnapshot {
   id: string;
   teamId: string;
-  sourceType: "chat" | "experiment" | "benchmark";
+  sourceType: "chat" | "experiment" | "benchmark" | "population";
   sourceId: string;
   modelName: string;
   provider: ModelProvider;
@@ -515,4 +569,105 @@ export interface InstructorFlag {
   summary: string;
   details?: string | null;
   createdAt: string;
+}
+
+export type TeachingPresetId =
+  | "small-cheap"
+  | "large-synthesis"
+  | "high-variance-creative"
+  | "rag-heavy"
+  | "safety-first";
+
+export interface TeachingPresetDefinition {
+  id: TeachingPresetId;
+  title: string;
+  summary: string;
+  config: Partial<ConfigSnapshot>;
+}
+
+export interface PopulationTaskDefinition {
+  id: string;
+  title: string;
+  prompt: string;
+  successCriteria: string;
+  contextMode?: PopulationTaskContextMode;
+  accuracyMeasurement?: string;
+  groundTruth?: PopulationTaskGroundTruth;
+}
+
+export interface PopulationSnapshotMetric {
+  label: string;
+  value: string;
+}
+
+export interface PopulationCohortDefinition {
+  id: string;
+  title: string;
+  summary: string;
+  rationale: string;
+  snapshotMetrics: PopulationSnapshotMetric[];
+  disparityIndicators: string[];
+  memberPatientIds: string[];
+  tasks: PopulationTaskDefinition[];
+}
+
+export type PopulationTaskContextMode = "summary" | "note-review";
+
+export interface PopulationTaskGroundTruth {
+  label: string;
+  expectedCount: number;
+  matchingPatientIds: string[];
+  note?: string;
+}
+
+export interface PopulationGroundTruthCheck {
+  label: string;
+  expectedCount: number;
+  extractedCount: number;
+  countDelta: number;
+  countSource: "explicit-tally" | "listed-charts";
+  matchedPatientIds: string[];
+  matchedPatientNames: string[];
+  missedPatientIds: string[];
+  missedPatientNames: string[];
+  unexpectedPatientIds: string[];
+  unexpectedPatientNames: string[];
+  precision: number | null;
+  recall: number | null;
+  summary: string;
+  note?: string;
+}
+
+export interface PopulationRun {
+  id: string;
+  teamId: string;
+  userId: string;
+  cohortId: string;
+  cohortName: string;
+  taskId: string;
+  taskTitle: string;
+  prompt: string;
+  slots: ExperimentSlotResult[];
+  createdAt: string;
+}
+
+export interface PopulationRunResponse extends PopulationRun {
+  partialFailure?: boolean;
+  completedSlotCount?: number;
+  failedSlotCount?: number;
+  persisted?: boolean;
+}
+
+export interface InstructorGrade {
+  id?: string;
+  teamId: string;
+  gradedBy: string;
+  experimentalDesign: number;
+  benchmarkEvidence: number;
+  costObservability: number;
+  safetyReasoning: number;
+  biasEquity: number;
+  finalRecommendation: number;
+  overallComments: string;
+  updatedAt: string;
 }

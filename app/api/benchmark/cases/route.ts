@@ -1,9 +1,3 @@
-// ---------------------------------------------------------------------------
-// /api/benchmark/cases — List benchmark cases (GET)
-// For public cases: return full details including prompt.
-// For hidden/adversarial: return only id, category, title, difficulty.
-// ---------------------------------------------------------------------------
-
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -15,67 +9,63 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const url = new URL(req.url);
-  const packId = url.searchParams.get("packId");
-
+  const packId = new URL(req.url).searchParams.get("packId");
   const supabase = createAdminClient();
 
-  // Fetch all benchmark cases
   let query = supabase
     .from("benchmark_cases")
-    .select("id, category, title, description, patient_id, recommended_patient_id, prompt, ground_truth, scoring_method, max_score, difficulty, case_set, pack_id, phase, learning_objective, evidence_checklist, fairness_dimension, recommended_comparison")
+    .select(
+      "id, category, title, description, patient_id, recommended_patient_id, prompt, ground_truth, scoring_method, max_score, difficulty, case_set, pack_id, phase, learning_objective, evidence_checklist, fairness_dimension, recommended_comparison"
+    )
     .order("category", { ascending: true });
 
   if (packId) {
     query = query.eq("pack_id", packId);
   }
 
-  const { data: cases, error } = await query;
-
+  const { data, error } = await query;
   if (error) {
     console.error("Failed to fetch benchmark cases:", error);
-    return NextResponse.json({ error: "Failed to load benchmark cases" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to load benchmark cases" },
+      { status: 500 }
+    );
   }
 
-  // Filter response based on case_set visibility
-  const result = (cases ?? []).map((c) => {
-    if (c.case_set === "public") {
-      // Public cases: return full details
-      return {
-        id: c.id,
-        category: c.category,
-        title: c.title,
-        description: c.description,
-        patientId: c.patient_id,
-        recommendedPatientId: c.recommended_patient_id,
-        prompt: c.prompt,
-        groundTruth: c.ground_truth,
-        scoringMethod: c.scoring_method,
-        maxScore: c.max_score,
-        difficulty: c.difficulty,
-        caseSet: c.case_set,
-        packId: c.pack_id,
-        phase: c.phase,
-        learningObjective: c.learning_objective,
-        evidenceChecklist: c.evidence_checklist,
-        fairnessDimension: c.fairness_dimension,
-        recommendedComparison: c.recommended_comparison,
-      };
-    } else {
-      // Hidden/adversarial: return metadata only (NO prompt, NO ground_truth)
-      return {
-        id: c.id,
-        category: c.category,
-        title: c.title,
-        difficulty: c.difficulty,
-        caseSet: c.case_set,
-        packId: c.pack_id,
-        phase: c.phase,
-        learningObjective: c.learning_objective,
-        fairnessDimension: c.fairness_dimension,
-      };
-    }
-  });
+  const response = (data ?? []).map((row) =>
+    row.case_set === "public"
+      ? {
+          id: row.id,
+          category: row.category,
+          title: row.title,
+          description: row.description,
+          patientId: row.patient_id,
+          recommendedPatientId: row.recommended_patient_id,
+          prompt: row.prompt,
+          groundTruth: row.ground_truth,
+          scoringMethod: row.scoring_method,
+          maxScore: row.max_score,
+          difficulty: row.difficulty,
+          caseSet: row.case_set,
+          packId: row.pack_id,
+          phase: row.phase,
+          learningObjective: row.learning_objective,
+          evidenceChecklist: row.evidence_checklist,
+          fairnessDimension: row.fairness_dimension,
+          recommendedComparison: row.recommended_comparison,
+        }
+      : {
+          id: row.id,
+          category: row.category,
+          title: row.title,
+          difficulty: row.difficulty,
+          caseSet: row.case_set,
+          packId: row.pack_id,
+          phase: row.phase,
+          learningObjective: row.learning_objective,
+          fairnessDimension: row.fairness_dimension,
+        }
+  );
 
-  return NextResponse.json(result);
+  return NextResponse.json(response);
 }

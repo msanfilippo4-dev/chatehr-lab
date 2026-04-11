@@ -21,6 +21,8 @@ import {
   CONTEXT_LEVELS,
   STYLE_PROFILES,
   RESPONSE_FORMATS,
+  TEACHING_PRESETS,
+  KNOWN_RETIRED_MODEL_IDS,
 } from "@/lib/constants";
 import ConfigSection from "./ConfigSection";
 
@@ -327,9 +329,26 @@ export default function GuidedConfig({
 }: GuidedConfigProps) {
   const d = isFrozen; // shorthand for disabled
 
+  const applyPreset = (presetId: string) => {
+    const preset = TEACHING_PRESETS.find((item) => item.id === presetId);
+    if (!preset) return;
+
+    onConfigChange({
+      ...config,
+      ...preset.config,
+      presetId: preset.id,
+      modelProvider: preset.config.modelProvider ?? config.modelProvider,
+      sectionToggles: preset.config.sectionToggles
+        ? { ...config.sectionToggles, ...preset.config.sectionToggles }
+        : config.sectionToggles,
+    });
+  };
+
   // Filter models by selected provider
   const providerModels = Object.entries(MODEL_REGISTRY).filter(
-    ([, entry]) => entry.provider === config.modelProvider
+    ([modelId, entry]) =>
+      entry.provider === config.modelProvider &&
+      !KNOWN_RETIRED_MODEL_IDS.has(modelId)
   );
   const coreProviderModels = providerModels.filter(([modelId]) =>
     CORE_MODEL_IDS.includes(modelId)
@@ -339,7 +358,9 @@ export default function GuidedConfig({
   );
 
   // All models for fallback (any provider)
-  const allModels = Object.entries(MODEL_REGISTRY);
+  const allModels = Object.entries(MODEL_REGISTRY).filter(
+    ([modelId]) => !KNOWN_RETIRED_MODEL_IDS.has(modelId)
+  );
 
   return (
     <div className="space-y-2">
@@ -347,6 +368,47 @@ export default function GuidedConfig({
       {/* Section 1: Model & Infrastructure                                 */}
       {/* ================================================================= */}
       <ConfigSection title="Model & Infrastructure" icon={Cpu} defaultOpen>
+        <div>
+          <FieldLabel
+            label="Teaching Presets"
+            help="One-click starter presets designed to make the major tradeoffs easier to compare."
+          />
+          <div className="grid gap-2">
+            {TEACHING_PRESETS.map((preset) => {
+              const isActive = config.presetId === preset.id;
+              return (
+                <button
+                  key={preset.id}
+                  type="button"
+                  disabled={d}
+                  onClick={() => applyPreset(preset.id)}
+                  className={`rounded-xl border p-3 text-left transition-colors ${
+                    isActive
+                      ? "border-fordham-maroon bg-fordham-maroon/5"
+                      : "border-[#d6dfeb] bg-white hover:bg-[#f8fbff]"
+                  } ${d ? "cursor-not-allowed opacity-50" : ""}`}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="t-caption font-semibold t-primary">
+                        {preset.title}
+                      </p>
+                      <p className="mt-1 t-micro t-tertiary">
+                        {preset.summary}
+                      </p>
+                    </div>
+                    {isActive && (
+                      <span className="rounded-full bg-fordham-maroon px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-white">
+                        Current
+                      </span>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Model Provider */}
         <div>
           <FieldLabel label="Model Provider" />
@@ -357,10 +419,13 @@ export default function GuidedConfig({
               onClick={() => {
                 // Switch provider and auto-select first model of that provider
                 const firstGemini = Object.keys(MODEL_REGISTRY).find(
-                  (k) => MODEL_REGISTRY[k].provider === "gemini"
+                  (k) =>
+                    MODEL_REGISTRY[k].provider === "gemini" &&
+                    !KNOWN_RETIRED_MODEL_IDS.has(k)
                 );
                 onConfigChange({
                   ...config,
+                  presetId: null,
                   modelProvider: "gemini",
                   modelName: firstGemini || config.modelName,
                 });
@@ -388,10 +453,13 @@ export default function GuidedConfig({
               disabled={d}
               onClick={() => {
                 const firstOpenRouter = Object.keys(MODEL_REGISTRY).find(
-                  (k) => MODEL_REGISTRY[k].provider === "openrouter"
+                  (k) =>
+                    MODEL_REGISTRY[k].provider === "openrouter" &&
+                    !KNOWN_RETIRED_MODEL_IDS.has(k)
                 );
                 onConfigChange({
                   ...config,
+                  presetId: null,
                   modelProvider: "openrouter",
                   modelName: firstOpenRouter || config.modelName,
                 });
@@ -411,7 +479,7 @@ export default function GuidedConfig({
                 }
               />
               <span className="t-caption font-semibold t-primary">OpenRouter</span>
-              <span className="t-micro t-tertiary">Free-tier models</span>
+              <span className="t-micro t-tertiary">Open-weight models</span>
             </button>
           </div>
         </div>
@@ -424,7 +492,13 @@ export default function GuidedConfig({
           />
           <select
             value={config.modelName}
-            onChange={(e) => patch(config, onConfigChange, "modelName", e.target.value)}
+            onChange={(e) =>
+              onConfigChange({
+                ...config,
+                presetId: null,
+                modelName: e.target.value,
+              })
+            }
             disabled={d}
             className="w-full border border-[#d6dfeb] rounded-lg px-3 py-1.5 t-caption t-primary bg-white focus:outline-none focus:ring-2 focus:ring-fordham-maroon/40 disabled:opacity-50 disabled:cursor-not-allowed"
           >

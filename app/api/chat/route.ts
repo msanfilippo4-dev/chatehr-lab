@@ -3,9 +3,16 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { readJsonBodyWithLimit } from "@/lib/api-request";
+import { errorResponse, routeErrorResponse } from "@/lib/api-response";
+import {
+  isSupabaseNoRowsError,
+  notFoundError,
+  toApiRouteError,
+} from "@/lib/api-error";
 import { DEFAULT_CONFIG } from "@/lib/constants";
 import { mapDbRowToConfig } from "@/lib/config-mapper";
 import { createModelAdapter } from "@/lib/models";
+import { getRequestedModelChain } from "@/lib/model-fallback";
 import type { ModelRequest } from "@/lib/models/types";
 import { tracedModelCall } from "@/lib/langfuse/trace";
 import { estimateCost } from "@/lib/pricing";
@@ -99,8 +106,15 @@ async function loadConfig(
     .eq("id", configId)
     .single();
 
-  if (error || !dbConfig) {
-    throw new Error("Configuration not found.");
+  if (error) {
+    if (isSupabaseNoRowsError(error)) {
+      throw notFoundError("Configuration not found.");
+    }
+    throw toApiRouteError(error, "Failed to load configuration.");
+  }
+
+  if (!dbConfig) {
+    throw notFoundError("Configuration not found.");
   }
 
   return mapDbRowToConfig(dbConfig);
@@ -112,10 +126,14 @@ async function loadPatientConditionLabels(
 ) {
   if (!patientId) return [];
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("conditions")
     .select("display")
     .eq("patient_id", patientId);
+
+  if (error) {
+    throw toApiRouteError(error, "Failed to load patient conditions.");
+  }
 
   return (data ?? []).map((row) => row.display);
 }
@@ -129,15 +147,24 @@ async function maybeRetrieveGuidelines(args: {
 }) {
   const { supabase, config, patientId, userQuery, teamId } = args;
 
-  if (!config.ragEnabled) return [] as Array<RAGChunk & { score: number }>;
+  if (!config.ragEnabled) {
+    return {
+      patientConditions: [] as string[],
+      retrieved: [] as Array<RAGChunk & { score: number }>,
+    };
+  }
 
-  const [{ data: chunks }, patientConditions] = await Promise.all([
+  const [{ data: chunks, error: chunkError }, patientConditions] = await Promise.all([
     supabase
       .from("guideline_chunks")
       .select("id, source, title, text, keywords")
       .limit(500),
     loadPatientConditionLabels(supabase, patientId),
   ]);
+
+  if (chunkError) {
+    throw toApiRouteError(chunkError, "Failed to load guideline chunks.");
+  }
 
   const chunkRows = (chunks ?? []) as RAGChunk[];
   const method = config.ragMethod === "hybrid" ? "keyword" : config.ragMethod;
@@ -150,7 +177,7 @@ async function maybeRetrieveGuidelines(args: {
   );
 
   if (teamId && retrieved.length > 0) {
-    await supabase.from("retrieval_logs").insert({
+    const { error } = await supabase.from("retrieval_logs").insert({
       team_id: teamId,
       query: userQuery,
       method: config.ragMethod,
@@ -160,9 +187,16 @@ async function maybeRetrieveGuidelines(args: {
         return acc;
       }, {}),
     });
+
+    if (error) {
+      throw toApiRouteError(error, "Failed to record guideline retrieval.");
+    }
   }
 
-  return retrieved;
+  return {
+    patientConditions,
+    retrieved,
+  };
 }
 
 function buildPromptRequest(args: {
@@ -216,8 +250,7 @@ async function callWithFallback(args: {
   teamId?: string | null;
   userId: string;
 }) {
-  const attempts = [args.config.modelName];
-  if (args.config.fallbackModel) attempts.push(args.config.fallbackModel);
+  const attempts = getRequestedModelChain(args.config);
 
   let lastError: unknown;
   for (const modelName of attempts) {
@@ -240,7 +273,7 @@ async function callWithFallback(args: {
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return errorResponse("Unauthorized", 401, "unauthorized");
   }
 
   const body = await readJsonBodyWithLimit<ChatRequestBody>(req);
@@ -265,39 +298,50 @@ export async function POST(req: Request) {
   }
 
   const supabase = createAdminClient();
-  const ctx = await getSessionContext(supabase, session);
+  let ctx;
+  try {
+    ctx = await getSessionContext(supabase, session);
+  } catch (error) {
+    return routeErrorResponse(error, "Failed to start chat.");
+  }
 
   let config: ConfigSnapshot;
   try {
     config = await loadConfig(supabase, configId);
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to load configuration." },
-      { status: 404 }
-    );
+    return routeErrorResponse(error, "Failed to load configuration.");
   }
 
   if (config.teamId && ctx.team?.teamId && config.teamId !== ctx.team.teamId) {
-    return NextResponse.json(
-      { error: "This configuration does not belong to your team." },
-      { status: 403 }
+    return errorResponse(
+      "This configuration does not belong to your team.",
+      403,
+      "forbidden"
     );
   }
 
-  const ragChunks = await maybeRetrieveGuidelines({
-    supabase,
-    config,
-    patientId,
-    userQuery: lastMessage.content,
-    teamId: ctx.team?.teamId,
-  });
+  let ragChunks: Array<RAGChunk & { score: number }>;
+  let patientConditions: string[];
+  try {
+    const ragResult = await maybeRetrieveGuidelines({
+      supabase,
+      config,
+      patientId,
+      userQuery: lastMessage.content,
+      teamId: ctx.team?.teamId,
+    });
+    ragChunks = ragResult.retrieved;
+    patientConditions = ragResult.patientConditions;
+  } catch (error) {
+    return routeErrorResponse(error, "Failed to prepare chat context.");
+  }
 
   const ragMetadata = buildRagObservabilityMetadata({
     enabled: config.ragEnabled,
     method: config.ragMethod,
     topK: config.ragTopK,
     userQuery: lastMessage.content,
-    patientConditions: await loadPatientConditionLabels(supabase, patientId),
+    patientConditions,
     retrievedChunks: ragChunks,
     includeSourceInInjectedContext: true,
   });

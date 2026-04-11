@@ -1,11 +1,16 @@
 import { NextResponse } from "next/server";
+import { waitUntil } from "@vercel/functions";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { readJsonBodyWithLimit } from "@/lib/api-request";
 import { mapDbRowToConfig } from "@/lib/config-mapper";
-import { executeBenchmarkRun } from "@/lib/benchmark/runner";
+import { errorResponse, routeErrorResponse } from "@/lib/api-response";
 import { getSessionContext } from "@/lib/server-context";
+import { validateBatchRunnableConfigs } from "@/lib/config-health";
+import { getBenchmarkPackMeta } from "@/lib/course";
+import { runBenchmarkJob } from "@/lib/benchmark/run-job";
+import { reconcileStaleBenchmarkRuns } from "@/lib/benchmark/run-lifecycle";
 
 interface StartRunBody {
   configId: string;
@@ -21,10 +26,13 @@ const PACK_BY_MODE: Record<StartRunBody["runMode"], BenchmarkPackId> = {
   official: "final",
 };
 
+export const runtime = "nodejs";
+export const maxDuration = 300;
+
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return errorResponse("Unauthorized", 401, "unauthorized");
   }
 
   const body = await readJsonBodyWithLimit<StartRunBody>(req);
@@ -34,20 +42,23 @@ export async function POST(req: Request) {
 
   const { configId, runMode } = body.data;
   if (!configId) {
-    return NextResponse.json(
-      { error: "configId is required." },
-      { status: 400 }
-    );
+    return errorResponse("configId is required.", 400, "bad_request");
   }
 
   const packId: BenchmarkPackId = body.data.packId ?? PACK_BY_MODE[runMode];
 
   const supabase = createAdminClient();
-  const ctx = await getSessionContext(supabase, session);
+  let ctx;
+  try {
+    ctx = await getSessionContext(supabase, session);
+  } catch (error) {
+    return routeErrorResponse(error, "Failed to start benchmark run.");
+  }
   if (!ctx.team) {
-    return NextResponse.json(
-      { error: "You must be on a team to run benchmarks." },
-      { status: 403 }
+    return errorResponse(
+      "You must be on a team to run benchmarks.",
+      403,
+      "no_team"
     );
   }
 
@@ -78,10 +89,10 @@ export async function POST(req: Request) {
     .single();
 
   if (configError || !configRow) {
-    return NextResponse.json(
-      { error: "Configuration not found." },
-      { status: 404 }
-    );
+    if (configError) {
+      return routeErrorResponse(configError, "Failed to load configuration.");
+    }
+    return errorResponse("Configuration not found.", 404, "not_found");
   }
 
   if (configRow.team_id !== ctx.team.teamId) {
@@ -101,6 +112,29 @@ export async function POST(req: Request) {
     );
   }
 
+  const config = mapDbRowToConfig(configRow);
+  const invalidConfigs = await validateBatchRunnableConfigs([config]);
+  if (invalidConfigs.length > 0) {
+    return NextResponse.json(
+      {
+        error:
+          "The selected configuration is not ready for batch benchmarking. Fix the configuration and try again.",
+        code: "invalid_configs",
+        invalidConfigs,
+      },
+      { status: 400 }
+    );
+  }
+
+  try {
+    await reconcileStaleBenchmarkRuns(supabase);
+  } catch (error) {
+    return routeErrorResponse(
+      error,
+      "Failed to reconcile stale benchmark runs."
+    );
+  }
+
   const { data: canRun, error: cooldownError } = await supabase.rpc(
     "can_run_benchmark",
     {
@@ -109,9 +143,9 @@ export async function POST(req: Request) {
   );
 
   if (cooldownError) {
-    return NextResponse.json(
-      { error: "Failed to check benchmark cooldown." },
-      { status: 500 }
+    return routeErrorResponse(
+      cooldownError,
+      "Failed to check benchmark cooldown."
     );
   }
 
@@ -134,75 +168,39 @@ export async function POST(req: Request) {
       run_mode: runMode,
       pack_id: packId,
       status: "pending",
-      started_at: new Date().toISOString(),
+      cases_completed: 0,
+      cases_total: getBenchmarkPackMeta(packId)?.caseCount ?? 0,
+      last_progress_at: new Date().toISOString(),
     })
     .select("*")
     .single();
 
   if (insertError || !run) {
-    return NextResponse.json(
-      { error: "Failed to create benchmark run." },
-      { status: 500 }
-    );
+    return routeErrorResponse(insertError, "Failed to create benchmark run.");
   }
 
-  const config = mapDbRowToConfig(configRow);
-  try {
-    const result = await executeBenchmarkRun(
-      run.id,
-      ctx.team.teamId,
+  waitUntil(
+    runBenchmarkJob({
+      runId: run.id,
+      teamId: ctx.team.teamId,
+      userId: ctx.user.id,
       config,
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      packId
-    );
+      supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      supabaseKey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      packId,
+      runMode,
+    })
+  );
 
-    await supabase.from("audit_events").insert({
-      team_id: ctx.team.teamId,
-      user_id: ctx.user.id,
-      event_type: "benchmark.run_completed",
-      details: {
-        run_id: run.id,
-        run_mode: runMode,
-        pack_id: packId,
-        tournament_score: result.tournamentScore,
-      },
-    });
-
-    return NextResponse.json({
+  return NextResponse.json(
+    {
       id: run.id,
-      status: "completed",
+      status: run.status,
       runMode,
       packId,
-      accuracyScore: result.accuracyScore,
-      safetyScore: result.safetyScore,
-      biasEquityScore: result.biasEquityScore,
-      tournamentScore: result.tournamentScore,
-      latencyP95Ms: result.latencyP95Ms,
-      totalCostUsd: result.totalCostUsd,
-      totalTokens: result.totalTokens,
-    });
-  } catch (error) {
-    await supabase.from("audit_events").insert({
-      team_id: ctx.team.teamId,
-      user_id: ctx.user.id,
-      event_type: "benchmark.run_failed",
-      details: {
-        run_id: run.id,
-        run_mode: runMode,
-        pack_id: packId,
-        error: error instanceof Error ? error.message : "unknown",
-      },
-    });
-
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Benchmark execution failed.",
-      },
-      { status: 500 }
-    );
-  }
+      casesCompleted: run.cases_completed ?? 0,
+      casesTotal: run.cases_total ?? getBenchmarkPackMeta(packId)?.caseCount ?? 0,
+    },
+    { status: 202 }
+  );
 }

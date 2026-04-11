@@ -3,13 +3,13 @@
 // ---------------------------------------------------------------------------
 
 import type { ModelAdapter, ModelRequest, ModelResponse } from "../models/types";
-import { getLangfuse } from "./client";
+import { disableLangfuse, getLangfuse } from "./client";
 
 export interface TraceMetadata {
   teamId: string;
   userId: string;
   sessionId?: string;
-  context: "chat" | "benchmark";
+  context: "chat" | "experiment" | "benchmark" | "population";
   caseId?: string;
 }
 
@@ -29,6 +29,11 @@ export async function tracedModelCall(
   metadata: TraceMetadata
 ): Promise<TracedModelResponse> {
   const langfuse = getLangfuse();
+  if (!langfuse) {
+    const response = await adapter.chat(request);
+    return { ...response, traceId: "" };
+  }
+
   let traceId = "";
 
   // ── Create Langfuse trace ───────────────────────────────────────────
@@ -53,15 +58,19 @@ export async function tracedModelCall(
       name: "llm-call",
       model: adapter.modelName,
       input: request.messages,
-      modelParameters: {
-        temperature: request.temperature ?? null,
-        maxOutputTokens: request.maxOutputTokens ?? null,
-        topP: request.topP ?? null,
-        topK: request.topK ?? null,
-      },
-    });
+        modelParameters: {
+          temperature: request.temperature ?? null,
+          maxOutputTokens: request.maxOutputTokens ?? null,
+          topP: request.topP ?? null,
+          topK: request.topK ?? null,
+          responseMimeType: request.responseMimeType ?? null,
+        },
+      });
   } catch {
-    // Langfuse initialisation failed — proceed without tracing
+    const message =
+      "Trace initialization failed. Check LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY, and LANGFUSE_BASE_URL.";
+    console.warn(`[langfuse] ${message}`);
+    disableLangfuse("trace_initialization_failed");
   }
 
   // ── Execute the model call ──────────────────────────────────────────
@@ -85,9 +94,15 @@ export async function tracedModelCall(
     }
 
     // Flush asynchronously — do not block the response
-    langfuse.flushAsync();
-  } catch {
-    // Telemetry flush failed — not critical
+    void langfuse.flushAsync().catch((error) => {
+      const message = error instanceof Error ? error.message : String(error);
+      console.warn(`[langfuse] flush failed: ${message}`);
+      disableLangfuse("flush_failed");
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn(`[langfuse] generation end failed: ${message}`);
+    disableLangfuse("generation_end_failed");
   }
 
   return { ...response, traceId };

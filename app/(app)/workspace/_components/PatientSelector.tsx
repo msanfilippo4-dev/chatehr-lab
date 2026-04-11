@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Search, User, AlertTriangle } from "lucide-react";
+import { Search, User, AlertTriangle, RefreshCcw } from "lucide-react";
 import type { Patient } from "@/lib/types";
+import { fetchApiJson, getApiErrorMessage } from "@/lib/client-api";
 
 // ---------------------------------------------------------------------------
 // Props
@@ -34,6 +35,7 @@ export default function PatientSelector({
   const [hasMore, setHasMore] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -62,10 +64,10 @@ export default function PatientSelector({
           params.set("search", searchTerm.trim());
         }
 
-        const res = await fetch(`/api/patients?${params.toString()}`);
-        if (!res.ok) throw new Error("Failed to fetch patients");
-
-        const data: PatientListResponse = await res.json();
+        const data = await fetchApiJson<PatientListResponse>(
+          `/api/patients?${params.toString()}`
+        );
+        setLoadError(null);
 
         if ((data.patients?.length ?? 0) < 50) {
           setHasMore(false);
@@ -75,7 +77,17 @@ export default function PatientSelector({
           append ? [...prev, ...(data.patients ?? [])] : data.patients ?? []
         );
       } catch (err) {
-        console.error("PatientSelector fetch error:", err);
+        setLoadError(
+          getApiErrorMessage(err, {
+            backendUnavailable:
+              "Patient data is unavailable right now. Check the backend connection and try again.",
+            default: "Failed to load patients.",
+          })
+        );
+        if (!append) {
+          setPatients([]);
+        }
+        setHasMore(false);
       } finally {
         setIsLoading(false);
         setInitialLoad(false);
@@ -137,6 +149,24 @@ export default function PatientSelector({
                 className="h-14 animate-pulse rounded-lg bg-gray-100"
               />
             ))}
+          </div>
+        ) : loadError && patients.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-3 px-4 py-10 text-center">
+            <AlertTriangle className="h-8 w-8 text-amber-600" />
+            <div>
+              <p className="t-small font-semibold text-amber-800">
+                Patient list unavailable
+              </p>
+              <p className="mt-1 t-caption text-amber-700">{loadError}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => void fetchPatients(0, debouncedSearch, false)}
+              className="inline-flex items-center gap-2 rounded-lg border border-amber-200 bg-white px-3 py-2 t-small font-semibold text-amber-700"
+            >
+              <RefreshCcw size={14} />
+              Retry
+            </button>
           </div>
         ) : patients.length === 0 && !isLoading ? (
           <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
@@ -214,6 +244,12 @@ export default function PatientSelector({
                 {patients.length} patient{patients.length !== 1 ? "s" : ""}{" "}
                 loaded
               </p>
+            )}
+
+            {loadError && patients.length > 0 && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 t-micro text-amber-700">
+                {loadError}
+              </div>
             )}
           </div>
         )}

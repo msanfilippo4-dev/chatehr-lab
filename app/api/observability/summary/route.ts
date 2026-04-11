@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { errorResponse, routeErrorResponse } from "@/lib/api-response";
+import { getLangfuseStatus } from "@/lib/langfuse/client";
 import { getSessionContext } from "@/lib/server-context";
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -17,17 +19,23 @@ function asNumber(value: unknown) {
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return errorResponse("Unauthorized", 401, "unauthorized");
   }
 
   const supabase = createAdminClient();
-  const ctx = await getSessionContext(supabase, session);
+  let ctx;
+  try {
+    ctx = await getSessionContext(supabase, session);
+  } catch (error) {
+    return routeErrorResponse(error, "Failed to load observability data.");
+  }
   if (!ctx.team) {
     return NextResponse.json({
       summary: null,
       ragSummary: null,
       chatEvents: [],
       snapshots: [],
+      langfuse: getLangfuseStatus(),
     });
   }
 
@@ -51,6 +59,20 @@ export async function GET(req: Request) {
       .order("created_at", { ascending: false })
       .limit(40),
   ]);
+
+  if (chatMessagesResult.error) {
+    return routeErrorResponse(
+      chatMessagesResult.error,
+      "Failed to load observability data."
+    );
+  }
+
+  if (snapshotResult.error) {
+    return routeErrorResponse(
+      snapshotResult.error,
+      "Failed to load observability data."
+    );
+  }
 
   const assistantMessages = (chatMessagesResult.data ?? []).filter(
     (row) => row.role === "assistant"
@@ -137,5 +159,6 @@ export async function GET(req: Request) {
     },
     chatEvents: assistantMessages,
     snapshots,
+    langfuse: getLangfuseStatus(),
   });
 }

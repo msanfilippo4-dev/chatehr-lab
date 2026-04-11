@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { readJsonBodyWithLimit } from "@/lib/api-request";
+import { errorResponse, routeErrorResponse } from "@/lib/api-response";
 import { requireInstructor } from "@/lib/server-context";
 
 interface SettingsBody {
@@ -13,17 +14,14 @@ interface SettingsBody {
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return errorResponse("Unauthorized", 401, "unauthorized");
   }
 
   const supabase = createAdminClient();
   try {
     await requireInstructor(supabase, session);
-  } catch {
-    return NextResponse.json(
-      { error: "Instructor access required." },
-      { status: 403 }
-    );
+  } catch (error) {
+    return routeErrorResponse(error, "Failed to load course settings.");
   }
 
   const { data, error } = await supabase
@@ -33,10 +31,7 @@ export async function GET() {
     .single();
 
   if (error) {
-    return NextResponse.json(
-      { error: "Failed to load course settings." },
-      { status: 500 }
-    );
+    return routeErrorResponse(error, "Failed to load course settings.");
   }
 
   return NextResponse.json({
@@ -49,7 +44,7 @@ export async function GET() {
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return errorResponse("Unauthorized", 401, "unauthorized");
   }
 
   const body = await readJsonBodyWithLimit<SettingsBody>(req);
@@ -61,11 +56,8 @@ export async function POST(req: Request) {
   let ctx;
   try {
     ctx = await requireInstructor(supabase, session);
-  } catch {
-    return NextResponse.json(
-      { error: "Instructor access required." },
-      { status: 403 }
-    );
+  } catch (error) {
+    return routeErrorResponse(error, "Failed to update course settings.");
   }
 
   const payload = {
@@ -82,10 +74,7 @@ export async function POST(req: Request) {
     .single();
 
   if (error) {
-    return NextResponse.json(
-      { error: "Failed to update course settings." },
-      { status: 500 }
-    );
+    return routeErrorResponse(error, "Failed to update course settings.");
   }
 
   await supabase.from("audit_events").insert({
