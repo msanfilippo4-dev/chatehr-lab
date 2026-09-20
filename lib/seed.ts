@@ -1,4 +1,5 @@
 import type { Appointment, EHRState, ExchangeItem, IdentityReview, ImplementationCheckpoint, Patient, PortalMessage, Task } from "./types";
+import { courseAssignments } from "./assignments";
 
 const names = [
   ["Liu Huang", "1984-03-19", "Mandarin", "she/her"],
@@ -104,18 +105,17 @@ export const initialState: EHRState = {
   tasks,
   messages,
   audit: [],
-  exercises: [
-    { id: "ehr-v3-week-01", title: "Chart orientation and evidence", summary: "Trace a synthetic patient's longitudinal record and locate evidence across chart sections.", durationMinutes: 30, teamSize: "Pairs", objectives: ["Use identifiers before interpreting the chart", "Find a problem, medication, result, and note", "Explain how structured data supports reuse"], requiredAuditActions: ["Open chart"], completedActions: [], startedAt: "2026-09-21T18:00:00-04:00" },
-    { id: "ehr-v3-week-02", title: "Master patient index adjudication", summary: "Compare conflicting identifiers and record a defensible identity decision without merging records directly.", durationMinutes: 30, teamSize: "3–4 learners", objectives: ["Distinguish strong and weak match signals", "Document uncertainty", "Protect both safety and privacy"], requiredAuditActions: ["Resolve identity review"], completedActions: [], startedAt: "2026-09-28T18:00:00-04:00" },
-    { id: "ehr-v3-week-03", title: "Scheduling and access", summary: "Create and reschedule visits, resolve a provider conflict, and connect transactions to access measures.", durationMinutes: 30, teamSize: "Pairs", objectives: ["Create a valid appointment", "Preserve appointment history during rescheduling", "Interpret third-next-available access"], requiredAuditActions: ["Create appointment", "Reschedule appointment"], completedActions: [], startedAt: "2026-10-05T18:00:00-04:00" },
-    { id: "ehr-v3-week-04", title: "Orders, warnings, and follow-up", summary: "Respond to an allergy alert, submit a simulated laboratory order, and close the result loop.", durationMinutes: 30, teamSize: "Pairs", objectives: ["Interpret warning context", "Avoid unsafe overrides", "Assign follow-up responsibility"], requiredAuditActions: ["Place simulated order", "Review result and create follow-up"], completedActions: [], startedAt: "2026-10-12T18:00:00-04:00" },
-    { id: "ehr-v3-week-05", title: "SOAP note integrity", summary: "Create a supported SOAP note, sign it, and amend it while preserving the signed history.", durationMinutes: 30, teamSize: "Pairs", objectives: ["Separate reported and observed evidence", "Sign a supported note", "Amend without overwriting history"], requiredAuditActions: ["Signed SOAP note", "Amend signed note"], completedActions: [], startedAt: "2026-10-19T18:00:00-04:00" },
-    { id: "ehr-v3-week-06", title: "Portal message triage", summary: "Route a patient message with attention to urgency, ownership, language, and accessibility.", durationMinutes: 30, teamSize: "3–4 learners", objectives: ["Identify a clinical escalation", "Assign an accountable team", "Use patient-centered language"], requiredAuditActions: ["Route portal message"], completedActions: [], startedAt: "2026-10-26T18:00:00-04:00" },
-    { id: "ehr-v3-week-07", title: "Privacy and downtime tabletop", summary: "Use audit evidence and an implementation checkpoint to respond to a downtime risk.", durationMinutes: 30, teamSize: "3–4 learners", objectives: ["Identify minimum necessary access", "Preserve continuity during downtime", "Document a readiness decision"], requiredAuditActions: ["Update implementation readiness"], completedActions: [], startedAt: "2026-11-02T18:00:00-05:00" },
-    { id: "ehr-v3-week-08", title: "AI draft safety review", summary: "Compare a scripted AI draft with chart evidence and document a human review decision.", durationMinutes: 30, teamSize: "Pairs", objectives: ["Detect unsupported content", "Identify safety-relevant omissions", "Record accountable human review"], requiredAuditActions: ["AI draft review"], completedActions: [], startedAt: "2026-11-09T18:00:00-05:00" },
-    { id: "ehr-v3-week-09", title: "HIE reconciliation and population query", summary: "Reconcile an external clinical item, then define and run a reproducible cohort query.", durationMinutes: 30, teamSize: "3–4 learners", objectives: ["Use provenance and match confidence", "Resolve a discrepancy", "Validate a computable denominator"], requiredAuditActions: ["Reconcile external item", "Run population query"], completedActions: [], startedAt: "2026-11-16T18:00:00-05:00" },
-    { id: "ehr-v3-week-10", title: "Implementation readiness decision", summary: "Review evidence across eight implementation domains and update a risk-based readiness decision.", durationMinutes: 30, teamSize: "3–4 learners", objectives: ["Connect evidence to readiness", "Assign ownership", "Identify a go-live blocker"], requiredAuditActions: ["Update implementation readiness"], completedActions: [], startedAt: "2026-11-23T18:00:00-05:00" },
-  ],
+  exercises: courseAssignments.map((assignment) => ({
+    id: assignment.id,
+    title: assignment.title,
+    summary: assignment.scenario,
+    durationMinutes: assignment.estimatedMinutes,
+    teamSize: "Individual" as const,
+    objectives: assignment.objectives,
+    requiredAuditActions: assignment.requirements.flatMap((requirement) => Array(requirement.minimumCount).fill(requirement.action)),
+    completedActions: [],
+    startedAt: "",
+  })),
   exchanges,
   identityReviews,
   queryRuns: [],

@@ -2,24 +2,43 @@
 
 import "./accessibility.css";
 import "./advanced.css";
-import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { signOut, useSession } from "next-auth/react";
 import { loadState, normalizeState, saveState } from "@/lib/db";
 import { codeExamples, initialState } from "@/lib/seed";
+import { assignmentProgress, courseAssignments, type CourseAssignment } from "@/lib/assignments";
 import type { Appointment, EHRState, NoteVersion, Order, Patient, Role } from "@/lib/types";
 import { HIEReconciliation, ImplementationReadiness, MPIWorkbench, QueryStudio } from "./advanced";
 
-type View = "Worklist" | "Schedule" | "Patients" | "MPI" | "Encounter" | "Orders & Results" | "Portal" | "HIE" | "Analytics" | "Query Studio" | "AI Review" | "Implementation" | "Exercises";
+type View = "Worklist" | "Schedule" | "Patients" | "MPI" | "Encounter" | "Orders & Results" | "Portal" | "HIE" | "Analytics" | "Query Studio" | "AI Review" | "Implementation" | "Assignments" | "Gradebook";
 
-const views: View[] = ["Worklist", "Schedule", "Patients", "MPI", "Encounter", "Orders & Results", "Portal", "HIE", "Analytics", "Query Studio", "AI Review", "Implementation", "Exercises"];
+const views: View[] = ["Worklist", "Schedule", "Patients", "MPI", "Encounter", "Orders & Results", "Portal", "HIE", "Analytics", "Query Studio", "AI Review", "Implementation", "Assignments", "Gradebook"];
 const roles: Role[] = ["Front Desk", "Clinical", "HIM", "Patient", "Analyst", "Implementation Lead"];
 const roleViews: Record<Role, View[]> = {
-  "Front Desk": ["Worklist", "Schedule", "Patients", "MPI", "Exercises"],
-  Clinical: ["Worklist", "Patients", "Encounter", "Orders & Results", "Portal", "HIE", "AI Review", "Exercises"],
-  HIM: ["Worklist", "Patients", "MPI", "HIE", "Analytics", "Exercises"],
-  Patient: ["Portal", "Exercises"],
-  Analyst: ["Worklist", "Analytics", "Query Studio", "HIE", "Exercises"],
-  "Implementation Lead": ["Worklist", "Analytics", "Implementation", "Exercises"],
+  "Front Desk": ["Worklist", "Schedule", "Patients", "MPI", "Assignments"],
+  Clinical: ["Worklist", "Patients", "Encounter", "Orders & Results", "Portal", "HIE", "AI Review", "Assignments"],
+  HIM: ["Worklist", "Patients", "MPI", "HIE", "Analytics", "Assignments"],
+  Patient: ["Portal", "Assignments"],
+  Analyst: ["Worklist", "Analytics", "Query Studio", "HIE", "Assignments"],
+  "Implementation Lead": ["Worklist", "Analytics", "Implementation", "Assignments"],
 };
+
+interface CourseSubmission {
+  assignment_id: string;
+  status: "submitted" | "graded" | "returned";
+  version: number;
+  score: number | null;
+  feedback: string | null;
+  submitted_at: string;
+  graded_at: string | null;
+}
+
+interface CourseData {
+  user: { email: string; name?: string; role: "student" | "instructor" | "admin" };
+  assignments: CourseAssignment[];
+  progress: Array<{ assignment_id: string; percent_complete: number; updated_at: string }>;
+  submissions: CourseSubmission[];
+}
 
 function nowIso() {
   return new Date().toISOString();
@@ -57,24 +76,71 @@ function PatientBanner({ patient }: { patient: Patient }) {
 }
 
 export default function PracticeEHR() {
+  const { data: session, status: sessionStatus } = useSession();
   const [state, setState] = useState<EHRState>(initialState);
   const [ready, setReady] = useState(false);
-  const [storageMessage, setStorageMessage] = useState("Loading local course workspace...");
+  const [storageMessage, setStorageMessage] = useState("Loading your Fordham course workspace...");
+  const [courseData, setCourseData] = useState<CourseData | null>(null);
   const [role, setRole] = useState<Role>("Clinical");
   const [view, setView] = useState<View>("Worklist");
   const [selectedPatientId, setSelectedPatientId] = useState("PT-001");
+  const syncTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  async function refreshCourseData() {
+    const response = await fetch("/api/course/bootstrap", { cache: "no-store" });
+    if (!response.ok) throw new Error("Could not load course records.");
+    const payload = await response.json();
+    setCourseData(payload);
+    return payload as CourseData & { workspace?: unknown };
+  }
 
   useEffect(() => {
-    loadState().then((saved) => {
-      if (saved) setState(saved);
-      setStorageMessage(saved ? "Saved course workspace restored and updated to schema version 2." : "New course workspace created in this browser.");
-    }).catch(() => setStorageMessage("Browser storage is unavailable. Work remains available until this tab closes; export evidence before leaving.")).finally(() => setReady(true));
-  }, []);
+    if (sessionStatus !== "authenticated") return;
+    let cancelled = false;
+    Promise.allSettled([loadState(), fetch("/api/course/bootstrap", { cache: "no-store" }).then(async (response) => {
+      if (!response.ok) throw new Error("Course account could not be loaded.");
+      return response.json();
+    })]).then(([localResult, cloudResult]) => {
+      if (cancelled) return;
+      const local = localResult.status === "fulfilled" ? localResult.value : null;
+      const cloud = cloudResult.status === "fulfilled" ? cloudResult.value : null;
+      if (cloud) setCourseData(cloud);
+      if (cloud?.workspace) {
+        setState(normalizeState(cloud.workspace));
+        setStorageMessage("Your saved Fordham course workspace was restored.");
+      } else if (local) {
+        setState(local);
+        setStorageMessage("Your browser workspace was restored and will now sync to your Fordham account.");
+      } else {
+        setStorageMessage("A new Fordham course workspace was created.");
+      }
+    }).catch(() => setStorageMessage("The cloud workspace is unavailable. Export evidence before leaving.")).finally(() => {
+      if (!cancelled) setReady(true);
+    });
+    return () => { cancelled = true; };
+  }, [sessionStatus]);
 
   useEffect(() => {
     if (!ready) return;
-    saveState(state).then(() => setStorageMessage("All changes saved in this browser.")).catch(() => setStorageMessage("Could not save to browser storage. Export evidence before leaving."));
-  }, [state, ready]);
+    saveState(state).catch(() => setStorageMessage("Browser storage is unavailable. Course sync will continue."));
+    if (sessionStatus !== "authenticated") return;
+    if (syncTimer.current) clearTimeout(syncTimer.current);
+    setStorageMessage("Saving to your Fordham course account…");
+    syncTimer.current = setTimeout(async () => {
+      try {
+        const response = await fetch("/api/course/sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ workspace: state }) });
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error || "Sync failed");
+        setCourseData((current) => current ? { ...current, progress: payload.progress.map((row: { assignment_id: string; percent_complete: number; updated_at: string }) => row) } : current);
+        setStorageMessage(`Saved to your Fordham course account at ${new Date(payload.savedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}.`);
+      } catch {
+        setStorageMessage("Cloud save failed. Work remains in this browser; export evidence before leaving.");
+      }
+    }, 900);
+    return () => { if (syncTimer.current) clearTimeout(syncTimer.current); };
+  }, [state, ready, sessionStatus]);
+
+  const courseRole = courseData?.user.role ?? ((session?.user as { courseRole?: "student" | "instructor" | "admin" } | undefined)?.courseRole ?? "student");
 
   const patient = state.patients.find((p) => p.id === selectedPatientId) ?? state.patients[0];
   const selectedName = patient.name;
@@ -97,11 +163,9 @@ export default function PracticeEHR() {
     const report = {
       generatedAt: nowIso(),
       course: "HINF 6105 Electronic Health Records",
+      learner: session?.user?.email,
       workspaceVersion: state.version,
-      progress: state.exercises.map((exercise) => {
-        const completed = exercise.requiredAuditActions.filter((action) => state.audit.some((event) => event.action === action));
-        return { id: exercise.id, title: exercise.title, completedActions: completed, requiredActions: exercise.requiredAuditActions, complete: completed.length === exercise.requiredAuditActions.length };
-      }),
+      progress: courseAssignments.map((assignment) => ({ id: assignment.id, title: assignment.title, ...assignmentProgress(assignment, state.audit.map((event) => event.action)) })),
       auditEvidence: state.audit,
     };
     download("fordham-ehr-learner-evidence.json", JSON.stringify(report, null, 2));
@@ -129,16 +193,18 @@ export default function PracticeEHR() {
   return <div className="app-shell">
     <a className="skip-link" href="#practice-ehr-main" onClick={() => document.getElementById("practice-ehr-main")?.focus()}>Skip to main content</a>
     <header className="topbar">
-      <div className="brand"><span className="brand-mark" aria-hidden="true">F</span><div><span className="brand-university">Fordham University</span><strong>Practice EHR</strong><small>HINF 6105 · Electronic Health Records</small></div></div>
+      <div className="brand"><span className="brand-mark" aria-hidden="true">F</span><div><span className="brand-university">Fordham University</span><strong>FordMS EHR</strong><small>HINF 6105 · Electronic Health Records</small></div></div>
       <div className="top-actions">
+        <div className="account-chip"><strong>{session?.user?.name ?? "Fordham learner"}</strong><span>{session?.user?.email} · {courseRole}</span></div>
         <label className="role-label">Role<select aria-label="Select simulated role" value={role} onChange={(e) => { const next = e.target.value as Role; setRole(next); setView(next === "Front Desk" ? "Schedule" : next === "HIM" ? "MPI" : next === "Patient" ? "Portal" : next === "Analyst" ? "Query Studio" : next === "Implementation Lead" ? "Implementation" : "Worklist"); }}>{roles.map((r) => <option key={r}>{r}</option>)}</select></label>
         <button onClick={exportWorkspace}>Export evidence</button>
         <label className="buttonlike">Import<input aria-label="Import workspace" type="file" accept="application/json" onChange={importWorkspace} /></label>
         <button className="danger-button" onClick={resetWorkspace}>Reset</button>
+        <button onClick={() => signOut({ callbackUrl: "/login" })}>Sign out</button>
       </div>
     </header>
     <div className="storage-line"><span className={storageMessage.includes("unavailable") || storageMessage.includes("failed") ? "storage-error" : "storage-ok"} />{storageMessage}</div>
-    <nav className="nav-tabs" aria-label="Practice EHR modules">{views.filter((item) => roleViews[role].includes(item)).map((item) => <button key={item} className={view === item ? "active" : ""} onClick={() => setView(item)}>{item}</button>)}</nav>
+    <nav className="nav-tabs" aria-label="FordMS EHR modules">{views.filter((item) => roleViews[role].includes(item) || (item === "Gradebook" && courseRole !== "student")).map((item) => <button key={item} className={view === item ? "active" : ""} onClick={() => setView(item)}>{item}</button>)}</nav>
     <PatientBanner patient={patient} />
     <main id="practice-ehr-main" tabIndex={-1}>
       {view === "Worklist" && <Worklist state={state} patient={patient} selectPatient={(id) => { setSelectedPatientId(id); setView("Patients"); }} completeTask={(id) => { setState((old) => ({ ...old, tasks: old.tasks.map((t) => t.id === id ? { ...t, complete: !t.complete } : t) })); audit("Update task", id); }} />}
@@ -153,7 +219,8 @@ export default function PracticeEHR() {
       {view === "Query Studio" && <QueryStudio state={state} setState={setState} audit={audit} />}
       {view === "AI Review" && <AIReview patient={patient} audit={audit} />}
       {view === "Implementation" && <ImplementationReadiness state={state} setState={setState} audit={audit} />}
-      {view === "Exercises" && <Exercises state={state} exportLearnerReport={exportLearnerReport} />}
+      {view === "Assignments" && <Assignments state={state} courseData={courseData} exportLearnerReport={exportLearnerReport} refreshCourseData={refreshCourseData} />}
+      {view === "Gradebook" && courseRole !== "student" && <Gradebook />}
     </main>
     <footer><span>Fordham University · Applied Health Informatics</span><span>All names and clinical data are fictional · no clinical use</span><button onClick={() => window.print()}>Print current view</button></footer>
   </div>;
@@ -253,15 +320,15 @@ function Patients({ state, selectedPatientId, setSelectedPatientId, patient, rep
       {tab === "Results" && <SimpleTable heads={["Date", "Test", "Value", "Flag", "Status"]} rows={patient.results.map((r) => [r.date, r.name, r.value, r.flag || "Normal", r.status])} />}
       {tab === "Notes" && <div className="timeline">{patient.notes.length ? patient.notes.map((n) => <article key={n.id}><header><strong>{n.kind}</strong><span>{n.recordedAt} · {n.author}</span></header><p><b>S:</b> {n.subjective}</p><p><b>O:</b> {n.objective}</p><p><b>A:</b> {n.assessment}</p><p><b>P:</b> {n.plan}</p>{n.amendmentReason && <p><b>Reason:</b> {n.amendmentReason}</p>}</article>) : <p className="empty">No notes have been created in this practice workspace.</p>}</div>}
       {tab === "Audit" && <SimpleTable heads={["Time", "Actor", "Action", "Detail"]} rows={state.audit.filter((a) => !a.patientId || a.patientId === patient.id).slice(0, 20).map((a) => [a.timestamp, a.actor, a.action, a.detail])} />}
-      {tab === "Coding" && <CodeSearch />}
+      {tab === "Coding" && <CodeSearch patient={patient} audit={audit} />}
     </Panel>
   </div>;
 }
 
-function CodeSearch() {
+function CodeSearch({ patient, audit }: { patient: Patient; audit: (a: string, d: string, p?: string) => void }) {
   const [query, setQuery] = useState("");
   const rows = codeExamples.filter((c) => `${c.system} ${c.code} ${c.display}`.toLowerCase().includes(query.toLowerCase()));
-  return <div><div className="inline-alert info"><strong>Teaching code list</strong><p>Examples only. Verify the official code set effective on the date of service. FY2027 ICD-10-CM applies beginning October 1, 2026.</p></div><input className="search" placeholder="Search code or term" value={query} onChange={(e) => setQuery(e.target.value)} /><SimpleTable heads={["System", "Code", "Display", "Represents"]} rows={rows.map((r) => [r.system, r.code, r.display, r.use])} /></div>;
+  return <div><div className="inline-alert info"><strong>Teaching code list</strong><p>Examples only. Verify the official code set effective on the date of service. FY2027 ICD-10-CM applies beginning October 1, 2026.</p></div><input className="search" placeholder="Search code or term" value={query} onChange={(e) => setQuery(e.target.value)} /><table><thead><tr><th>System</th><th>Code</th><th>Display</th><th>Represents</th><th>Evidence</th></tr></thead><tbody>{rows.map((row) => <tr key={`${row.system}-${row.code}`}><td>{row.system}</td><td><strong>{row.code}</strong></td><td>{row.display}</td><td>{row.use}</td><td><button onClick={() => audit("Use code example", `${row.system} ${row.code}: ${row.display}`, patient.id)}>Record use</button></td></tr>)}</tbody></table></div>;
 }
 
 function Encounter({ patient, replacePatient, audit }: { patient: Patient; replacePatient: (p: Patient, action?: string) => void; audit: (a: string, d: string, p?: string) => void }) {
@@ -375,12 +442,104 @@ function AIReview({ patient, audit }: { patient: Patient; audit: (a: string, d: 
   </div>;
 }
 
-function Exercises({ state, exportLearnerReport }: { state: EHRState; exportLearnerReport: () => void }) {
-  const [active, setActive] = useState(state.exercises[0].id);
-  const exercise = state.exercises.find((x) => x.id === active)!;
-  const progress = (item: typeof exercise) => item.requiredAuditActions.filter((action) => state.audit.some((event) => event.action === action));
-  const completed = progress(exercise);
-  return <div className="grid directory"><Panel title="Course exercise center" subtitle="Completion comes from actions recorded in the audit trail"><div className="patient-list">{state.exercises.map((item) => { const done = progress(item); return <button className={item.id === active ? "selected" : ""} key={item.id} onClick={() => setActive(item.id)}><strong>{item.title}</strong><span>{item.durationMinutes} minutes · {item.teamSize}</span><Status tone={done.length === item.requiredAuditActions.length ? "good" : "warn"}>{done.length}/{item.requiredAuditActions.length} actions</Status></button>; })}</div></Panel><Panel title={exercise.title} subtitle={`${exercise.id} · ${exercise.durationMinutes} minutes · ${exercise.teamSize}`}><p>{exercise.summary}</p><h3>Learning objectives</h3><ul className="checklist">{exercise.objectives.map((objective) => <li key={objective}>{objective}</li>)}</ul><h3>Action evidence</h3><div className="evidence-list">{exercise.requiredAuditActions.map((action) => { const event = state.audit.find((row) => row.action === action); return <div className={event ? "evidence-complete" : ""} key={action}><span aria-hidden="true">{event ? "✓" : "○"}</span><span><strong>{action}</strong><small>{event ? `${event.timestamp} · ${event.detail}` : "Complete the action in the relevant workspace to record evidence automatically."}</small></span></div>; })}</div><div className="inline-alert info"><strong>Evidence package</strong><p>Download the learner report or print this view. Blackboard remains the submission and grading system.</p><button className="primary" onClick={exportLearnerReport}>Download learner report</button></div><p className="help">{completed.length === exercise.requiredAuditActions.length ? "All required actions are present in the audit trail." : `${exercise.requiredAuditActions.length - completed.length} required action(s) remain.`}</p></Panel></div>;
+function Assignments({ state, courseData, exportLearnerReport, refreshCourseData }: { state: EHRState; courseData: CourseData | null; exportLearnerReport: () => void; refreshCourseData: () => Promise<CourseData & { workspace?: unknown }> }) {
+  const [active, setActive] = useState(courseAssignments[0].id);
+  const [reflection, setReflection] = useState<Record<string, string>>({});
+  const [message, setMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const assignment = courseAssignments.find((item) => item.id === active) ?? courseAssignments[0];
+  const progressFor = (item: CourseAssignment) => assignmentProgress(item, state.audit.map((event) => event.action));
+  const progress = progressFor(assignment);
+  const submission = courseData?.submissions.find((item) => item.assignment_id === assignment.id);
+
+  async function submit() {
+    setSubmitting(true);
+    setMessage("");
+    try {
+      const syncResponse = await fetch("/api/course/sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ workspace: state }) });
+      if (!syncResponse.ok) throw new Error("Your latest EHR actions could not be synchronized.");
+      const response = await fetch("/api/course/submit", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ assignmentId: assignment.id, reflection: reflection[assignment.id] ?? "" }) });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "Submission failed.");
+      await refreshCourseData();
+      setMessage(`Submitted ${assignment.id} successfully. Version ${payload.version} is ready for grading.`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Submission failed.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return <div className="grid assignment-layout">
+    <Panel title="Four graded FordMS assignments" subtitle="Each assignment takes approximately 1–2 hours and records evidence from real actions">
+      <div className="assignment-list">{courseAssignments.map((item) => { const itemProgress = progressFor(item); const itemSubmission = courseData?.submissions.find((row) => row.assignment_id === item.id); return <button className={item.id === active ? "selected" : ""} key={item.id} onClick={() => { setActive(item.id); setMessage(""); }}><span className="assignment-number">{item.id.replace("FORDMS-", "")}</span><span><strong>{item.shortTitle}</strong><small>{item.estimatedMinutes} minutes · {item.dueLabel}</small></span><Status tone={itemSubmission?.status === "graded" ? "good" : itemSubmission ? "neutral" : itemProgress.complete ? "good" : "warn"}>{itemSubmission?.status === "graded" ? `${itemSubmission.score}/100` : itemSubmission ? "Submitted" : `${itemProgress.percent}%`}</Status></button>; })}</div>
+      <div className="assignment-summary"><strong>Course record</strong><p>Your audit events, progress, submissions, scores, and feedback are saved under your Fordham email.</p><button onClick={exportLearnerReport}>Download learner report</button></div>
+    </Panel>
+    <div className="stack">
+      <Panel title={assignment.title} subtitle={`${assignment.id} · ${assignment.estimatedMinutes} minutes · Individual`}>
+        <div className="assignment-header"><div><span>Due</span><strong>{assignment.dueLabel}</strong></div><div><span>Action progress</span><strong>{progress.completedUnits}/{progress.totalUnits} · {progress.percent}%</strong></div><div><span>Status</span><strong>{submission?.status === "graded" ? `Graded ${submission.score}/100` : submission ? `Submitted v${submission.version}` : progress.complete ? "Ready to submit" : "In progress"}</strong></div></div>
+        <div className="assignment-body"><h3>Scenario</h3><p>{assignment.scenario}</p><h3>Learning objectives</h3><ol>{assignment.objectives.map((item) => <li key={item}>{item}</li>)}</ol><h3>Required workflow</h3><ol>{assignment.workflow.map((item) => <li key={item}>{item}</li>)}</ol></div>
+      </Panel>
+      <Panel title="Action evidence" subtitle="Progress is calculated from timestamped EHR audit events">
+        <div className="evidence-list">{progress.requirements.map((requirement) => { const events = state.audit.filter((event) => event.action === requirement.action); return <div className={requirement.complete ? "evidence-complete" : ""} key={requirement.action}><span aria-hidden="true">{requirement.complete ? "✓" : "○"}</span><span><strong>{requirement.label}</strong><small>{requirement.completedCount}/{requirement.minimumCount} required · {events[0] ? `${events[0].timestamp} · ${events[0].detail}` : "Complete this action in the relevant workspace."}</small></span></div>; })}</div>
+      </Panel>
+      <Panel title="Rubric" subtitle="100 points"><table><thead><tr><th>Criterion</th><th>Points</th><th>Standard</th></tr></thead><tbody>{assignment.rubric.map((item) => <tr key={item.criterion}><td>{item.criterion}</td><td>{item.points}</td><td>{item.standard}</td></tr>)}</tbody></table></Panel>
+      <Panel title="Submit for grading" subtitle="You may resubmit; the newest version replaces the earlier submission">
+        <div className="submission-box"><p>{assignment.submissionPrompt}</p><label>Written analysis<textarea rows={9} value={reflection[assignment.id] ?? ""} onChange={(event) => setReflection({ ...reflection, [assignment.id]: event.target.value })} placeholder="Write your evidence-based analysis here. Do not include real patient information." /></label><div className="submission-actions"><span>{(reflection[assignment.id] ?? "").length} characters</span><button className="primary" disabled={!progress.complete || submitting} onClick={submit}>{submitting ? "Submitting…" : submission ? "Resubmit assignment" : "Submit assignment"}</button></div>{message && <p className={message.startsWith("Submitted") ? "form-message success" : "form-message error"}>{message}</p>}{submission?.feedback && <div className="feedback-card"><strong>Instructor feedback · {submission.score}/100</strong><p>{submission.feedback}</p></div>}</div>
+      </Panel>
+    </div>
+  </div>;
+}
+
+interface InstructorData {
+  assignments: Array<CourseAssignment & { instructorBenchmark: string[] }>;
+  students: Array<{
+    email: string;
+    name: string;
+    last_login_at: string;
+    progress: Array<{ assignment_id: string; percent_complete: number; updated_at: string }>;
+    submissions: Array<CourseSubmission & { reflection: string; evidence: Array<{ action?: string; detail?: string; timestamp?: string }> }>;
+  }>;
+}
+
+function Gradebook() {
+  const [data, setData] = useState<InstructorData | null>(null);
+  const [selectedEmail, setSelectedEmail] = useState("");
+  const [assignmentId, setAssignmentId] = useState(courseAssignments[0].id);
+  const [score, setScore] = useState("");
+  const [feedback, setFeedback] = useState("");
+  const [message, setMessage] = useState("");
+
+  async function load() {
+    const response = await fetch("/api/instructor/grade", { cache: "no-store" });
+    const payload = await response.json();
+    if (!response.ok) throw new Error(payload.error || "Gradebook could not be loaded.");
+    setData(payload);
+    setSelectedEmail((current) => current || payload.students[0]?.email || "");
+  }
+  useEffect(() => { load().catch((error) => setMessage(error.message)); }, []);
+  const student = data?.students.find((item) => item.email === selectedEmail);
+  const assignment = data?.assignments.find((item) => item.id === assignmentId);
+  const submission = student?.submissions.find((item) => item.assignment_id === assignmentId);
+  useEffect(() => { setScore(submission?.score == null ? "" : String(submission.score)); setFeedback(submission?.feedback ?? ""); setMessage(""); }, [submission?.score, submission?.feedback, selectedEmail, assignmentId]);
+
+  async function saveGrade() {
+    const response = await fetch("/api/instructor/grade", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: selectedEmail, assignmentId, score: Number(score), feedback }) });
+    const payload = await response.json();
+    if (!response.ok) return setMessage(payload.error || "Grade could not be saved.");
+    await load();
+    setMessage("Grade and feedback saved.");
+  }
+
+  if (!data) return <Panel title="Instructor gradebook" subtitle="Loading authenticated course records"><p className="empty">{message || "Loading students, progress, and submissions…"}</p></Panel>;
+  return <div className="grid gradebook-layout">
+    <Panel title="Students" subtitle={`${data.students.length} Fordham course account(s)`}><div className="student-list">{data.students.length ? data.students.map((item) => { const graded = item.submissions.filter((submission) => submission.status === "graded" && submission.score != null); const average = graded.length ? Math.round(graded.reduce((sum, row) => sum + Number(row.score), 0) / graded.length) : null; return <button className={item.email === selectedEmail ? "selected" : ""} key={item.email} onClick={() => setSelectedEmail(item.email)}><strong>{item.name || item.email}</strong><span>{item.email}</span><small>{item.submissions.length}/4 submitted · {average == null ? "No grades" : `${average}% average`}</small></button>; }) : <p className="empty">No students have signed in yet.</p>}</div></Panel>
+    <div className="stack">
+      <Panel title="Assignment record" subtitle={student ? `${student.name} · ${student.email}` : "Select a student"}><div className="gradebook-tabs">{data.assignments.map((item) => { const row = student?.submissions.find((submission) => submission.assignment_id === item.id); const progress = student?.progress.find((entry) => entry.assignment_id === item.id)?.percent_complete ?? 0; return <button className={item.id === assignmentId ? "active" : ""} key={item.id} onClick={() => setAssignmentId(item.id)}><strong>{item.id.replace("FORDMS-", "")}</strong><span>{row?.status === "graded" ? `${row.score}/100` : row ? "Submitted" : `${progress}%`}</span></button>; })}</div></Panel>
+      {assignment && <Panel title={assignment.title} subtitle={`${assignment.id} · ${student?.progress.find((entry) => entry.assignment_id === assignment.id)?.percent_complete ?? 0}% action completion`}><div className="assignment-body"><h3>Rubric</h3><ul>{assignment.rubric.map((item) => <li key={item.criterion}><strong>{item.criterion} · {item.points}</strong><br />{item.standard}</li>)}</ul><h3>Instructor benchmark</h3><ul>{assignment.instructorBenchmark.map((item) => <li key={item}>{item}</li>)}</ul></div></Panel>}
+      <Panel title="Student submission" subtitle={submission ? `Version ${submission.version} · ${new Date(submission.submitted_at).toLocaleString()}` : "No submission received"}>{submission ? <div className="submission-box"><h3>Written analysis</h3><p className="student-response">{submission.reflection}</p><h3>Captured evidence</h3><div className="evidence-list">{submission.evidence.map((item, index) => <div key={`${item.action}-${index}`}><span>✓</span><span><strong>{item.action}</strong><small>{item.timestamp} · {item.detail}</small></span></div>)}</div><div className="grade-entry"><label>Score<input type="number" min="0" max="100" value={score} onChange={(event) => setScore(event.target.value)} /></label><label>Instructor feedback<textarea rows={7} value={feedback} onChange={(event) => setFeedback(event.target.value)} /></label><button className="primary" onClick={saveGrade}>Save grade and feedback</button>{message && <p className={message.startsWith("Grade") ? "form-message success" : "form-message error"}>{message}</p>}</div></div> : <p className="empty">The student has not submitted this assignment.</p>}</Panel>
+    </div>
+  </div>;
 }
 
 function SimpleTable({ heads, rows }: { heads: string[]; rows: string[][] }) {
