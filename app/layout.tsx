@@ -1,23 +1,15 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import SessionProvider from "@/components/providers/SessionProvider";
 
 export const metadata: Metadata = {
-  title: "ChartEHR Project | Fordham HINF 6117",
-  description:
-    "Team Competition Platform for Configurable Clinical LLM Systems",
+  title: "Fordham Practice EHR | HINF 6105",
+  description: "A synthetic electronic health record for Fordham HINF 6105 coursework and demonstrations.",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>
-        <SessionProvider>{children}</SessionProvider>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
