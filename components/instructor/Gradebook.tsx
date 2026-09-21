@@ -15,6 +15,7 @@ const STATUS_LABEL: Record<RosterStatus, string> = { not_started: "Not started",
 interface RosterCell { assignment_id: string; status: RosterStatus; percent: number; earned_units: number; imported_units: number; total_units: number; score: number | null; version: number | null; late: boolean; submitted_at: string | null; graded_at: string | null }
 interface RosterRow { email: string; name: string | null; role: CourseRole; enrollment_status: string; first_name: string | null; last_name: string | null; blackboard_username: string | null; section: string | null; notes: string | null; last_login_at: string | null; cells: RosterCell[] }
 interface RosterPayload { assignments: CourseAssignment[]; configVersion: number; releases: AssignmentRelease[]; students: RosterRow[]; generatedAt: string }
+interface QuizPayload { weeks: { week: number; title: string; graded: boolean; dueAt: string | null }[]; students: { email: string; name: string | null; first_name: string | null; last_name: string | null; enrollment_status: string; weeks: { week: number; graded: boolean; attempts: number; best: number | null; late: boolean }[]; category: { score: number | null; counted: number; dropped: number | null } }[] }
 interface AnalyticsPayload { denominator: number; activeLastWeek: number; note: string; assignments: { assignment_id: string; shortTitle: string; counts: Record<RosterStatus, number>; submitted: number; late: number; withImportedEvidence: number; meanScore: number | null; medianScore: number | null; gradedCount: number; meanPercent: number }[] }
 
 export function Gradebook({ courseRole, onPreview }: { courseRole: CourseRole; onPreview: (email: string) => Promise<void> }) {
@@ -26,7 +27,8 @@ export function Gradebook({ courseRole, onPreview }: { courseRole: CourseRole; o
   const [assignmentId, setAssignmentId] = useState("FORDMS-A1");
   const [includeTest, setIncludeTest] = useState(false);
   const [selectedEmail, setSelectedEmail] = useState("");
-  const [tab, setTab] = useState<"roster" | "analytics">("roster");
+  const [tab, setTab] = useState<"roster" | "analytics" | "quizzes">("roster");
+  const [quizzes, setQuizzes] = useState<QuizPayload | null>(null);
   const [resetTarget, setResetTarget] = useState<{ email: string; scope: "assignment" | "all" } | null>(null);
   const [notice, setNotice] = useState("");
 
@@ -43,6 +45,7 @@ export function Gradebook({ courseRole, onPreview }: { courseRole: CourseRole; o
 
   useEffect(() => { load(); }, [load]);
   useEffect(() => { if (tab === "analytics") apiFetch<AnalyticsPayload>("/api/instructor/analytics").then(setAnalytics).catch(() => setAnalytics(null)); }, [tab, data]);
+  useEffect(() => { if (tab === "quizzes") apiFetch<QuizPayload>(`/api/instructor/quizzes?includeTest=${includeTest ? 1 : 0}`).then(setQuizzes).catch(() => setQuizzes(null)); }, [tab, includeTest]);
 
   const students = useMemo(() => (data?.students ?? []).filter((student) => {
     const cell = student.cells.find((item) => item.assignment_id === assignmentId);
@@ -71,7 +74,7 @@ export function Gradebook({ courseRole, onPreview }: { courseRole: CourseRole; o
   const counts = (data.students.length ? (["not_started", "in_progress", "ready", "submitted", "revision_requested", "graded"] as RosterStatus[]).map((status) => [status, data.students.filter((s) => s.cells.find((c) => c.assignment_id === assignmentId)?.status === status).length]) : []) as [RosterStatus, number][];
 
   return <div className="gradebook-shell">
-    <Panel title="Instructor gradebook" subtitle={`${data.students.length} enrolled account(s) · configuration v${data.configVersion} · Blackboard remains the gradebook of record`} actions={<><button className={tab === "roster" ? "active" : ""} onClick={() => setTab("roster")}>Roster</button><button className={tab === "analytics" ? "active" : ""} onClick={() => setTab("analytics")}>Cohort analytics</button><SimulationBadge>Synthetic course data</SimulationBadge></>}>
+    <Panel title="Instructor gradebook" subtitle={`${data.students.length} enrolled account(s) · configuration v${data.configVersion} · Blackboard remains the gradebook of record`} actions={<><button className={tab === "roster" ? "active" : ""} onClick={() => setTab("roster")}>Roster</button><button className={tab === "analytics" ? "active" : ""} onClick={() => setTab("analytics")}>Cohort analytics</button><button className={tab === "quizzes" ? "active" : ""} onClick={() => setTab("quizzes")}>Quizzes</button><SimulationBadge>Synthetic course data</SimulationBadge></>}>
       <div className="gradebook-toolbar">
         <Field label="Assignment"><select value={assignmentId} onChange={(e) => setAssignmentId(e.target.value)}>{data.assignments.map((item) => <option key={item.id} value={item.id}>{item.id.replace("FORDMS-", "")} · {item.shortTitle}</option>)}</select></Field>
         <Field label="Status"><select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}><option value="all">All statuses</option>{counts.map(([status, count]) => <option key={status} value={status}>{STATUS_LABEL[status]} ({count})</option>)}</select></Field>
@@ -83,6 +86,10 @@ export function Gradebook({ courseRole, onPreview }: { courseRole: CourseRole; o
       {notice && <p className="form-message success" role="status">{notice}</p>}
       {error && <p className="form-message error" role="alert">{error}</p>}
     </Panel>
+
+    {tab === "quizzes" && <Panel title="Quiz results" subtitle="Best attempt per week · graded weeks count, lowest graded quiz dropped · quizzes are 10% of the course grade" actions={<a className="buttonlike" href={`/api/instructor/export?format=blackboard&scope=quizzes${includeTest ? "&includeTest=1" : ""}`}>Export quiz CSV</a>}>
+      {quizzes ? <table className="roster-table"><thead><tr><th>Student</th>{quizzes.weeks.map((week) => <th key={week.week}>W{week.week}{week.graded ? "" : " (review)"}</th>)}<th>Category</th></tr></thead><tbody>{quizzes.students.map((row) => <tr key={row.email}><td>{row.last_name ? `${row.last_name}, ${row.first_name ?? ""}` : row.name || row.email}<small>{row.email}</small></td>{row.weeks.map((cell) => <td key={cell.week}>{cell.best == null ? <small>—</small> : <span className={`status-pill ${cell.best >= 70 ? "graded" : "in_progress"}`}>{cell.best}%</span>}{cell.attempts > 0 && <small>{cell.attempts} attempt(s){cell.late ? " · late" : ""}</small>}</td>)}<td><strong>{row.category.score == null ? "—" : `${row.category.score}%`}</strong>{row.category.dropped != null && <small>dropped {row.category.dropped}%</small>}</td></tr>)}{!quizzes.students.length && <tr><td colSpan={quizzes.weeks.length + 2} className="empty">No students yet.</td></tr>}</tbody></table> : <p className="empty">Loading quiz results…</p>}
+    </Panel>}
 
     {tab === "analytics" && <Panel title="Cohort analytics" subtitle={analytics ? `Denominator ${analytics.denominator} active student(s) · ${analytics.activeLastWeek} active in the last 7 days` : "Loading"}>
       {analytics ? <div className="analytics-grid">{analytics.assignments.map((row) => <article className="analytics-card" key={row.assignment_id}><h3>{row.assignment_id.replace("FORDMS-", "A")} · {row.shortTitle}</h3><div className="bars">{(Object.keys(row.counts) as RosterStatus[]).map((status) => <div key={status}><span>{STATUS_LABEL[status]}</span><i style={{ width: `${analytics.denominator ? (row.counts[status] / analytics.denominator) * 100 : 0}%` }} /><b>{row.counts[status]}</b></div>)}</div><p className="help">Mean action completion {row.meanPercent}% · submitted {row.submitted} ({row.late} late) · {row.withImportedEvidence} with imported evidence · graded {row.gradedCount}{row.meanScore != null ? ` · mean ${row.meanScore}, median ${row.medianScore}` : ""}</p></article>)}</div> : <p className="empty">Analytics unavailable.</p>}

@@ -6,7 +6,7 @@ import { appointmentRules, noteTemplates, providerRoles, providers, specialties,
 import type { CourseConfig } from "./types";
 
 export const VIEW_NAMES = [
-  "Worklist", "Schedule", "Registration", "Patients", "MPI", "Encounter", "Orders & Results", "Portal", "HIE", "Analytics", "Query Studio", "AI Review", "Implementation", "Audit Review", "Assignments", "Gradebook", "Admin",
+  "Worklist", "Schedule", "Registration", "Patients", "MPI", "Encounter", "Orders & Results", "Portal", "HIE", "Analytics", "Query Studio", "AI Review", "Implementation", "Audit Review", "Assignments", "Quizzes", "Gradebook", "Admin",
 ] as const;
 export type View = (typeof VIEW_NAMES)[number];
 

@@ -25,6 +25,7 @@ import { QueryStudio } from "@/components/views/QueryStudio";
 import { Registration } from "@/components/views/Registration";
 import { Schedule } from "@/components/views/Schedule";
 import { Worklist } from "@/components/views/Worklist";
+import { Quizzes } from "@/components/views/Quizzes";
 import { download, type ViewProps } from "@/components/views/shared";
 import { useCourseData } from "@/hooks/useCourseData";
 import { makeId, useWorkspace } from "@/hooks/useWorkspace";
@@ -43,12 +44,12 @@ const defaultViewForRole: Record<Role, View> = { "Front Desk": "Schedule", Clini
 
 export interface PreviewTarget { email: string; name: string; workspace: EHRState | null; progress: ProgressRow[]; submissions: unknown[] }
 
-export function AppShell() {
+export function AppShell({ initialView = "Worklist" }: { initialView?: View }) {
   const { data: session, status: sessionStatus } = useSession();
   const { courseData, refresh, mergeProgress, error: courseError } = useCourseData();
   const [bootstrapped, setBootstrapped] = useState(false);
   const [role, setRole] = useState<Role>("Clinical");
-  const [view, setView] = useState<View>("Worklist");
+  const [view, setView] = useState<View>(initialView);
   const [selectedPatientId, setSelectedPatientId] = useState("PT-001");
   const [preview, setPreview] = useState<PreviewTarget | null>(null);
   const [confirmFullReset, setConfirmFullReset] = useState(false);
@@ -69,7 +70,7 @@ export function AppShell() {
   const patient = state.patients.find((p) => p.id === selectedPatientId) ?? state.patients[0];
   const selectPatient = useCallback((id: string, nextView?: View) => { setSelectedPatientId(id); if (nextView) setView(nextView); }, []);
   const roleViews = useMemo(() => config.simulatedRoles.find((item) => item.role === role)?.views ?? [], [config, role]);
-  const visibleViews = VIEW_NAMES.filter((item) => roleViews.includes(item) || (item === "Gradebook" && courseRole !== "student") || (item === "Admin" && courseRole !== "student"));
+  const visibleViews = VIEW_NAMES.filter((item) => roleViews.includes(item) || item === "Quizzes" || (item === "Gradebook" && courseRole !== "student") || (item === "Admin" && courseRole !== "student"));
 
   function exportWorkspace() {
     download(`fordms-workspace-${owner.split("@")[0] || "learner"}.json`, JSON.stringify(exportEnvelope(state, owner), null, 2));
@@ -142,7 +143,7 @@ export function AppShell() {
     {preview && <div className="preview-banner" role="status"><span>Preview mode: viewing {preview.name} ({preview.email}) read-only. Nothing you do here is saved to the student's record.</span><button onClick={exitPreview}>Exit preview</button></div>}
     <div className="storage-line" role="status" aria-live="polite"><span className={storage.tone === "error" ? "storage-error" : storage.tone === "busy" ? "storage-busy" : "storage-ok"} />{courseError && !courseData ? `${courseError} ` : ""}{storage.message}</div>
     {notice && <div className="notice-line" role="status"><span className="storage-ok" />{notice}<button className="text-button" onClick={() => setNotice("")}>Dismiss</button></div>}
-    <nav className="nav-tabs" aria-label="FordMS EHR modules">{visibleViews.map((item) => <button key={item} className={view === item ? "active" : ""} aria-current={view === item ? "page" : undefined} onClick={() => setView(item)}>{item}</button>)}</nav>
+    <nav className="nav-tabs" aria-label="FordMS EHR modules">{visibleViews.map((item) => <button key={item} className={view === item ? "active" : ""} aria-current={view === item ? "page" : undefined} onClick={() => { setView(item); if (typeof window !== "undefined") window.history.replaceState(null, "", item === "Quizzes" ? "/quizzes" : "/"); }}>{item}</button>)}</nav>
     {PATIENT_VIEWS.has(view) && <PatientBanner patient={patient} />}
     <main id="practice-ehr-main" tabIndex={-1}>
       {!ready && view !== "Gradebook" && view !== "Admin" && <p className="empty">Preparing the workspace…</p>}
@@ -161,6 +162,7 @@ export function AppShell() {
       {view === "Implementation" && <ImplementationReadiness {...viewProps} />}
       {view === "Audit Review" && <AuditReview {...viewProps} />}
       {view === "Assignments" && <Assignments state={state} courseData={previewCourseData} readOnly={Boolean(preview)} exportLearnerReport={exportLearnerReport} refreshCourseData={refresh} flushSync={flushSync} replaceWorkspace={replace} />}
+      {view === "Quizzes" && <Quizzes readOnly={Boolean(preview)} />}
       {view === "Gradebook" && courseRole !== "student" && <Gradebook courseRole={courseRole} onPreview={enterPreview} />}
       {view === "Admin" && courseRole !== "student" && <AdminConsole courseRole={courseRole} onConfigPublished={() => refresh().catch(() => undefined)} />}
     </main>

@@ -1,0 +1,1122 @@
+{
+  "generatedAt": "2026-09-21T04:07:52.775Z",
+  "source": "manifest/course_manifest.json",
+  "weeks": [
+    {
+      "week": 1,
+      "title": "EHR foundations and digital maturity",
+      "date": "2026-09-21",
+      "dueAt": "2026-09-27T23:59:00-04:00",
+      "graded": true,
+      "items": [
+        {
+          "id": "W01-Q01",
+          "question": "What distinguishes a personal health record from the other record types discussed this week?",
+          "options": [
+            "The patient controls or maintains it and may connect it to provider systems",
+            "Hospitals produce it only for patients who have been discharged",
+            "It contains only information entered by clinicians during visits",
+            "It is stored on the patient's phone and can never be shared"
+          ],
+          "correct": 0,
+          "rationale": "A personal health record is defined by who controls it: the individual maintains it, decides what it contains, and may connect it to provider systems. It is not limited to discharge summaries, it is not clinician-authored, and it can certainly be shared; control by the person is the distinguishing feature.",
+          "kind": "definition",
+          "objective": "W01-O3"
+        },
+        {
+          "id": "W01-Q02",
+          "question": "A group practice keeps scanned records in one system and clinical data in four specialty systems that do not exchange information. How should you classify it?",
+          "options": [
+            "A single electronic health record, because every record is electronic",
+            "A clinical data warehouse serving the whole practice",
+            "A collection of electronic medical records plus a document repository",
+            "A personal health record, because patients can request copies"
+          ],
+          "correct": 2,
+          "rationale": "Each specialty system serves one department and does not exchange information, which is the boundary that defines an EMR, and the scanned archive holds images rather than structured data, which makes it a document repository. Being electronic does not make a system an EHR, and patient copies do not make it a PHR.",
+          "kind": "scenario",
+          "objective": "W01-O1"
+        },
+        {
+          "id": "W01-Q03",
+          "question": "A patient's uploaded home blood pressure readings arrive without a device name or units. What is the most important first step?",
+          "options": [
+            "Enter the readings into the vital signs flowsheet as clinical values",
+            "Discard the readings because they cannot be trusted",
+            "Ask the patient to stop using the portal for readings",
+            "Label them as patient-reported with source and verification status before anyone acts on them"
+          ],
+          "correct": 3,
+          "rationale": "Patient-generated data is valuable, but its provenance must travel with it. Labeling the readings with their source, units when known, and a verification status preserves patient control while preventing an unverified number from being treated as a clinical measurement. Discarding the data or entering it as verified both destroy information.",
+          "kind": "scenario",
+          "objective": "W01-O3"
+        },
+        {
+          "id": "W01-Q04",
+          "question": "An abnormal laboratory result has been finalized and appears in the chart, but no one has opened it. Which core function has not yet finished its work?",
+          "options": [
+            "Order management, because the order was never actually placed",
+            "Results management, because the result has not reached a reviewer who acts on it",
+            "Administrative processes, because the visit has not been billed",
+            "Health information and data, because the value is not stored"
+          ],
+          "correct": 1,
+          "rationale": "Results management covers the whole lifecycle from final result through review, communication, and follow-up, so a final but unopened result means the function is only half complete. The order clearly was placed, the value is stored, and billing is unrelated to whether the patient was told.",
+          "kind": "scenario",
+          "objective": "W01-O2"
+        },
+        {
+          "id": "W01-Q05",
+          "question": "A hospital reports the highest possible maturity score and asks whether it can stop auditing result follow-up. What should you recommend?",
+          "options": [
+            "Stop auditing, because the score demonstrates that the workflow is safe",
+            "Audit only the departments that scored lowest on the model",
+            "Keep auditing, because the score reflects adopted capabilities rather than local performance",
+            "Replace the audit with an annual clinician satisfaction survey"
+          ],
+          "correct": 2,
+          "rationale": "A maturity score is a structured assessment of adopted capabilities and governance; it does not measure whether a specific closed loop, such as result follow-up, actually closes for each patient. Local evidence must confirm performance, so the audit continues, and the score is used to decide which loops deserve the closest look.",
+          "kind": "action",
+          "objective": "W01-O4"
+        },
+        {
+          "id": "W01-Q06",
+          "question": "In the practice chart, the audit history for a result shows created at 09:14, finalized at 10:02, and no viewed entry. What does this evidence support?",
+          "options": [
+            "The result was reviewed but the audit log failed to record it",
+            "The result exists and is final but has not been opened by anyone",
+            "The order was never placed, so the result is an error",
+            "The patient was notified of the result at 10:02"
+          ],
+          "correct": 1,
+          "rationale": "Audit evidence supports exactly what it records: a result was created, then finalized, and no view event exists. Assuming a silent log failure or a patient notification adds facts the evidence does not contain, and a finalized result cannot exist without an order, so the honest reading is final and unopened.",
+          "kind": "data",
+          "objective": "W01-O5"
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "title": "Architecture, chart sections, and clinical systems",
+      "date": "2026-09-28",
+      "dueAt": "2026-10-04T23:59:00-04:00",
+      "graded": false,
+      "items": [
+        {
+          "id": "W02-Q01",
+          "question": "Which statement best describes a source system?",
+          "options": [
+            "The screen where a clinician most often reads a value",
+            "The database that stores copies of results for display",
+            "The application or device where a data element originates",
+            "The message standard that carries results between systems"
+          ],
+          "correct": 2,
+          "rationale": "A source system is defined by origination: it is where the data element or transaction is created and where a correction must begin. The display screen and the repository hold copies, and a message standard describes how copies travel; none of them creates the value.",
+          "kind": "definition",
+          "objective": "W02-O1"
+        },
+        {
+          "id": "W02-Q02",
+          "question": "A chart shows a creatinine from three months ago as the most recent value, but a specimen was drawn this morning and verified in the laboratory system forty minutes ago. What is the most likely explanation?",
+          "options": [
+            "The laboratory technologist has not yet verified the result",
+            "The feed into the repository is lagging, so the screen is complete for display but not current for decisions",
+            "The result was filed under a different patient because the names match",
+            "The chart's reference range excluded the value as an outlier"
+          ],
+          "correct": 1,
+          "rationale": "The stem states that the result is verified in the source, so the technologist option contradicts the facts. A lagging feed is the classic repository failure: the view looks complete and is simply behind. A patient mismatch is possible but requires evidence not given, and reference ranges flag values rather than hide them.",
+          "kind": "scenario",
+          "objective": "W02-O2"
+        },
+        {
+          "id": "W02-Q03",
+          "question": "A registrar codes I10, essential hypertension, on a patient's problem list because a prior note mentioned elevated blood pressure. The code is valid and current. What is wrong?",
+          "options": [
+            "Nothing; a valid, current code on the problem list is correct by definition",
+            "The code should have been entered as free text so a clinician could edit it",
+            "The field passed the format check, but the encounter documentation does not support the diagnosis",
+            "The registrar should have chosen a CPT code instead of an ICD-10-CM code"
+          ],
+          "correct": 2,
+          "rationale": "Format validation confirms that the code exists and is current; it cannot confirm that the clinical finding supports it, and a single mention of elevated pressure is not a diagnosis. Free text would not make the claim true, and a CPT code represents a service, not a condition, so the code system is not the error.",
+          "kind": "scenario",
+          "objective": "W02-O3"
+        },
+        {
+          "id": "W02-Q04",
+          "question": "During interface testing, a corrected potassium result is sent after the original. The chart now shows both values as final. Which transaction type failed?",
+          "options": [
+            "The corrected transaction, because the correction should replace the original rather than post beside it",
+            "The normal transaction, because the original result should never have posted",
+            "The unmatched transaction, because the second message had no patient identifier",
+            "The canceled transaction, because the laboratory should have canceled the first order"
+          ],
+          "correct": 0,
+          "rationale": "A corrected result must supersede the original so that only one final value is visible, and two finals side by side is the signature of a corrected transaction that was handled as a new result. The original posting was correct at the time, nothing in the stem says the identifier was missing, and no order was canceled.",
+          "kind": "scenario",
+          "objective": "W02-O4"
+        },
+        {
+          "id": "W02-Q05",
+          "question": "A practice manager asks the IT team to switch on a quick-registration screen she saw at a conference. What is the right first step under the life cycle?",
+          "options": [
+            "Configure the screen in the test environment so the manager can see it",
+            "Ask the vendor for a reference site that already uses the screen",
+            "Schedule the go-live date so that training can be planned around it",
+            "Observe the current registration work to confirm what the slow step actually is"
+          ],
+          "correct": 3,
+          "rationale": "Analysis comes before design in the life cycle, and the analysis question is what the current work actually does and where it is slow. Configuring first automates an assumption, a reference site tells you about another organization's work, and a go-live date before analysis is the skipped phase that produces unsafe processes.",
+          "kind": "action",
+          "objective": "W02-O5"
+        },
+        {
+          "id": "W02-Q06",
+          "question": "In the practice chart, a result shows final and not reviewed, and the audit history for the patient contains a population query by an analyst and no delivery or review entry. What does the evidence support?",
+          "options": [
+            "The result was reviewed by the analyst who ran the query",
+            "The chart displays the result, but the delivery handoff is not visible in the chart's own audit and no clinician has reviewed it",
+            "The interface failed and the result on the screen is a cached value",
+            "The audit log is broken and should be reset before the demonstration"
+          ],
+          "correct": 1,
+          "rationale": "Audit evidence supports exactly what it records: the value is displayed, a query touched the record, and no review event exists. A population query is not a clinical review, an interface failure is an inference the log does not contain, and declaring the log broken adds a fact with no evidence behind it.",
+          "kind": "data",
+          "objective": "W02-O1"
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "title": "Scheduling, registration, coding, and access",
+      "date": "2026-10-05",
+      "dueAt": "2026-10-11T23:59:00-04:00",
+      "graded": true,
+      "items": [
+        {
+          "id": "W03-Q01",
+          "question": "Which statement correctly separates ICD-10-CM from CPT?",
+          "options": [
+            "ICD-10-CM represents the diagnosis or reason for the encounter; CPT represents the service performed",
+            "ICD-10-CM is used in hospitals and CPT is used in outpatient clinics",
+            "ICD-10-CM is chosen by the clinician and CPT is chosen by the payer",
+            "ICD-10-CM changes every October and CPT never changes"
+          ],
+          "correct": 0,
+          "rationale": "The two code sets answer different questions: ICD-10-CM says why the patient was seen and CPT says what was done. Both are used across settings, both are assigned from the clinician's documentation by the coder, and both sets are updated on a schedule, so setting, chooser, and update frequency do not separate them.",
+          "kind": "definition",
+          "objective": "W03-O5"
+        },
+        {
+          "id": "W03-Q02",
+          "question": "A scheduler searches for Liu and finds Liu Huang and Liu H. with the same date of birth, different phone numbers, and different medical record numbers. The caller is waiting. What should the scheduler do?",
+          "options": [
+            "Merge the two records because the date of birth matches and then book",
+            "Book on the record with the most recent visit and note the other record in the comments",
+            "Ask the caller for identifiers the records hold, send the pair to the identity queue, and book only once identity is verified",
+            "Create a new record for the caller so the two existing records are not disturbed"
+          ],
+          "correct": 2,
+          "rationale": "The decision standard is search before creating and escalate ambiguous matches rather than guessing, and a scheduler is not authorized to merge. Booking on the recent record is a guess that becomes invisible until a warning fails to fire, and a third record is the least safe outcome because it creates a third place for results to hide.",
+          "kind": "scenario",
+          "objective": "W03-O1"
+        },
+        {
+          "id": "W03-Q03",
+          "question": "A note from a visit on October 6, 2026 states shoulder bursitis with no side documented. What should the coder do?",
+          "options": [
+            "Assign M75.51, since the right shoulder is the more common side",
+            "Assign the code from last year's list, since the update does not affect bursitis",
+            "Leave the encounter uncoded until the patient returns for follow-up",
+            "Query the clinician for laterality before assigning a lateral code, using the fiscal year 2027 set"
+          ],
+          "correct": 3,
+          "rationale": "A lateral code claims a fact the documentation must contain, so the coder queries rather than guesses, and the date of service after October 1, 2026 places the encounter in the fiscal year 2027 code set. Guessing the side misrepresents the encounter, an old list ignores the effective date, and leaving the visit uncoded delays a fact the query can resolve in a day.",
+          "kind": "scenario",
+          "objective": "W03-O4"
+        },
+        {
+          "id": "W03-Q04",
+          "question": "A visit takes place on October 3, 2026. Which ICD-10-CM code set should the coder use, and why?",
+          "options": [
+            "The fiscal year 2027 set, because it applies to dates of service from October 1, 2026",
+            "The fiscal year 2026 set, because the visit falls within calendar year 2026",
+            "Whichever set the chart's search panel shows first",
+            "The set that was current when the patient was first registered"
+          ],
+          "correct": 0,
+          "rationale": "ICD-10-CM updates take effect on October 1 and apply by date of service, so a visit on October 3, 2026 is coded with the fiscal year 2027 set. The calendar year is not the rule, the search panel is a convenience that must be checked against the effective date, and registration date has nothing to do with which set applies to a later encounter.",
+          "kind": "action",
+          "objective": "W03-O4"
+        },
+        {
+          "id": "W03-Q05",
+          "question": "While booking Liu Huang with Dr. Chen at nine o'clock, the chart refuses because Dr. Chen already has an appointment at that time. What is the correct next action?",
+          "options": [
+            "Override the conflict, because the existing appointment may be a cancellation",
+            "Book the same time with Dr. Patel without checking whether the patient already has a visit that day",
+            "Choose an open slot in the template that fits the visit type and reschedule, then confirm the change with the patient",
+            "Delete the existing appointment so the new one can be created"
+          ],
+          "correct": 2,
+          "rationale": "The conflict check compared provider, date, and start time and found a real collision, so the right action is to reschedule into an open slot that matches the visit type and tell the patient. Overriding or deleting destroys someone else's booking, and moving to another provider at the same time ignores continuity and the checks the system does not perform.",
+          "kind": "action",
+          "objective": "W03-O2"
+        },
+        {
+          "id": "W03-Q06",
+          "question": "A clinic reports third next available of six days. Stratified, Dr. Chen is two days and Dr. Patel is fourteen days, and new patient visits are twenty-two days. What is the safest interpretation?",
+          "options": [
+            "The clinic figure is wrong and should be recalculated",
+            "Access is acceptable overall, but the wait sits with one provider and with new patients, so the template change should target them",
+            "Dr. Chen's template should be copied to Dr. Patel without further review",
+            "New patient visits should be removed from the measure because they distort it"
+          ],
+          "correct": 1,
+          "rationale": "The clinic figure is true and hides where the wait is, which is what stratification is for; the decision it supports is a targeted change for Dr. Patel and for new patient access, paired with balancing measures. Recalculating does not change the arithmetic, copying one template ignores why the two differ, and removing new patients hides the group that waits longest.",
+          "kind": "data",
+          "objective": "W03-O3"
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "title": "Medication, orders, results, and clinical decision support",
+      "date": "2026-10-12",
+      "dueAt": "2026-10-18T23:59:00-04:00",
+      "graded": true,
+      "items": [
+        {
+          "id": "W04-Q01",
+          "question": "A beta blocker that was discontinued in March still appears on a patient's medication list in October, because every note since then copied the previous list. What is the failure?",
+          "options": [
+            "The list was carried forward without reconciliation, so a stopped medication looks current",
+            "The pharmacy failed to send a discontinuation message to the chart",
+            "The patient forgot to report that the medication was stopped",
+            "The medication should have been deleted from the record rather than discontinued"
+          ],
+          "correct": 0,
+          "rationale": "The list was copied forward at each visit without comparing it with the patient, which is exactly the copy-forward risk reconciliation exists to catch. Pharmacy messages are not the source of truth for a discontinuation the clinician made, the patient's memory is the input rather than the safeguard, and deleting a medication destroys the history that an amendment or discontinuation preserves.",
+          "kind": "scenario",
+          "objective": "W04-O1"
+        },
+        {
+          "id": "W04-Q02",
+          "question": "A potassium of 5.9 is final at 10:02. The clinician opens it in the inbox at 10:30 and the state changes to reviewed. No task exists and the patient has not been contacted. What is the state of the loop?",
+          "options": [
+            "Closed, because the clinician has reviewed the result",
+            "Closed, because the chart has recorded a review time",
+            "Open, because the patient has not been told and no follow-up has an owner or a date",
+            "Open, because the result has not yet been repeated"
+          ],
+          "correct": 2,
+          "rationale": "Reviewed means the clinician saw the value; closure requires communication to the patient and a follow-up action with a named owner and a due date, and neither exists. A recorded review time proves viewing rather than action, and a repeat test is an outcome of follow-up rather than the closing event itself.",
+          "kind": "scenario",
+          "objective": "W04-O3"
+        },
+        {
+          "id": "W04-Q03",
+          "question": "A clinician enters a laboratory order for the next patient while the chart is still open on the previous patient's record. Which safeguard should catch this, and why does electronic entry make it urgent?",
+          "options": [
+            "The interaction checker, because it compares the order with the medication list",
+            "Reading the patient banner before signing, because the signed order reaches the laboratory in seconds and looks legitimate",
+            "The conflict check, because it compares provider, date, and time",
+            "The audit history, because it records who placed the order after the fact"
+          ],
+          "correct": 1,
+          "rationale": "The identity check at the moment of signing is the safeguard for a wrong-patient order, and it matters more electronically because a legible, complete order travels to the laboratory instantly and is acted on. The interaction checker and the scheduling conflict check compare different things, and the audit history records the error rather than preventing it.",
+          "kind": "scenario",
+          "objective": "W04-O2"
+        },
+        {
+          "id": "W04-Q04",
+          "question": "An amoxicillin order triggers a drug-allergy warning: penicillin, hives, severe. What should the prescriber do?",
+          "options": [
+            "Override the warning with the reason clinician aware and proceed",
+            "Remove the allergy from the chart, since the reaction happened years ago",
+            "Ask the medical assistant to acknowledge the warning so the order can be signed",
+            "Choose an alternative agent, or record an override reason that names the reaction and the clinical justification"
+          ],
+          "correct": 3,
+          "rationale": "A severe documented reaction requires either an alternative or an override reason that names the reaction and explains why the benefit outweighs it, because that reason is what the pharmacist and any later reviewer will read. A generic reason records nothing, removing the allergy destroys safety information, and the assistant cannot take responsibility for a prescribing decision.",
+          "kind": "action",
+          "objective": "W04-O5"
+        },
+        {
+          "id": "W04-Q05",
+          "question": "A monthly report shows a renal-dosing alert with a ninety-four percent override rate, fired at check-in to medical assistants. What is the right first action?",
+          "options": [
+            "Move the alert to the prescriber inside the order form and re-measure the override rate",
+            "Increase the alert's severity so that it cannot be dismissed",
+            "Retire the alert, since almost everyone overrides it",
+            "Send medical assistants a reminder to read alerts carefully"
+          ],
+          "correct": 0,
+          "rationale": "The override rate and the recipient together say the alert fails right person and right time, so the redesign moves it to the prescriber at the ordering step and then measures again. Raising severity makes a mistargeted alert more annoying, retiring it discards correct information, and a reminder blames the user for a design failure.",
+          "kind": "action",
+          "objective": "W04-O4"
+        },
+        {
+          "id": "W04-Q06",
+          "question": "The chart shows a result final at 10:02 and reviewed at 10:30, no task in the task list, and no documented patient contact. What does this evidence support?",
+          "options": [
+            "The patient was called at 10:30, because reviewed implies communication",
+            "The result was seen by a clinician and no follow-up or communication has been recorded",
+            "The result was never routed to the correct inbox",
+            "The laboratory has not yet released the result"
+          ],
+          "correct": 1,
+          "rationale": "The evidence supports exactly what it records: a final result, a review event, and nothing after it. Reviewed does not imply a call, the review event proves the result reached an inbox, and a review cannot occur before release, so the honest reading is seen and not yet acted on.",
+          "kind": "data",
+          "objective": "W04-O3"
+        }
+      ]
+    },
+    {
+      "week": 5,
+      "title": "Clinical documentation and note integrity",
+      "date": "2026-10-19",
+      "dueAt": "2026-10-25T23:59:00-04:00",
+      "graded": false,
+      "items": [
+        {
+          "id": "W05-Q01",
+          "question": "What does the SOAP structure separate in a clinical note?",
+          "options": [
+            "The clinician's findings from the nurse's findings",
+            "What the patient reported, what was observed or measured, what was concluded, and what will be done",
+            "The billable portion of the visit from the non-billable portion",
+            "The current visit's content from content copied from earlier notes"
+          ],
+          "correct": 1,
+          "rationale": "The four sections separate kinds of statement: subjective report, objective finding, assessment, and plan, so that a reader can tell a symptom from a measurement from a conclusion. Authorship, billing, and provenance are all important, but they are not what the four letters organize.",
+          "kind": "definition",
+          "objective": "W05-O1"
+        },
+        {
+          "id": "W05-Q02",
+          "question": "A shoulder template defaults the neurologic line to grossly intact. A resident signs fourteen notes in a month with that finding, and observation shows no neurologic exam was performed. What is the failure?",
+          "options": [
+            "The resident falsified fourteen examinations and should be reported",
+            "The observation was wrong, because a signed finding is evidence the exam occurred",
+            "A default-normal finding turned an examination that never happened into a signed claim, and the signer did not notice",
+            "The template should have defaulted to abnormal so the resident would have to correct it"
+          ],
+          "correct": 2,
+          "rationale": "The template supplied the finding before anyone examined the patient, and signing without noticing is the predictable result of a default-normal design. Calling it falsification ignores the design, a signature does not create an exam, and an abnormal default is the same error in the other direction; the fix is a neutral default with active confirmation.",
+          "kind": "scenario",
+          "objective": "W05-O2"
+        },
+        {
+          "id": "W05-Q03",
+          "question": "A note has carried the line acute chest pain, awaiting stress test through five visits since 2024, though the stress test was completed and normal that year. A covering clinician begins to order another one. What went wrong?",
+          "options": [
+            "Copied text without provenance or review made an old plan look current",
+            "The stress test result was never sent to the chart",
+            "The covering clinician should not have read the note",
+            "The problem list was missing a diagnosis code for chest pain"
+          ],
+          "correct": 0,
+          "rationale": "The line was copied forward without a visible source date and without a signer confirming it each time, so a finished plan read as pending. Nothing in the scenario says the result was missing, reading the note is exactly what the clinician should do, and the problem list is a separate record that would not have prevented the copied sentence.",
+          "kind": "scenario",
+          "objective": "W05-O3"
+        },
+        {
+          "id": "W05-Q04",
+          "question": "An ambient draft states left shoulder pain after a fall, a normal neurologic examination, and a plan for an MRI. The chart evidence records right shoulder pain after lifting, no fall, no neurologic exam, and no imaging discussed. What should the clinician conclude?",
+          "options": [
+            "The draft is acceptable once the laterality is corrected",
+            "The recording must have captured a different patient's visit",
+            "The draft should be signed and amended after the MRI result returns",
+            "The draft contains invented, misattributed, and unsupported claims and must be corrected claim by claim before anything is signed"
+          ],
+          "correct": 3,
+          "rationale": "Four separate claims contradict the evidence, so the draft is not one error away from usable; each claim needs a recorded decision and only supported content can be signed. Fixing laterality alone leaves the fall, the exam, and the MRI in place, a different patient is a guess, and signing then amending puts false content into the record on purpose.",
+          "kind": "scenario",
+          "objective": "W05-O5"
+        },
+        {
+          "id": "W05-Q05",
+          "question": "Four hours after signing a note, a clinician notices the assessment says left shoulder when the exam documented the right. What should she do?",
+          "options": [
+            "Reopen the signed note and change the word left to right",
+            "Add an amendment with her name, the time, the correction, and the reason, leaving the original readable",
+            "Ask the informatics team to delete the note from the record",
+            "Write the correct side in the next visit's note and leave the original as it is"
+          ],
+          "correct": 1,
+          "rationale": "A signed note is corrected by an amendment that preserves the original and carries author, time, and reason, so that the coder and anyone else who acted on the original can see what changed. Reopening destroys the original, deletion destroys the record, and a later note leaves the wrong side standing wherever the first note is read.",
+          "kind": "action",
+          "objective": "W05-O4"
+        },
+        {
+          "id": "W05-Q06",
+          "question": "An ambient pilot report lists forty drafts reviewed, thirty-one with at least one unsupported claim, six with laterality errors, and none of the errors flagged by the tool itself. What is the safest interpretation?",
+          "options": [
+            "The tool is safe, because every error was caught before signing",
+            "The reviewers were too strict and the error count is inflated",
+            "The tool should be expanded to more clinics to gather a larger sample",
+            "The draft cannot be trusted without claim-by-claim human review, and the review process, not the tool, is what caught the errors"
+          ],
+          "correct": 3,
+          "rationale": "Thirty-one of forty drafts with unsupported claims and zero self-detection means the safety of the pilot came entirely from the human review step, which must therefore remain mandatory and measured. Calling the tool safe credits it with the reviewers' work, doubting the reviewers has no evidence behind it, and expanding before fixing multiplies the error rate.",
+          "kind": "data",
+          "objective": "W05-O5"
+        }
+      ]
+    },
+    {
+      "week": 6,
+      "title": "Patient engagement, portals, and consent",
+      "date": "2026-10-26",
+      "dueAt": "2026-11-01T23:59:00-04:00",
+      "graded": true,
+      "items": [
+        {
+          "id": "W06-Q01",
+          "question": "What distinguishes proxy access from other ways a family member might see a patient's information?",
+          "options": [
+            "The family member uses the patient's own password with permission",
+            "The family member has separate credentials with a defined scope under legal and practice rules",
+            "The family member receives printed copies at each visit",
+            "The family member is listed as an emergency contact"
+          ],
+          "correct": 1,
+          "rationale": "Proxy access is authorized access to another person's portal under defined legal and organizational rules, which requires the proxy's own credentials and a documented scope. Sharing a password erases accountability, printed copies are a disclosure rather than access, and an emergency contact has no portal rights at all.",
+          "kind": "definition",
+          "objective": "W06-O2"
+        },
+        {
+          "id": "W06-Q02",
+          "question": "Elena Garcia sends readings of 148 over 90, 145 over 88, and 150 over 92 with no device named. Her last office reading was 132 over 78. What should the clinician conclude?",
+          "options": [
+            "Her blood pressure has risen and medication should change today",
+            "The readings are wrong because they disagree with the office value",
+            "The readings are a signal that needs provenance and a verified repeat before treatment changes",
+            "The office reading was wrong and should be amended"
+          ],
+          "correct": 2,
+          "rationale": "The readings are valuable information, but without device, cuff, timing, and conditions they cannot be compared with the office measurement, so the correct step is to label them, request provenance, and verify with a validated cuff. Changing treatment today and dismissing the readings both act on unverified data in opposite directions.",
+          "kind": "scenario",
+          "objective": "W06-O3"
+        },
+        {
+          "id": "W06-Q03",
+          "question": "A parent using proxy access to a fourteen-year-old's portal reports that a vaccine entry is wrong. What should the practice do first?",
+          "options": [
+            "Confirm the sender is the proxy, then verify the entry against the immunization registry before correcting",
+            "Delete the vaccine entry because the parent is the legal guardian",
+            "Ask the teenager to confirm by logging in with the parent's account",
+            "Tell the parent that proxies cannot report errors"
+          ],
+          "correct": 0,
+          "rationale": "A proxy report is a legitimate request that the practice must verify before changing the record, so the first step is to confirm who sent it and check the entry against the registry. Deleting on request skips verification, sharing the parent's login destroys accountability, and refusing the report ignores the purpose of proxy access.",
+          "kind": "scenario",
+          "objective": "W06-O2"
+        },
+        {
+          "id": "W06-Q04",
+          "question": "Priya Shah's portal message asks for an evening appointment and a Gujarati interpreter. The nurse forwards it to the front desk as a scheduling request. What has gone wrong?",
+          "options": [
+            "Nothing, because scheduling belongs to the front desk",
+            "The message should have gone to the clinician instead",
+            "The interpreter request was not carried with the routing, so one of two needs will be missed",
+            "Portal messages should never be forwarded"
+          ],
+          "correct": 2,
+          "rationale": "Routing rules must carry every request in the message to an owner, and this message had two: a time preference and a language need. Forwarding only the scheduling part means the interpreter is never booked. The clinician is not the owner of either request, and forwarding is exactly how routing is supposed to work when it preserves the whole message.",
+          "kind": "scenario",
+          "objective": "W06-O1"
+        },
+        {
+          "id": "W06-Q05",
+          "question": "A practice plans to move result notifications to the portal only. Which safeguard best protects digital inclusion?",
+          "options": [
+            "Add more languages to the login page before launch",
+            "Send results by portal and mail simultaneously forever",
+            "Require every patient to enroll at the next visit",
+            "Keep a supported phone pathway and measure completion by patient group before retiring it"
+          ],
+          "correct": 3,
+          "rationale": "Digital inclusion requires retaining supported alternatives and measuring adoption and completion by relevant patient groups, so the phone pathway stays until the stratified data says it is no longer needed. Login languages help but do not reach patients without devices, forced enrollment does not create skill or connectivity, and permanent dual delivery avoids the measurement question.",
+          "kind": "action",
+          "objective": "W06-O4"
+        },
+        {
+          "id": "W06-Q06",
+          "question": "Portal enrollment is 71 percent among English-speaking patients and 26 percent among Mandarin-speaking patients, and missed appointments rose after phone reminders were retired. What does the evidence support?",
+          "options": [
+            "Mandarin-speaking patients prefer not to use technology",
+            "The overall enrollment rate should be reported to leadership as the success measure",
+            "The reminder change should be reversed only if missed appointments rose in both groups",
+            "Retiring the alternative before measuring by language widened a gap that the workflow should now close"
+          ],
+          "correct": 3,
+          "rationale": "The stratified data shows a large enrollment gap by language, and the rise in missed appointments after the alternative was removed is the consequence. The evidence says nothing about preference, only about completion; the overall rate hides the gap; and waiting for harm in both groups ignores the group already harmed.",
+          "kind": "data",
+          "objective": "W06-O4"
+        }
+      ]
+    },
+    {
+      "week": 7,
+      "title": "Usability, privacy, security, and downtime",
+      "date": "2026-11-02",
+      "dueAt": "2026-11-08T23:59:00-04:00",
+      "graded": true,
+      "items": [
+        {
+          "id": "W07-Q01",
+          "question": "Which statement best describes usability as the course defines it?",
+          "options": [
+            "How much users say they like the screens on a satisfaction survey",
+            "How effectively, efficiently, and satisfactorily specified users achieve their goals in context",
+            "The number of features the vendor has enabled for the practice",
+            "Whether the system meets federal certification requirements"
+          ],
+          "correct": 1,
+          "rationale": "Usability is the extent to which specified users achieve goals effectively, efficiently, and satisfactorily in context, which is measured by task performance, observation, system data, and experience together. Satisfaction alone is one input, feature counts measure presence rather than use, and certification says nothing about a local task.",
+          "kind": "definition",
+          "objective": "W07-O1"
+        },
+        {
+          "id": "W07-Q02",
+          "question": "The audit log shows a scheduler opened the results tab for a patient who shares the scheduler's last name and has no appointment on the schedule. What does the evidence support?",
+          "options": [
+            "A possible insider snooping event that the privacy officer must investigate",
+            "Nothing, because schedulers are allowed to open charts",
+            "A phishing attack on the scheduler's account",
+            "A downtime back-entry that was mislabeled"
+          ],
+          "correct": 0,
+          "rationale": "A user opening clinical content outside any scheduled encounter for a patient who shares a surname is the classic snooping pattern, and the monitoring rule exists to flag exactly that for investigation. The scheduler role does not include results, there is no sign of a new device or odd hour that would suggest phishing, and downtime entries are labeled and clinical.",
+          "kind": "scenario",
+          "objective": "W07-O3"
+        },
+        {
+          "id": "W07-Q03",
+          "question": "During a two-hour downtime, orders were phoned to the laboratory and written on paper. The system is back. What is the largest remaining risk?",
+          "options": [
+            "The laboratory will bill twice for orders that were phoned in",
+            "Patients will complain about the delay and leave poor reviews",
+            "The system will go down again before the backlog is cleared",
+            "Phoned orders and paper encounters are never back-entered, so results arrive with no order"
+          ],
+          "correct": 3,
+          "rationale": "The risk that defines downtime recovery is the paper that never makes it back: orders phoned but never entered so results arrive with nothing to attach to, and encounters that exist only in a binder. Billing, recurrence, and complaints are real but secondary, and none of them is solved by the reconciliation step that closes the actual gap.",
+          "kind": "scenario",
+          "objective": "W07-O4"
+        },
+        {
+          "id": "W07-Q04",
+          "question": "A covering clinician must open a restricted chart for a patient in respiratory distress. What should the system require?",
+          "options": [
+            "A stated reason at the moment of access, a review warning, and a flagged log entry",
+            "A call to the privacy officer for approval before the chart opens",
+            "Nothing at all, because an emergency overrides access control",
+            "The patient's written consent obtained before the chart opens"
+          ],
+          "correct": 0,
+          "rationale": "Break-the-glass keeps minimum necessary as the default and handles the emergency by requiring a stated reason, warning the user that the access will be reviewed, and creating an entry the privacy officer must close. Waiting for approval delays care, silent override erases the exception, and written consent is impossible from a patient who cannot breathe.",
+          "kind": "action",
+          "objective": "W07-O2"
+        },
+        {
+          "id": "W07-Q05",
+          "question": "A practice wants to know whether a new template reduced documentation burden without harming safety. What should it measure?",
+          "options": [
+            "After-hours documentation time only, because that is what burden means",
+            "Clinician preference between the old and new templates",
+            "Time, note quality against visit evidence, downstream inbox work, and clinician experience together",
+            "The number of clinicians trained on the template"
+          ],
+          "correct": 2,
+          "rationale": "Documentation burden is judged on time, quality, downstream work, and clinician experience together, because a change that cuts time can fill in findings that never happened or push work into the inbox. Time alone missed the pre-filled examination in the story, preference is one weak input, and training counts measure adoption effort rather than effect.",
+          "kind": "action",
+          "objective": "W07-O1"
+        },
+        {
+          "id": "W07-Q06",
+          "question": "A monthly audit report shows 1,240 chart accesses, 3 break-the-glass events all reviewed and closed as justified, and 0 flags from the same-surname rule. What is the safest interpretation?",
+          "options": [
+            "The practice has no privacy problems this month and can skip the next review",
+            "Break-the-glass is being overused and the feature should be removed",
+            "The reviewed exceptions show the process works, but zero surname flags may mean the rule is not running",
+            "The 1,240 accesses are too many for a practice this size and need explanation"
+          ],
+          "correct": 2,
+          "rationale": "Three reviewed and closed exceptions are evidence that the break-the-glass process works as designed. A rule that has never fired is either a clean month or a broken rule, and the report cannot tell you which, so the honest reading tests the rule before claiming no problems. Total access counts mean nothing without the schedule as a denominator.",
+          "kind": "data",
+          "objective": "W07-O3"
+        }
+      ]
+    },
+    {
+      "week": 8,
+      "title": "Clinical decision support and artificial intelligence",
+      "date": "2026-11-09",
+      "dueAt": "2026-11-15T23:59:00-04:00",
+      "graded": false,
+      "items": [
+        {
+          "id": "W08-Q01",
+          "question": "What is the essential difference between a predictive model and generative AI?",
+          "options": [
+            "A predictive model is always more accurate than a generative system",
+            "A predictive model estimates the likelihood of a defined outcome, while generative AI produces new content from patterns and context",
+            "Generative AI is rules-based while a predictive model learns from data",
+            "A predictive model requires clinician review and generative AI does not"
+          ],
+          "correct": 1,
+          "rationale": "A predictive model estimates the likelihood of a defined outcome, such as readmission, while a generative model produces new text or other content from learned patterns and supplied context. Neither is rules-based, both require review, and accuracy depends on the task rather than the category.",
+          "kind": "definition",
+          "objective": "W08-O1"
+        },
+        {
+          "id": "W08-Q02",
+          "question": "A potassium alert fires on a sample the laboratory has marked hemolyzed. The clinician dismisses it. What should the system have captured?",
+          "options": [
+            "Nothing at all, because the alert was clearly wrong for this sample",
+            "A structured override reason such as sample quality, so the monthly review can revise the rule",
+            "A second alert warning the clinician that the first one was dismissed",
+            "An automatic repeat potassium order placed regardless of the dismissal"
+          ],
+          "correct": 1,
+          "rationale": "An override pathway only works if the reason is recorded in a form that can be counted, because the monthly review of override reasons is how an outdated or context-blind rule gets revised. Silent dismissal cannot be monitored, a second alert adds fatigue, and an automatic order removes the clinician's judgment the rule was meant to support.",
+          "kind": "scenario",
+          "objective": "W08-O1"
+        },
+        {
+          "id": "W08-Q03",
+          "question": "A generative draft states that the neurologic examination was normal. The encounter evidence says it was not performed. Which error type is this?",
+          "options": [
+            "An omission, because the examination is missing from the plan",
+            "A laterality error, because the wrong side was examined",
+            "A fabricated finding, because the draft asserts an observation that was never made",
+            "A misattributed cause, because the draft links the finding to the wrong event"
+          ],
+          "correct": 2,
+          "rationale": "A fabricated finding is a statement of an observation that the source does not support, and a normal examination that was never performed is exactly that. An omission is something the source contains that the draft leaves out, laterality concerns side, and misattributed cause concerns why rather than whether.",
+          "kind": "scenario",
+          "objective": "W08-O3"
+        },
+        {
+          "id": "W08-Q04",
+          "question": "A visit-summary tool omits an interpreter need in 4 percent of summaries overall and in 19 percent of summaries for Mandarin-speaking patients. The governance document set a 10 percent limit for any group. What should happen?",
+          "options": [
+            "Deploy, because the overall rate is well within the limit",
+            "Wait another quarter to see whether the gap closes on its own",
+            "Lower the group threshold so the tool can stay live",
+            "Follow the written rule: restrict or roll back the tool for that group and revise before re-testing"
+          ],
+          "correct": 3,
+          "rationale": "The subgroup measure and the threshold were written before launch precisely so that this decision would not be renegotiated when the number arrived; the group breach triggers the rollback rule. The overall rate hides the group that is harmed, moving the threshold after the fact defeats the purpose of setting it, and waiting exposes more patients to a known omission.",
+          "kind": "scenario",
+          "objective": "W08-O4"
+        },
+        {
+          "id": "W08-Q05",
+          "question": "A vendor announcement says a new AI assistant is now live at several health systems and reduces inbox time. How should you classify that evidence before citing it?",
+          "options": [
+            "As a controlled study, since several systems are involved",
+            "As irrelevant, since it did not come from a journal",
+            "As proof that the assistant works, since it is already in use",
+            "As an announced or vendor-reported deployment, a claim to be tested locally against a baseline"
+          ],
+          "correct": 3,
+          "rationale": "An announcement of deployment is evidence that a capability exists and is in use; it is not evidence of effect until an independent or local measurement with a baseline exists. Several customers do not make a controlled study, being live is not the same as working, and dismissing the announcement throws away real information about what has been deployed.",
+          "kind": "action",
+          "objective": "W08-O4"
+        },
+        {
+          "id": "W08-Q06",
+          "question": "A readmission model is tested on 1,000 discharges with 100 actual readmissions. It flags 150 patients, 60 of whom are readmitted. Which pair of numbers is correct?",
+          "options": [
+            "Sensitivity 60 percent and positive predictive value 40 percent",
+            "Sensitivity 40 percent and positive predictive value 60 percent",
+            "Sensitivity 90 percent and positive predictive value 10 percent",
+            "Sensitivity 60 percent and positive predictive value 60 percent"
+          ],
+          "correct": 0,
+          "rationale": "Sensitivity is true positives over all actual readmissions, sixty of a hundred, or sixty percent. Positive predictive value is true positives over everyone flagged, sixty of a hundred and fifty, or forty percent. The other pairs either swap the two denominators or confuse specificity, which would be 810 of 900, with sensitivity.",
+          "kind": "data",
+          "objective": "W08-O2"
+        }
+      ]
+    },
+    {
+      "week": 9,
+      "title": "Interoperability, FHIR, and population health",
+      "date": "2026-11-16",
+      "dueAt": "2026-11-22T23:59:00-04:00",
+      "graded": true,
+      "items": [
+        {
+          "id": "W09-Q01",
+          "question": "Which statement best describes interoperability as the course uses the term?",
+          "options": [
+            "Two systems are connected by a tested and working interface",
+            "Systems and organizations can exchange information and use it appropriately at every level",
+            "All systems in a region are purchased from the same vendor",
+            "Records can be printed and faxed between organizations on request"
+          ],
+          "correct": 1,
+          "rationale": "Interoperability is the ability of systems and organizations to exchange information and use it appropriately, which spans the foundational, structural, semantic, and organizational levels. A working interface proves only the first level, a shared vendor is neither necessary nor sufficient, and a fax is a paper bridge rather than usable exchange.",
+          "kind": "definition",
+          "objective": "W09-O1"
+        },
+        {
+          "id": "W09-Q02",
+          "question": "What is a FHIR resource?",
+          "options": [
+            "A complete copy of a patient's chart sent as one document",
+            "A network connection between two health information exchanges",
+            "A billing code set maintained by the federal government",
+            "A modular, standard representation of one healthcare concept, such as a patient, an allergy, or an observation"
+          ],
+          "correct": 3,
+          "rationale": "A FHIR resource is a modular representation of a single healthcare concept used in HL7 FHIR exchange, which is why reconciliation can happen item by item. A whole-chart document is a different exchange pattern, code sets are terminology rather than structure, and a network connection is transport.",
+          "kind": "definition",
+          "objective": "W09-O2"
+        },
+        {
+          "id": "W09-Q03",
+          "question": "An incoming AllergyIntolerance for penicillin says rash with no severity. The local chart says hives, severe. The match is 98 percent. What is the best reconciliation decision?",
+          "options": [
+            "Accept the incoming item so the chart reflects the most recent source",
+            "Keep the local entry and record the external reaction as an additional episode with its source and date",
+            "Defer the item until the sending organization supplies a severity",
+            "Remove the allergy because the two sources disagree"
+          ],
+          "correct": 1,
+          "rationale": "When identity is confident and content conflicts, the practice keeps the more specific and safer value and preserves the difference by accepting the external reaction as an additional documented episode with provenance. Replacing severe with an unknown severity lowers safety, deferring leaves a confident item unresolved, and removing an allergy on disagreement is dangerous.",
+          "kind": "scenario",
+          "objective": "W09-O3"
+        },
+        {
+          "id": "W09-Q04",
+          "question": "A Condition resource for prediabetes with a 2021 onset arrives with a match confidence of 0.71 for a patient whose local list says type 2 diabetes with a 2024 onset. What should happen first?",
+          "options": [
+            "Merge it into the local problem as history, since prediabetes precedes diabetes",
+            "Reject it because the code differs from the local diagnosis",
+            "Defer it to the identity queue and resolve who the item belongs to before any clinical decision",
+            "Accept it and let the clinician sort it out at the next visit"
+          ],
+          "correct": 2,
+          "rationale": "A match confidence of 0.71 means the exchange is not sure the item belongs to this patient, and no clinical reasoning about codes or onset dates is valid until identity is resolved. Merging or accepting risks attaching another person's diagnosis to this chart, and rejecting on the code alone throws away what may be genuine history once identity is confirmed.",
+          "kind": "scenario",
+          "objective": "W09-O3"
+        },
+        {
+          "id": "W09-Q05",
+          "question": "The analytics view shows both cohort members have commercial coverage and none have Medicaid or Medicare. What should the report say?",
+          "options": [
+            "Commercial coverage is associated with poorer diabetes control",
+            "Coverage should be removed from the report because it is sensitive",
+            "Patients with Medicaid or Medicare have better control",
+            "Both members of a two-patient cohort have commercial coverage, which is a first stratification and not an equity conclusion"
+          ],
+          "correct": 3,
+          "rationale": "Stratification describes how a cohort is distributed; it does not establish cause, and a two-patient cohort cannot support any association in either direction. Reporting the distribution with that limitation is correct, claiming an association in either direction overclaims, and removing coverage hides a stratification that a larger cohort would need.",
+          "kind": "action",
+          "objective": "W09-O5"
+        },
+        {
+          "id": "W09-Q06",
+          "question": "Twelve patients are in the practice. Nine have a final A1c in the window, and two of those are at or above 8 percent. What is the rate, and what else must the report state?",
+          "options": [
+            "Two of nine, about 22 percent, plus the three patients with no final result in the window",
+            "Two of twelve, about 17 percent, and nothing else is needed",
+            "Two of three, about 67 percent, using only patients with abnormal results",
+            "Nine of twelve, 75 percent, measuring completeness of testing"
+          ],
+          "correct": 0,
+          "rationale": "The denominator is the patients who could be measured, nine, so the rate is two of nine, and the report must state that three patients had no final result so the reader can judge what the rate leaves out. Two of twelve treats missing patients as normal, two of three has no meaning, and nine of twelve is a different and useful measure of testing completeness rather than of control.",
+          "kind": "data",
+          "objective": "W09-O5"
+        }
+      ]
+    },
+    {
+      "week": 10,
+      "title": "Vendor selection and implementation",
+      "date": "2026-11-23",
+      "dueAt": "2026-11-29T23:59:00-04:00",
+      "graded": false,
+      "items": [
+        {
+          "id": "W10-Q01",
+          "question": "What distinguishes weighted selection criteria from a feature checklist when comparing EHR vendors?",
+          "options": [
+            "Criteria are scored by the vendor and the checklist is scored by the buyer",
+            "Criteria rate how well each requirement fits the work and its cost, using weights agreed in advance",
+            "Criteria list every function the product offers in the order the vendor presents them",
+            "Criteria are applied only after the contract has been signed and configuration begins"
+          ],
+          "correct": 1,
+          "rationale": "Weighted criteria compare products on how well they meet requirements that matter to the organization, with weights fixed before scoring so the result is consistent and explainable. A checklist only records whether a function exists, which is why it hides workflow gaps and total cost. Vendors do not score themselves, and criteria are applied before selection, not after signing.",
+          "kind": "definition",
+          "objective": "W10-O1"
+        },
+        {
+          "id": "W10-Q02",
+          "question": "Crescent Health's chief executive tells the committee chair privately that one vendor is the obvious choice. What should the chair do first?",
+          "options": [
+            "Adjust the workflow weight so that the preferred vendor scores higher",
+            "Stop the selection and reissue the request for proposals to new vendors",
+            "Remove the chief executive from the steering committee for the rest of the process",
+            "Ask the chief executive to disclose the relationship and put the discussion on the record"
+          ],
+          "correct": 3,
+          "rationale": "Governance works by making influence visible: the interest is disclosed, the argument happens in an open meeting, and any change to a weight is minuted and applied to every vendor. Quietly adjusting a weight is exactly the informal influence the charter exists to prevent. Removing the chief executive is rarely possible and not necessary if disclosure and published weights are in place, and reissuing the request punishes the process for one conversation.",
+          "kind": "scenario",
+          "objective": "W10-O2"
+        },
+        {
+          "id": "W10-Q03",
+          "question": "A mock conversion reports 98.7 percent required-field completeness across 24,000 charts against a signed threshold of 99.5 percent. What does this most directly mean?",
+          "options": [
+            "About 312 charts have at least one missing required field, so the domain is not ready",
+            "The domain is ready, because well over 95 percent of required fields are complete",
+            "About 1.3 percent of the vendor's mappings are wrong, so the contract has been breached",
+            "The real conversion will fail for 1.3 percent of patients and they must be re-registered"
+          ],
+          "correct": 0,
+          "rationale": "The percentage only becomes meaningful with its denominator and its threshold: 1.3 percent of 24,000 is about 312 patients whose allergy, medication, or problem entries may be silently incomplete, and the result is below the agreed 99.5 percent. Calling it ready ignores the signed threshold. The figure describes records, not mappings or contract terms, and a trial load does not predict that patients must be re-registered.",
+          "kind": "data",
+          "objective": "W10-O3"
+        },
+        {
+          "id": "W10-Q04",
+          "question": "One week before a barcode medication administration go-live, the ADT and laboratory interfaces have passed and the pharmacy interface retest is still scheduled. How should the committee treat the interface domain?",
+          "options": [
+            "Ready, because two of the three interfaces have passed end-to-end testing",
+            "In progress at moderate risk, because pharmacy is a secondary feed for this scope",
+            "High risk, because the untested interface carries the workflow being launched",
+            "Ready, provided the vendor certifies the pharmacy interface in writing"
+          ],
+          "correct": 2,
+          "rationale": "Risk is judged against the workflow being launched, and barcode medication administration depends on pharmacy messages, so the one untested interface is the one that matters most. Two of three is a count, not a readiness judgment. Pharmacy is not secondary for this scope, and a vendor's written assurance is a claim rather than an end-to-end test result.",
+          "kind": "scenario",
+          "objective": "W10-O4"
+        },
+        {
+          "id": "W10-Q05",
+          "question": "The readiness board shows one domain blocked, three high-risk domains open, and a go-live date already announced to the board. What is the defensible recommendation?",
+          "options": [
+            "Go on the announced date, because the announcement is a commitment to the board",
+            "No-go, and begin the process of cancelling the vendor contract",
+            "Go on the date, and resolve the blocked domain during the first week after launch",
+            "Conditional go with named owners, thresholds, and a rollback trigger, or a delay for the affected scope"
+          ],
+          "correct": 3,
+          "rationale": "A defensible recommendation is made against the evidence in each domain and carries an owner, thresholds, monitoring, and a rollback trigger; when some domains are ready and others are not, a conditional go that limits scope, or a delay for the unready scope, is the honest answer. Going because of the announcement is calendar pressure, and resolving a blocked workflow after launch means patients meet the failure first. No-go with contract cancellation confuses a readiness decision with a selection decision.",
+          "kind": "action",
+          "objective": "W10-O5"
+        },
+        {
+          "id": "W10-Q06",
+          "question": "Crescent Health has three clinic sites and a small hospital that share one pharmacy system whose interface has not yet passed testing. Which rollout choice is best supported by tonight's reasoning?",
+          "options": [
+            "Big bang across every site, so that no interface has to bridge old and new systems",
+            "Phased by site, starting with the clinics and holding the hospital until the pharmacy interface passes",
+            "Phased by module, starting with billing at every site before any clinical function",
+            "Big bang on a holiday weekend, so that fewer patients are affected if something fails"
+          ],
+          "correct": 1,
+          "rationale": "A phased rollout lets the organization start where the evidence supports readiness and hold the scope that depends on an untested interface, which is exactly what a conditional go does. A big bang removes the bridging problem but exposes every patient to the pharmacy risk at once, on a weekend or not. Phasing by billing module first delays the clinical value and does not address the interface at all.",
+          "kind": "scenario",
+          "objective": "W10-O1"
+        }
+      ]
+    },
+    {
+      "week": 11,
+      "title": "Optimization, measurement, and AI project clinic",
+      "date": "2026-11-30",
+      "dueAt": "2026-12-06T23:59:00-04:00",
+      "graded": false,
+      "items": [
+        {
+          "id": "W11-Q01",
+          "question": "Crescent Health reports 96 percent of abnormal results acknowledged within one business day and 61 percent of those patients seen within seven days. What do the two numbers together tell you?",
+          "options": [
+            "Both numbers are process measures, so no outcome has yet been measured",
+            "The outcome is holding and the process is failing, so acknowledgment needs attention",
+            "The process is holding and the outcome is failing, so the loop breaks after acknowledgment",
+            "The 96 percent shows the 61 percent will rise once the scheduling backlog clears"
+          ],
+          "correct": 2,
+          "rationale": "Acknowledgment is a process step and it is happening reliably; being seen within seven days is the outcome, and it is not. Together they locate the break between the click and the visit, which is the follow-up order and the scheduling handoff. Reading both as process measures ignores that the second one records the result patients needed, and nothing in the acknowledgment rate predicts that visits will follow.",
+          "kind": "data",
+          "objective": "W11-O1"
+        },
+        {
+          "id": "W11-Q02",
+          "question": "A team demonstrates its AI summary tool on three polished cases and reports that it is faster than the current template. What is missing for a baseline comparison?",
+          "options": [
+            "A larger number of polished cases so that the speed difference is convincing",
+            "The same cases run through the current template workflow with one scoring sheet",
+            "A survey asking clinicians whether they prefer the tool to the template",
+            "A comparison with the accuracy figure the vendor published for a similar tool"
+          ],
+          "correct": 1,
+          "rationale": "A baseline is the current workflow measured on the same cases with the same scoring, so that any difference can be attributed to the tool. More polished cases make the demonstration longer, not comparative. A preference survey measures opinion, and a vendor's published figure was produced on different cases with different scoring and is a claim rather than a comparator.",
+          "kind": "scenario",
+          "objective": "W11-O2"
+        },
+        {
+          "id": "W11-Q03",
+          "question": "You are assembling the six-case test set for your AI project. Which set of cases is best?",
+          "options": [
+            "Six typical visits so that the results are consistent and easy to score",
+            "Six of the hardest visits available so that the tool is stressed as much as possible",
+            "Two normal, one exception, one ambiguous, one safety-critical, and one subgroup-relevant case",
+            "Six cases chosen by the tool's designer to show the range of what it can do"
+          ],
+          "correct": 2,
+          "rationale": "The test set has to include the situations where harm is highest and where performance may differ by subgroup, while still showing how the tool behaves on routine work, which is why the mix is specified. Six typical cases hide the failures that matter, six hardest cases say nothing about routine use, and cases chosen by the designer measure agreement with the designer.",
+          "kind": "action",
+          "objective": "W11-O3"
+        },
+        {
+          "id": "W11-Q04",
+          "question": "A prototype scores 91 percent on 45 scored items across six cases. All four failures fall in the safety-critical and subgroup-relevant cases. How should the team report the result?",
+          "options": [
+            "As 91 percent accurate, which exceeds the 90 percent target set before the run",
+            "As two failing cases out of six, which is 67 percent and below target",
+            "As a pass, because no single case failed every one of its scored items",
+            "As 91 percent overall, with case-level results showing failures concentrated where harm is highest"
+          ],
+          "correct": 3,
+          "rationale": "Honest reporting keeps the aggregate and adds the case-level distribution, because the location of the failures changes the decision even when the average clears the target. Reporting only the 91 percent hides the concentration. Converting to two failing cases throws away the item-level detail, and calling it a pass because no case failed completely ignores that one invented order is enough to block release.",
+          "kind": "data",
+          "objective": "W11-O3"
+        },
+        {
+          "id": "W11-Q05",
+          "question": "In the clinic, a team's evidence matrix lists a requirement with the source 'clinician interviews' and no test case. How should the reviewer mark it?",
+          "options": [
+            "Met, because interviews are primary evidence from the users themselves",
+            "Partly met, because a source exists but nothing tests whether the requirement was satisfied",
+            "Not met, because interviews are not an acceptable source for a requirement",
+            "Met, provided the prototype demonstration appeared to cover the requirement"
+          ],
+          "correct": 1,
+          "rationale": "Evidence traceability runs from the claim to a source and on to a test case that checks it; interviews justify the requirement but do not show that the prototype meets it, so the item is partly met and the missing test case is the finding. Interviews are a legitimate source, so not met is too harsh, and a demonstration that appeared to cover it is not a scored test.",
+          "kind": "scenario",
+          "objective": "W11-O4"
+        },
+        {
+          "id": "W11-Q06",
+          "question": "A team is writing the rollback trigger for a limited pilot of its AI draft tool. Which of these is a rollback trigger?",
+          "options": [
+            "Any signed note found to contain an invented order, or corrections above two per draft for a week",
+            "A monthly review meeting at which the pilot's progress is discussed",
+            "The project sponsor's judgment at the end of the pilot period",
+            "Users reporting that the tool feels slower than the template did"
+          ],
+          "correct": 0,
+          "rationale": "A rollback trigger is an observable event with a threshold that stops the release without a meeting, such as a specific error class appearing in a signed note or a balancing measure crossing a line. A review meeting and a sponsor's judgment are governance steps rather than triggers, and a feeling that the tool is slower has no measure or owner.",
+          "kind": "scenario",
+          "objective": "W11-O5"
+        }
+      ]
+    },
+    {
+      "week": 12,
+      "title": "Final demonstrations and course synthesis",
+      "date": "2026-12-07",
+      "dueAt": null,
+      "graded": false,
+      "items": [
+        {
+          "id": "W12-Q01",
+          "question": "A team's AI draft reply appears in a separate window that the nurse opens only after she has already triaged and answered the message. What is the problem?",
+          "options": [
+            "The draft is inaccurate and needs a larger test set before release",
+            "The nurse has not been trained to open the window first",
+            "The draft arrives after the decision it was meant to inform, so it adds work",
+            "The tool runs in the practice chart rather than in a certified clinical system"
+          ],
+          "correct": 2,
+          "rationale": "The draft may be perfectly accurate and still fail workflow fit, because it reaches the nurse after the moment of decision and in a place she is not looking, so it becomes an extra step. Nothing in the scenario says the draft is wrong or that more cases would help. Training the nurse to open a window first moves the burden onto the user instead of fixing the fit, and the environment is not the issue.",
+          "kind": "scenario",
+          "objective": "W12-O1"
+        },
+        {
+          "id": "W12-Q02",
+          "question": "Across forty signed AI drafts in a pilot, corrections per draft are zero and the median time to sign is nine seconds, while the test set found three corrections per complex draft. What does this most likely show?",
+          "options": [
+            "The tool improved between the test set and the pilot",
+            "The pilot drafts happened to be simpler than the test cases",
+            "Review has become automatic approval, so the oversight is nominal",
+            "The pilot clinicians read faster than the test scorer did"
+          ],
+          "correct": 2,
+          "rationale": "Zero corrections at nine seconds per draft, when a scored test set found errors on complex cases, is the signature of a review step that has become a signature: the design made scrutiny optional. Tool improvement would have to be shown on the same cases, not inferred from silence. Simpler drafts and faster readers are possible but would still need the corrections that the test set predicted, and none appeared.",
+          "kind": "data",
+          "objective": "W12-O3"
+        },
+        {
+          "id": "W12-Q03",
+          "question": "What design change most directly makes human oversight meaningful in that pilot?",
+          "options": [
+            "Add a pop-up reminding clinicians to read each draft carefully",
+            "Send clinicians a monthly email reporting the tool's accuracy figure",
+            "Let clinicians turn off the flags they find distracting",
+            "Require a disposition on each flagged finding before signing, and report corrections per draft"
+          ],
+          "correct": 3,
+          "rationale": "Meaningful oversight needs a review action the reviewer must take and a measure that shows whether reviewing is happening, which is what a required disposition per finding and a reported correction rate provide. A reminder pop-up becomes one more thing to dismiss, a monthly accuracy email changes nothing at the moment of signing, and letting reviewers switch off flags removes the safeguard rather than strengthening it.",
+          "kind": "action",
+          "objective": "W12-O3"
+        },
+        {
+          "id": "W12-Q04",
+          "question": "A prototype handled twelve synthetic patients in the practice chart. A health system wants to pilot it on three hundred portal messages a day. Which safeguard set fits the pilot stage?",
+          "options": [
+            "One clinic, a monitoring dashboard, a named escalation owner, and a rollback trigger",
+            "Broad release to every clinic with a satisfaction survey after one month",
+            "No pilot, because the six-case test set has already passed",
+            "Vendor hosting with the vendor responsible for monitoring the tool"
+          ],
+          "correct": 0,
+          "rationale": "A pilot exists because the demonstration environment cannot show production volume, integration, or privacy risk, so it needs limited scope, a measure someone watches, a person to call, and a rule that stops it. Broad release skips the pilot entirely, the test set was the gate for the pilot rather than a substitute for it, and handing monitoring to a vendor removes the organization's own oversight.",
+          "kind": "scenario",
+          "objective": "W12-O4"
+        },
+        {
+          "id": "W12-Q05",
+          "question": "In a demonstration, a team says its tool reduces documentation burden and shows a satisfied clinician. What should the evidence checker ask for?",
+          "options": [
+            "The baseline sheet and the balancing measure behind the claim",
+            "The clinician's job title and years of experience",
+            "A second clinician who is also satisfied with the tool",
+            "The vendor's published statistics on documentation burden"
+          ],
+          "correct": 0,
+          "rationale": "Reduced burden is a claim about time and effort, and the evidence behind it is the matched comparison on named cases plus the balancing measure that shows what the saving cost, such as corrections per draft. The clinician's credentials and a second satisfied user are opinion, not measurement, and vendor statistics were produced on different cases with different scoring.",
+          "kind": "scenario",
+          "objective": "W12-O2"
+        },
+        {
+          "id": "W12-Q06",
+          "question": "A team reports 96 percent of abnormal results acknowledged and 61 percent of patients seen within seven days, and calls the project a success. Which course principle does that reporting violate?",
+          "options": [
+            "Verify identity with three identifiers before acting on a record",
+            "Pair every process measure with the outcome and balancing measures it serves",
+            "Preserve provenance for every external record that is accepted",
+            "Stage deployment and tie each expansion to evidence"
+          ],
+          "correct": 1,
+          "rationale": "Acknowledgment is a process step and being seen is the outcome; calling the project a success on the process number while the outcome sits at 61 percent is exactly the mistake the pairing principle prevents. Identity verification, provenance, and staged deployment are all course principles, but none of them is the one this report breaks.",
+          "kind": "data",
+          "objective": "W12-O5"
+        }
+      ]
+    }
+  ]
+}

@@ -10,6 +10,7 @@ Production: <https://fordms.com/> (Vercel, deployed from the `main` branch of th
 - Twelve fictional longitudinal charts and six simulated roles (Front Desk, Clinical, HIM, Patient, Analyst, Implementation Lead), each with its own worklist-first views.
 - Workflows: registration with duplicate prevention, eligibility verification, referrals, scheduling with conflict and availability rules, reminders, no-shows, wait-list, MPI identity review, SOAP documentation with templates, copy-forward safeguards, signing, co-signature and amendments, orders with allergy, duplicate and interaction alerts plus override reasons, result acknowledgment and owned follow-up tasks, portal messaging with routing rules and proxy access, HIE reconciliation with provenance and match confidence, population queries with denominators, missingness and stratification, scripted AI draft review with an error taxonomy, implementation readiness and go-live recommendations, audit review, release of information, and downtime drills.
 - Four graded assignments (FORDMS-A1 to A4) that together form the FordMS share (18%) of the Applied EHR activities category (30%); each assignment counts equally. Progress is computed on the server from timestamped audit events, each required action is credited once per distinct item, imported evidence is labeled separately, submissions are versioned, and the instructor can return work for revision.
+- Weekly quizzes at `/quizzes` (also `/quiz`): six multiple-choice questions, two attempts on graded weeks with the highest kept and the lowest graded week dropped, unlimited attempts on review weeks, rationales after the final attempt; the question bank is exported from the course manifest with `npm run export:quiz-bank` and never leaves the server with answers.
 - A cloud workspace per account, a local IndexedDB recovery copy, and versioned JSON export and import.
 
 ## What instructors get
@@ -27,7 +28,7 @@ cp .env.example .env.local   # fill in the values from the course vault
 npm run dev
 ```
 
-Apply the migrations in `supabase/migrations/` to the course database in order (`008_hinf6105_practice_ehr.sql`, then `009_fordms_course_ops.sql`). Row-level security stays enabled with no browser policies; all database access goes through server routes with the service-role key.
+Apply the migrations in `supabase/migrations/` to the course database in order (`008_hinf6105_practice_ehr.sql`, `009_fordms_course_ops.sql`, `010_fordms_versions_delete.sql`, `011_fordms_quizzes.sql`). Row-level security stays enabled with no browser policies; all database access goes through server routes with the service-role key.
 
 ## Tests
 
