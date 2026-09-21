@@ -1,87 +1,56 @@
 # FordMS EHR
 
-FordMS EHR is the authenticated simulation environment for Fordham HINF 6105. Students sign in with a verified `@fordham.edu` Google account. The application combines front-desk, clinical, HIM, analytics, patient, and implementation workflows in one longitudinal synthetic record. All patients and clinical events are fictional.
+FordMS is the authenticated practice electronic health record for Fordham University's HINF 6105 Electronic Health Records course. It is a teaching simulation: every patient, result, warning, match score, and AI draft is synthetic and scripted. It is not a certified clinical system and must never be used for patient care.
 
-The course includes four individual FordMS assignments. Each assignment takes approximately 1–2 hours, calculates progress from timestamped EHR actions, accepts a written analysis, and appears in the instructor gradebook for scoring and feedback.
+Production: <https://fordms.com/> (Vercel, deployed from the `main` branch of the course repository).
 
-## Course assignments
+## What students get
 
-1. **FORDMS-A1 — Identity, access, scheduling, and coding:** resolve a possible duplicate, create and reschedule an appointment, and distinguish ICD-10-CM from CPT examples.
-2. **FORDMS-A2 — Clinical documentation, orders, results, and patient follow-up:** complete a SOAP note and amendment, respond to warnings, and close results and communication loops.
-3. **FORDMS-A3 — Interoperability, provenance, and population analytics:** reconcile external records, run computable cohorts, and validate patient-level evidence.
-4. **FORDMS-A4 — AI safety review and implementation readiness:** identify unsupported draft content, evaluate readiness evidence, and record a release recommendation with monitoring and rollback conditions.
+- Sign-in with a verified `@fordham.edu` Google account; sessions last eight hours.
+- Twelve fictional longitudinal charts and six simulated roles (Front Desk, Clinical, HIM, Patient, Analyst, Implementation Lead), each with its own worklist-first views.
+- Workflows: registration with duplicate prevention, eligibility verification, referrals, scheduling with conflict and availability rules, reminders, no-shows, wait-list, MPI identity review, SOAP documentation with templates, copy-forward safeguards, signing, co-signature and amendments, orders with allergy, duplicate and interaction alerts plus override reasons, result acknowledgment and owned follow-up tasks, portal messaging with routing rules and proxy access, HIE reconciliation with provenance and match confidence, population queries with denominators, missingness and stratification, scripted AI draft review with an error taxonomy, implementation readiness and go-live recommendations, audit review, release of information, and downtime drills.
+- Four graded assignments (FORDMS-A1 to A4) inside the Applied EHR activities category. Progress is computed on the server from timestamped audit events, each required action is credited once per distinct item, imported evidence is labeled separately, submissions are versioned, and the instructor can return work for revision.
+- A cloud workspace per account, a local IndexedDB recovery copy, and versioned JSON export and import.
 
-## Account and grading model
+## What instructors get
 
-- Google OAuth accepts verified `@fordham.edu` accounts only.
-- JWT sessions expire after eight hours.
-- Each student has an isolated cloud workspace, action history, progress record, assignment submission, grade, and feedback.
-- Instructors can view all enrolled users, inspect captured evidence, apply the published 100-point rubric, and return written feedback.
-- Private instructor benchmarks are loaded only by the protected instructor API and are not included in the student bundle.
-- IndexedDB remains a local recovery copy. JSON export/import provides an additional portable backup.
+- Roster with enrollment state, status filters (not started, in progress, ready, submitted, revision requested, graded), search, and test-account hiding.
+- Per-criterion rubric scoring, partial saves, grade release, return-for-revision with comments, submission version history, evidence bundles with chart context and provenance badges, and an append-only grading log.
+- Read-only preview of any student's workspace, scoped or full resets that snapshot first and never touch submissions, cohort analytics with explicit denominators, and a Blackboard-ready CSV export (0-100 or course-percent scale).
+- An admin console that versions and audits the entire course configuration: ICD-10-CM and CPT teaching catalogs, insurers and coverage fields, organizations, facilities, departments, locations, specialties, provider roles and providers with availability, visit types, note templates, appointment rules, medication and laboratory examples, alert rules, message categories and routing rules, simulated role views, assignment definitions with requirements and rubrics, release states and due dates. Publishing archives the previous version; any version can be restored.
 
 ## Local development
 
-Requirements: Node.js 20.9 or later and a Supabase project.
-
 ```bash
-cp .env.example .env.local
 npm install
+cp .env.example .env.local   # fill in the values from the course vault
 npm run dev
 ```
 
-Configure the variables in `.env.local`, then apply [`supabase/migrations/008_hinf6105_practice_ehr.sql`](supabase/migrations/008_hinf6105_practice_ehr.sql) to the course database. Open `http://localhost:3000` and sign in with a Fordham account.
+Apply the migrations in `supabase/migrations/` to the course database in order (`008_hinf6105_practice_ehr.sql`, then `009_fordms_course_ops.sql`). Row-level security stays enabled with no browser policies; all database access goes through server routes with the service-role key.
 
-Required variables:
-
-- `NEXTAUTH_SECRET`
-- `NEXTAUTH_URL`
-- `GOOGLE_CLIENT_ID`
-- `GOOGLE_CLIENT_SECRET`
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
-- `INSTRUCTOR_EMAILS`
-
-The Google OAuth client must allow the local and production NextAuth callback URLs:
-
-- `http://localhost:3000/api/auth/callback/google`
-- `https://fordms.com/api/auth/callback/google`
-
-## Production build
+## Tests
 
 ```bash
+npm run typecheck
+npm test                 # Vitest unit tests: progress engine, config schema, reducer, resets, CSV, auth guard
 npm run build
-npm start
+npm run test:e2e         # Playwright, Chromium and WebKit, against `next start` with test sign-in enabled
 ```
 
-The application requires a server-capable Next.js deployment because login, synchronization, submission, and grading use protected route handlers. Production is published at [fordms.com](https://fordms.com/).
+The browser tests enable a credentials provider that accepts only `e2e-*@fordham.edu` addresses and records those accounts with `enrollment_status = 'test'`. Test accounts are hidden from the roster, analytics, and exports by default and are deleted by `npm run cleanup:test-users` (also run automatically after the suite). The provider is registered only when `FORDMS_TEST_AUTH=1`, and the application refuses to start with that flag on a production deployment.
 
-## Role-based simulations
+Screens for the course slides are captured with `npm run capture:screens` against a test server (see `scripts/capture_screens.mjs`).
 
-- Front desk: patient search, scheduling, conflict detection, check-in, cancellation, and rescheduling.
-- Clinical: longitudinal charts, SOAP notes, signed-note amendments, orders, warnings, results, portal messages, and scripted AI review.
-- HIM: master patient index adjudication and exchange reconciliation with provenance.
-- Analyst: computable cohort definitions, SQL-style logic previews, patient-level validation, saved query runs, and stratification.
-- Implementation lead: evidence, ownership, risk, and readiness decisions across eight implementation domains.
-- Patient: a plain-language portal view for medicines, results, messages, and reconciliation requests.
+## Deployment
 
-## Teaching safeguards
+1. `npm run typecheck && npm test && npm run build && npm run test:e2e`.
+2. Apply any new migration to the production database (SQL editor or `psql -1 -f`).
+3. Sync this directory to the deployment checkout and push `main`; Vercel builds and promotes automatically.
+4. Verify on production: unauthenticated `/` redirects to `/login`, unauthenticated `/api/course/bootstrap` returns JSON 401, the instructor sees Gradebook and Admin, and a test student can save, submit, and receive feedback. Then run the cleanup script.
 
-- Every patient and event is labeled synthetic.
-- Signed notes remain in history; amendments create new entries.
-- Medication and duplicate-order warnings are teaching simulations.
-- The AI review screen uses a scripted draft, not a live model.
-- HIE resources, FHIR-style labels, match confidence values, and implementation evidence are authored course simulations.
-- Server routes verify the Fordham session and course role before reading or writing records.
-- Database tables use row-level security with no direct browser policies; the service-role key remains server-side.
-- Reset requires browser confirmation and returns the learner to the synthetic starting state.
-- Storage or synchronization failures leave the active session usable and prompt the learner to export evidence.
+Rollback: redeploy the previous Vercel build (older code ignores the new tables and columns) and, only if necessary, run `009_fordms_course_ops_down.sql`.
 
-## Instructor preparation
+## Integrity limits of a course simulator
 
-1. Confirm that the Google OAuth callback, Supabase migration, and Vercel environment variables are current.
-2. Add instructor addresses to `INSTRUCTOR_EMAILS` and verify that the Gradebook tab is visible.
-3. Test one student account through sign-in, action sync, submission, grading, feedback, sign-out, and sign-in recovery.
-4. Test Chrome and Safari, including keyboard navigation and local-storage recovery.
-5. Keep EHR Go enrollment keys and private Blackboard links outside this repository.
+Progress evidence originates in the learner's browser and is mirrored to the server, where it is de-duplicated and recomputed. Imported workspaces are labeled and never outrank evidence earned in place; submission versions carry a workspace hash and an immutable snapshot. A determined learner could still fabricate client events. The instructor evidence view, version history, and grading log make that reviewable, and the written analysis remains the primary graded artifact.

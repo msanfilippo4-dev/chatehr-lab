@@ -1,0 +1,17 @@
+"use client";
+
+import { useState } from "react";
+import { Field, InlineAlert, Panel, SimulationBadge, Status } from "@/components/ui/primitives";
+import type { ViewProps } from "./shared";
+
+export function HIEReconciliation({ state, dispatch }: ViewProps) {
+  const [patientFilter, setPatientFilter] = useState("All");
+  const visible = state.exchanges.filter((item) => patientFilter === "All" || item.patientId === patientFilter);
+  return <div className="stack">
+    <Panel title="HIE reconciliation inbox" subtitle="FHIR-style resources with provenance, patient-match confidence, and discrepancy review" actions={<SimulationBadge />}>
+      <div className="filter-bar"><Field label="Patient filter"><select aria-label="HIE patient filter" value={patientFilter} onChange={(event) => setPatientFilter(event.target.value)}><option>All</option>{state.patients.filter((patient) => state.exchanges.some((item) => item.patientId === patient.id)).map((patient) => <option key={patient.id} value={patient.id}>{patient.name} · {patient.mrn}</option>)}</select></Field><span><b>{visible.filter((item) => item.status === "Pending review").length}</b> pending of {visible.length}</span></div>
+      <InlineAlert tone="info" title="Decision standard"><p>Accept when source, timing, identity confidence, and clinical plausibility line up. Keep local when the local value is more specific or more recent. Defer when identity confidence is low or the source must be verified. Never let a lower-confidence match overwrite the chart.</p></InlineAlert>
+    </Panel>
+    <div className="exchange-grid">{visible.map((item) => { const patient = state.patients.find((row) => row.id === item.patientId); if (!patient) return null; const lowConfidence = item.matchScore < 0.85; return <article className="exchange-card" key={item.id}><header><div><span className="resource-type">{item.fhirResourceLabel ?? item.resourceType}</span><h3>{patient.name}</h3><small>{patient.mrn} · source ID {item.sourcePatientId}</small></div><Status tone={item.status === "Accepted" ? "good" : item.status === "Pending review" ? "warn" : "neutral"}>{item.status}</Status></header><dl className="provenance"><div><dt>Source</dt><dd>{item.sourceOrganization}{item.provenance ? ` · ${item.provenance.sourceSystem}` : ""}</dd></div><div><dt>Received via</dt><dd>{item.provenance?.receivedVia ?? "HIE"} · {item.receivedAt}</dd></div><div><dt>Source time</dt><dd>{item.sourceTimestamp}</dd></div><div><dt>Identity confidence</dt><dd className={lowConfidence ? "danger-text" : ""}>{Math.round(item.matchScore * 100)}%{lowConfidence ? " · below the 85% auto-link threshold" : ""}</dd></div></dl><div className="value-compare"><div><small>Local record</small><p>{item.localValue}</p></div><div><small>Incoming resource</small><p>{item.incomingValue}</p></div></div><p className="discrepancy"><b>Review point:</b> {item.discrepancy}</p>{item.reviewerNote && <p className="reviewer-note">{item.reviewerNote}{item.decidedAt ? ` (${new Date(item.decidedAt).toLocaleString()})` : ""}</p>}{item.status === "Pending review" && <div className="button-row"><button className="primary" onClick={() => dispatch({ type: "reconcileExchange", id: item.id, status: "Accepted" })}>Accept into chart</button><button onClick={() => dispatch({ type: "reconcileExchange", id: item.id, status: "Kept local" })}>Keep local</button><button onClick={() => dispatch({ type: "reconcileExchange", id: item.id, status: "Deferred" })}>Defer</button></div>}</article>; })}</div>
+  </div>;
+}

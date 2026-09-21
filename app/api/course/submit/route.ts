@@ -1,46 +1,54 @@
-import { NextResponse } from "next/server";
-import { assignmentProgress, courseAssignments } from "@/lib/assignments";
+import { computeProgress } from "@/lib/progress";
+import { SubmitBodySchema } from "@/lib/schemas/api";
 import { createCourseAdminClient } from "@/lib/server/course-db";
+import { loadEffectiveAssignments } from "@/lib/server/config";
+import { ApiError, apiError, ok } from "@/lib/server/errors";
+import { loadEventsForUser, loadResetMarkers, resetCutoffFor } from "@/lib/server/progress";
+import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { requireCourseUser } from "@/lib/server/session";
+import { buildEvidence, createSubmissionVersion } from "@/lib/server/submissions";
+import { parseJsonBody } from "@/lib/server/validation";
 
 export async function POST(request: Request) {
   try {
     const user = await requireCourseUser();
-    const body = await request.json();
-    const assignment = courseAssignments.find((item) => item.id === body?.assignmentId);
-    const reflection = String(body?.reflection ?? "").trim();
-    if (!assignment) return NextResponse.json({ error: "Unknown assignment." }, { status: 400 });
-    if (reflection.length < 150 || reflection.length > 5000) {
-      return NextResponse.json({ error: "The written analysis must contain at least 150 characters." }, { status: 400 });
-    }
+    const body = await parseJsonBody(request, SubmitBodySchema);
     const admin = createCourseAdminClient();
-    const { data: workspaceRow, error: workspaceError } = await admin.from("ehr_user_workspaces").select("workspace").eq("email", user.email).maybeSingle();
-    if (workspaceError) throw workspaceError;
-    const audit = Array.isArray(workspaceRow?.workspace?.audit) ? workspaceRow.workspace.audit : [];
-    const progress = assignmentProgress(assignment, audit.map((event: { action?: unknown }) => String(event.action ?? "")));
-    if (!progress.complete) return NextResponse.json({ error: "Complete all required EHR actions before submitting." }, { status: 409 });
-    const requiredActions = new Set(assignment.requirements.map((item) => item.action));
-    const evidence = audit.filter((event: { action?: unknown }) => requiredActions.has(String(event.action ?? "")));
-    const { data: existing, error: existingError } = await admin.from("ehr_assignment_submissions").select("version").eq("email", user.email).eq("assignment_id", assignment.id).maybeSingle();
-    if (existingError) throw existingError;
-    const now = new Date().toISOString();
-    const { error } = await admin.from("ehr_assignment_submissions").upsert({
+    await enforceRateLimit(admin, `submit:${user.email}`, 10, 600);
+
+    const effective = await loadEffectiveAssignments(admin);
+    const assignment = effective.assignments.find((item) => item.id === body.assignmentId);
+    if (!assignment || assignment.releaseState === "hidden") throw new ApiError(403, "This assignment is not open for submission.", "NOT_RELEASED");
+    const release = effective.releases.find((row) => row.assignment_id === assignment.id);
+    const now = Date.now();
+    if (release?.release_at && Date.parse(release.release_at) > now) throw new ApiError(403, "This assignment has not been released yet.", "NOT_RELEASED");
+    const late = Boolean(assignment.dueAt && Date.parse(assignment.dueAt) < now);
+    if (assignment.releaseState === "closed" || (release?.close_at && Date.parse(release.close_at) < now)) {
+      if (!(release?.accept_late ?? true) || assignment.releaseState === "closed") throw new ApiError(403, "This assignment is closed. Contact the instructor if you need an extension.", "CLOSED");
+    }
+
+    const [workspaceRow, events, markers] = await Promise.all([
+      admin.from("ehr_user_workspaces").select("workspace").eq("email", user.email).maybeSingle(),
+      loadEventsForUser(admin, user.email),
+      loadResetMarkers(admin, user.email),
+    ]);
+    if (workspaceRow.error) throw workspaceRow.error;
+    const progress = computeProgress(assignment, events, { resetCutoff: resetCutoffFor(markers, assignment.id) });
+    if (!progress.complete) throw new ApiError(409, "Complete all required EHR actions before submitting. Save your work and wait for the cloud save confirmation first.", "INCOMPLETE", progress.requirements.filter((item) => !item.complete).map((item) => item.label));
+
+    const evidence = buildEvidence(assignment, progress, events, workspaceRow.data?.workspace ?? null);
+    const result = await createSubmissionVersion(admin, {
       email: user.email,
-      assignment_id: assignment.id,
-      reflection,
+      assignment,
+      reflection: body.reflection,
       evidence,
-      status: "submitted",
-      version: (existing?.version ?? 0) + 1,
-      score: null,
-      feedback: null,
-      submitted_at: now,
-      graded_at: null,
-      graded_by: null,
-    }, { onConflict: "email,assignment_id" });
-    if (error) throw error;
-    return NextResponse.json({ assignmentId: assignment.id, status: "submitted", submittedAt: now, version: (existing?.version ?? 0) + 1 });
+      progress,
+      configVersion: effective.version,
+      late,
+      workspace: workspaceRow.data?.workspace ?? null,
+    });
+    return ok({ assignmentId: assignment.id, status: "submitted", submittedAt: result.submittedAt, version: result.version, late, importedUnits: progress.importedUnits });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "UNKNOWN";
-    return NextResponse.json({ error: message }, { status: message === "UNAUTHORIZED" ? 401 : 500 });
+    return apiError(error);
   }
 }

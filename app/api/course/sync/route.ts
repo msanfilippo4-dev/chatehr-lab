@@ -1,52 +1,42 @@
-import { NextResponse } from "next/server";
-import { assignmentProgress, courseAssignments } from "@/lib/assignments";
+import { normalizeState } from "@/lib/db";
+import { SyncBodySchema } from "@/lib/schemas/api";
 import { createCourseAdminClient } from "@/lib/server/course-db";
+import { loadEffectiveAssignments } from "@/lib/server/config";
+import { ApiError, apiError, ok } from "@/lib/server/errors";
+import { computeServerProgress, toEventRows } from "@/lib/server/progress";
+import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { requireCourseUser } from "@/lib/server/session";
+import { parseJsonBody, WORKSPACE_MAX_BYTES } from "@/lib/server/validation";
 
 export async function POST(request: Request) {
   try {
     const user = await requireCourseUser();
-    const body = await request.json();
-    const workspace = body?.workspace;
-    if (!workspace || workspace.version !== 2 || !Array.isArray(workspace.audit)) {
-      return NextResponse.json({ error: "A compatible version 2 workspace is required." }, { status: 400 });
-    }
-    if (JSON.stringify(workspace).length > 1_500_000) {
-      return NextResponse.json({ error: "The workspace is too large to synchronize." }, { status: 413 });
-    }
+    const body = await parseJsonBody(request, SyncBodySchema, WORKSPACE_MAX_BYTES);
+    const owner = body.workspace.meta?.owner;
+    if (owner && owner.toLowerCase() !== user.email) throw new ApiError(403, "This workspace belongs to a different account and cannot be saved here.", "OWNER_MISMATCH");
     const admin = createCourseAdminClient();
+    await enforceRateLimit(admin, `sync:${user.email}`, 240, 60);
+
+    let workspace;
+    try {
+      workspace = normalizeState(body.workspace, user.email);
+    } catch {
+      throw new ApiError(400, "The workspace could not be read. Export your evidence and reload the page.", "BAD_WORKSPACE");
+    }
     const now = new Date().toISOString();
-    const actions = workspace.audit.map((event: { action?: unknown }) => String(event.action ?? ""));
-    const progressRows = courseAssignments.map((assignment) => {
-      const progress = assignmentProgress(assignment, actions);
-      return {
-        email: user.email,
-        assignment_id: assignment.id,
-        progress,
-        percent_complete: progress.percent,
-        completed_at: progress.complete ? now : null,
-        updated_at: now,
-      };
-    });
-    const events = workspace.audit.slice(0, 250).map((event: Record<string, unknown>) => ({
-      email: user.email,
-      event_id: String(event.id ?? ""),
-      action: String(event.action ?? ""),
-      patient_id: event.patientId ? String(event.patientId) : null,
-      detail: String(event.detail ?? ""),
-      occurred_at: String(event.timestamp ?? now),
-    })).filter((event: { event_id: string; action: string }) => event.event_id && event.action);
-    const workspaceWrite = await admin.from("ehr_user_workspaces").upsert({ email: user.email, workspace, schema_version: 2, updated_at: now }, { onConflict: "email" });
+    const effective = await loadEffectiveAssignments(admin);
+
+    const workspaceWrite = await admin.from("ehr_user_workspaces").upsert({ email: user.email, workspace, schema_version: 3, updated_at: now }, { onConflict: "email" });
     if (workspaceWrite.error) throw workspaceWrite.error;
-    const progressWrite = await admin.from("ehr_assignment_progress").upsert(progressRows, { onConflict: "email,assignment_id" });
-    if (progressWrite.error) throw progressWrite.error;
+
+    const events = toEventRows(user.email, workspace.audit, now);
     if (events.length) {
       const eventWrite = await admin.from("ehr_activity_events").upsert(events, { onConflict: "email,event_id", ignoreDuplicates: true });
       if (eventWrite.error) throw eventWrite.error;
     }
-    return NextResponse.json({ savedAt: now, progress: progressRows });
+    const { rows } = await computeServerProgress(admin, user.email, effective.assignments, effective.version);
+    return ok({ savedAt: now, configVersion: effective.version, progress: rows });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "UNKNOWN";
-    return NextResponse.json({ error: message }, { status: message === "UNAUTHORIZED" ? 401 : 500 });
+    return apiError(error);
   }
 }

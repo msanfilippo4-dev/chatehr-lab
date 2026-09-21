@@ -1,0 +1,20 @@
+/* Admin configuration console */
+.admin-shell { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 16px; }
+.admin-nav { display: flex; flex-direction: column; gap: 4px; }
+.admin-nav button { text-align: left; padding: 8px 10px; border: 1px solid transparent; border-radius: 8px; background: transparent; }
+.admin-nav button.active { background: var(--fordham-blush); border-color: #e7c9d3; color: var(--fordham-maroon); font-weight: 700; }
+.admin-nav button.dirty::after { content: " •"; color: var(--amber); }
+.admin-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
+.admin-toolbar .spacer { flex: 1; }
+.catalog-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.catalog-table th, .catalog-table td { border-bottom: 1px solid var(--line); padding: 6px; text-align: left; vertical-align: top; }
+.catalog-table input, .catalog-table select, .catalog-table textarea { width: 100%; font-size: 13px; }
+.catalog-table textarea { min-height: 36px; }
+.catalog-table td.narrow { width: 90px; }
+.json-editor { width: 100%; min-height: 320px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+.version-table td, .version-table th { font-size: 13px; }
+.publish-bar { border-top: 1px solid var(--line); margin-top: 12px; padding-top: 12px; display: grid; gap: 8px; }
+.invalid-sections { background: var(--redbg); border: 1px solid #efc3ce; border-radius: 8px; padding: 10px; }
+.release-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.release-card { border: 1px solid var(--line); border-radius: 10px; padding: 12px; display: grid; gap: 8px; }
+@media (max-width: 900px) { .admin-shell { grid-template-columns: 1fr; } .admin-nav { flex-direction: row; flex-wrap: wrap; } }
