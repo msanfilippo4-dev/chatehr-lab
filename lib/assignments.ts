@@ -17,7 +17,7 @@ export const defaultAssignments: CourseAssignment[] = [
     estimatedMinutes: 90,
     dueAt: "2026-10-11T23:59:00-04:00",
     dueLabel: "Sunday, October 11, 2026 at 11:59 p.m. ET",
-    weightPercent: 2,
+    weightPercent: 4.5,
     weekIntroduced: 3,
     releaseState: "released",
     scenario: "A patient may have two records, needs timely follow-up, and must be scheduled without creating a conflict. You are responsible for protecting identity integrity while completing the front-desk workflow and selecting defensible code examples.",
@@ -59,7 +59,7 @@ export const defaultAssignments: CourseAssignment[] = [
     estimatedMinutes: 110,
     dueAt: "2026-11-01T23:59:00-05:00",
     dueLabel: "Sunday, November 1, 2026 at 11:59 p.m. ET",
-    weightPercent: 3,
+    weightPercent: 4.5,
     weekIntroduced: 4,
     releaseState: "released",
     scenario: "You are covering an ambulatory team. The chart contains shoulder symptoms, a severe allergy, an abnormal result, and a patient message. Complete the encounter without introducing unsupported documentation and close each follow-up loop.",
@@ -102,7 +102,7 @@ export const defaultAssignments: CourseAssignment[] = [
     estimatedMinutes: 100,
     dueAt: "2026-11-22T23:59:00-05:00",
     dueLabel: "Sunday, November 22, 2026 at 11:59 p.m. ET",
-    weightPercent: 3,
+    weightPercent: 4.5,
     weekIntroduced: 8,
     releaseState: "released",
     scenario: "Crescent Health has received external clinical records and needs a reproducible patient cohort for improvement work. Reconcile conflicting information, preserve provenance, and validate the analytical denominator before interpreting results.",
@@ -140,7 +140,7 @@ export const defaultAssignments: CourseAssignment[] = [
     estimatedMinutes: 105,
     dueAt: "2026-12-06T23:59:00-05:00",
     dueLabel: "Sunday, December 6, 2026 at 11:59 p.m. ET",
-    weightPercent: 3,
+    weightPercent: 4.5,
     weekIntroduced: 10,
     releaseState: "released",
     scenario: "A scripted AI visit summary is proposed for broader use while the organization is preparing for a related clinical-system go-live. Evaluate the draft, update readiness evidence, and make a defensible release recommendation with human oversight.",
@@ -173,3 +173,7 @@ export const defaultAssignments: CourseAssignment[] = [
 ];
 
 export const ASSIGNMENT_IDS = defaultAssignments.map((item) => item.id);
+
+/** Combined course share of the four FordMS assignments (each counts equally within it). */
+export const FORDMS_CATEGORY_SHARE = 18;
+export const EHRGO_CATEGORY_SHARE = 12;

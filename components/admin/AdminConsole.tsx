@@ -152,7 +152,7 @@ function AssignmentEditor({ assignments, onChange }: { assignments: CourseAssign
       <Field label="Short title"><input value={active.shortTitle} onChange={(e) => set({ shortTitle: e.target.value })} /></Field>
       <Field label="Due (ISO with offset)"><input value={active.dueAt} onChange={(e) => set({ dueAt: e.target.value })} /></Field>
       <Field label="Due label (shown to students)"><input value={active.dueLabel} onChange={(e) => set({ dueLabel: e.target.value })} /></Field>
-      <Field label="Weight (% of course)"><input type="number" value={active.weightPercent} onChange={(e) => set({ weightPercent: Number(e.target.value) })} /></Field>
+      <Field label="Course share (%) — used for the course-scale CSV export; assignments count equally"><input type="number" value={active.weightPercent} onChange={(e) => set({ weightPercent: Number(e.target.value) })} /></Field>
       <Field label="Estimated minutes"><input type="number" value={active.estimatedMinutes} onChange={(e) => set({ estimatedMinutes: Number(e.target.value) })} /></Field>
       <Field label="Week introduced"><input type="number" value={active.weekIntroduced} onChange={(e) => set({ weekIntroduced: Number(e.target.value) })} /></Field>
       <Field label="Release state (release table overrides)"><select value={active.releaseState} onChange={(e) => set({ releaseState: e.target.value as CourseAssignment["releaseState"] })}><option>hidden</option><option>released</option><option>closed</option></select></Field>

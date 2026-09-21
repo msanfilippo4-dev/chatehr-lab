@@ -20,8 +20,8 @@ describe("course configuration", () => {
     expect(new Set(ACTION_IDS).size).toBe(ACTION_IDS.length);
   });
 
-  it("assignment weights total 11 percent and due dates are Sundays in New York", () => {
-    expect(defaultAssignments.reduce((sum, item) => sum + item.weightPercent, 0)).toBe(11);
+  it("assignment shares total 18 percent and due dates are Sundays in New York", () => {
+    expect(defaultAssignments.reduce((sum, item) => sum + item.weightPercent, 0)).toBe(18);
     for (const assignment of defaultAssignments) {
       const weekday = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", weekday: "short" }).format(new Date(assignment.dueAt));
       expect(weekday, assignment.id).toBe("Sun");

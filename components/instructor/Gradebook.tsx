@@ -6,6 +6,7 @@ import { apiFetch, postJson } from "@/lib/api";
 import type { CourseAssignment } from "@/lib/config/types";
 import type { AssignmentRelease, CourseRole } from "@/lib/types";
 import { formatWhen } from "@/components/views/shared";
+import { FORDMS_CATEGORY_SHARE } from "@/lib/assignments";
 import { SubmissionReview } from "./SubmissionReview";
 
 type RosterStatus = "not_started" | "in_progress" | "ready" | "submitted" | "revision_requested" | "graded";
@@ -78,7 +79,7 @@ export function Gradebook({ courseRole, onPreview }: { courseRole: CourseRole; o
         <label className="field"><span><input type="checkbox" checked={includeTest} onChange={(e) => setIncludeTest(e.target.checked)} /> Show test accounts</span></label>
         <div className="button-row"><a className="buttonlike" href={`/api/instructor/export?format=blackboard&assignment=all&scale=rubric`}>Export CSV (0–100)</a><a className="buttonlike" href={`/api/instructor/export?format=blackboard&assignment=all&scale=course`}>Export CSV (course %)</a><button onClick={load}>Refresh</button></div>
       </div>
-      {assignment && <p className="help">Due {assignment.dueLabel} · {assignment.weightPercent}% of the course grade · release state {assignment.releaseState}.</p>}
+      {assignment && <p className="help">Due {assignment.dueLabel} · FordMS assignments share {FORDMS_CATEGORY_SHARE}% of the course grade equally ({assignment.weightPercent}% each) · release state {assignment.releaseState}.</p>}
       {notice && <p className="form-message success" role="status">{notice}</p>}
       {error && <p className="form-message error" role="alert">{error}</p>}
     </Panel>

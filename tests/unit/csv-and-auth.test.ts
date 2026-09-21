@@ -4,7 +4,7 @@ import { splitName, toBlackboardCsv, toCsv } from "@/lib/csv";
 import { GradeBodySchema, SubmitBodySchema, SyncBodySchema } from "@/lib/schemas/api";
 
 describe("Blackboard CSV export", () => {
-  const assignments = [{ id: "FORDMS-A1", shortTitle: "Identity and access", weightPercent: 2 }, { id: "FORDMS-A2", shortTitle: "Clinical loop closure", weightPercent: 3 }];
+  const assignments = [{ id: "FORDMS-A1", shortTitle: "Identity and access", weightPercent: 4.5 }, { id: "FORDMS-A2", shortTitle: "Clinical loop closure", weightPercent: 4.5 }];
   it("produces a BOM, CRLF, quoted header, and score columns", () => {
     const csv = toBlackboardCsv([{ lastName: "Reed", firstName: "Marcus", username: "mreed3", scores: { "FORDMS-A1": 88, "FORDMS-A2": null } }], assignments, "rubric");
     expect(csv.startsWith("﻿")).toBe(true);
@@ -14,8 +14,8 @@ describe("Blackboard CSV export", () => {
   });
   it("scales to course percentage", () => {
     const csv = toBlackboardCsv([{ lastName: "R", firstName: "M", username: "m", scores: { "FORDMS-A1": 50, "FORDMS-A2": 100 } }], assignments, "course");
-    expect(csv).toContain("[Total Pts: 2 Score]");
-    expect(csv.split("\r\n")[1]).toBe('"R","M","m","1.00","3.00"');
+    expect(csv).toContain("[Total Pts: 4.5 Score]");
+    expect(csv.split("\r\n")[1]).toBe('"R","M","m","2.25","4.50"');
   });
   it("neutralizes formula injection", () => {
     const csv = toCsv([{ v: "=HYPERLINK(\"x\")" }], [{ header: "v", value: (row) => row.v }]);
