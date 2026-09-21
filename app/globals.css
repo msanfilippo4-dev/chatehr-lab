@@ -187,7 +187,10 @@ footer { display: flex; justify-content: space-between; align-items: center; gap
 .inline-alert.info { background: var(--bluebg); border-color: #cfe0f5; border-left-color: var(--navy2); color: #1f3d5a; }
 .inline-alert.warn { background: var(--amberbg); border-color: #efdcae; border-left-color: #d4a03a; color: #5e4200; }
 .inline-alert.danger { background: var(--redbg); border-color: #f0c2cd; border-left-color: var(--red); color: #7a1330; }
-.checklist { padding-left: 20px; margin: 8px 0; }
+.checklist { padding-left: 1.6em; margin: 8px 0; }
+.panel > ol, .panel > ul:not(.task-list):not(.patient-list) { padding-left: calc(20px + 1.6em); margin-right: 20px; }
+.panel > ol li, .panel > ul li { margin: 4px 0; }
+.assignment-body ol, .assignment-body ul, .inline-alert ol, .inline-alert ul, .login-notes { padding-left: 1.6em; }
 .checklist li { margin: 4px 0; }
 .search { margin: 0 20px 12px; width: calc(100% - 40px); }
 
