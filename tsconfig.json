@@ -37,6 +37,9 @@
   ],
   "exclude": [
     "node_modules",
-    "tests/e2e/results"
+    "tests",
+    "playwright.config.ts",
+    "vitest.config.mts",
+    "scripts"
   ]
 }
