@@ -2,7 +2,17 @@ import type { NextAuthOptions } from "next-auth";
 import type { Provider } from "next-auth/providers/index";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
-import { ensureCourseUser, getCourseRole, isFordhamEmail, isTestEmail, normalizeEmail } from "@/lib/server/course-db";
+import { createCourseAdminClient, ensureCourseUser, getCourseRole, isConfiguredInstructor, isFordhamEmail, isTestEmail, normalizeEmail } from "@/lib/server/course-db";
+import { loadPublishedConfig } from "@/lib/server/config";
+
+/** When roster-only sign-in is published, only enrolled (non-dropped) accounts and configured instructors may enter. */
+async function allowedByRoster(email: string) {
+  if (isConfiguredInstructor(email)) return true;
+  const { config } = await loadPublishedConfig(createCourseAdminClient());
+  if (!config.permissions.rosterOnlySignIn) return true;
+  const { data } = await createCourseAdminClient().from("ehr_course_users").select("enrollment_status,role").eq("email", email).maybeSingle();
+  return Boolean(data && data.enrollment_status !== "dropped");
+}
 
 /**
  * Test-only credentials sign-in used by Playwright. It is registered only when
@@ -52,6 +62,7 @@ export const authOptions: NextAuthOptions = {
       const email = normalizeEmail(profile?.email ?? user.email ?? "");
       const verified = !profile || !("email_verified" in profile) || profile.email_verified !== false;
       if (!verified || !isFordhamEmail(email)) return false;
+      if (!(await allowedByRoster(email))) return false;
       await ensureCourseUser(email, user.name, user.image);
       return true;
     },

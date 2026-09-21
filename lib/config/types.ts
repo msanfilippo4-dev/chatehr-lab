@@ -162,7 +162,7 @@ export interface CourseConfig {
   routingRules: RoutingRule[];
   simulatedRoles: { role: Role; views: string[] }[];
   assignments: CourseAssignment[];
-  permissions: { instructorCanPublishConfig: boolean; adminOnlyRoleChanges: boolean };
+  permissions: { instructorCanPublishConfig: boolean; adminOnlyRoleChanges: boolean; rosterOnlySignIn: boolean };
 }
 
 export type CourseConfigSection = Exclude<keyof CourseConfig, "meta">;

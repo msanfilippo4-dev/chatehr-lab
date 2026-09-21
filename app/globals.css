@@ -171,7 +171,7 @@ footer { display: flex; justify-content: space-between; align-items: center; gap
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 0 0 16px; min-width: 0; overflow: hidden; }
 .panel-head { padding: 16px 20px 12px; }
 .panel-head h2 { font-size: 16px; }
-.panel-head p { margin: 3px 0 0; color: var(--muted); font-size: 12.5px; }
+.panel-head p { margin: 3px 0 0; color: var(--muted); font-size: 12.5px; max-width: 60ch; }
 .panel > :where(:not(.panel-head, table, .patient-list, .subtabs, .timeline, .message, .task-list, .facts, .soap-grid, .portal-card, .metric-row, .compare-head, .filter-bar, .decision-box, .query-builder, .bar-chart, .run-list, .big-number, .summary-grid, .roster-table, .exchange-grid, .readiness-grid)) { margin-left: 20px; margin-right: 20px; }
 .panel > .form-stack, .panel > .stack { margin-top: 4px; }
 .panel > .inline-alert { margin-bottom: 12px; }
@@ -256,7 +256,7 @@ footer { display: flex; justify-content: space-between; align-items: center; gap
 .assignment-list > button { display: grid; grid-template-columns: 34px 1fr auto; gap: 10px; align-items: center; text-align: left; padding: 10px 12px; border-radius: var(--radius-sm); white-space: normal; font-weight: 500; }
 .assignment-list > button.selected { background: var(--fordham-blush); border-color: #e7c9d3; }
 .assignment-list strong { display: block; color: var(--navy); }
-.assignment-list small { display: block; color: var(--muted); font-size: 11px; }
+.assignment-list small { display: block; color: var(--muted); font-size: 11.5px; line-height: 1.35; margin-top: 2px; }
 .assignment-number { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 9px; background: var(--navy); color: #fff; font-weight: 800; font-size: 13px; }
 .assignment-summary { margin-top: 14px; padding: 12px 14px; border-radius: var(--radius-sm); background: var(--surface-2); border: 1px solid var(--line); font-size: 13px; }
 .assignment-summary strong { color: var(--navy); }

@@ -106,7 +106,7 @@ export const CourseConfigSchema = z.object({
   routingRules: z.array(RoutingRuleSchema).max(50),
   simulatedRoles: z.array(z.object({ role: z.enum(["Front Desk", "Clinical", "HIM", "Patient", "Analyst", "Implementation Lead"]), views: z.array(short).min(1) })).min(1),
   assignments: z.array(AssignmentSchema).min(1).max(8),
-  permissions: z.object({ instructorCanPublishConfig: z.boolean(), adminOnlyRoleChanges: z.boolean() }),
+  permissions: z.object({ instructorCanPublishConfig: z.boolean(), adminOnlyRoleChanges: z.boolean(), rosterOnlySignIn: z.boolean().default(false) }),
 });
 
 export type CourseConfigInput = z.input<typeof CourseConfigSchema>;

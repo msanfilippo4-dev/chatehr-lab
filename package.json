@@ -12,7 +12,8 @@
     "test:e2e:chromium": "playwright test --project=chromium",
     "test:e2e:webkit": "playwright test --project=webkit",
     "capture:screens": "node scripts/capture_screens.mjs",
-    "cleanup:test-users": "node scripts/cleanup_test_users.mjs"
+    "cleanup:test-users": "node scripts/cleanup_test_users.mjs",
+    "enroll:students": "node scripts/enroll_students.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.116.0",

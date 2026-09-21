@@ -47,5 +47,5 @@ export const defaultCourseConfig: CourseConfig = {
     { role: "Implementation Lead", views: ["Worklist", "Analytics", "Implementation", "AI Review", "Assignments"] },
   ],
   assignments: defaultAssignments,
-  permissions: { instructorCanPublishConfig: true, adminOnlyRoleChanges: true },
+  permissions: { instructorCanPublishConfig: true, adminOnlyRoleChanges: true, rosterOnlySignIn: false },
 };

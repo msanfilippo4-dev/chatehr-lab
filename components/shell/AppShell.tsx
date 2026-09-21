@@ -38,6 +38,7 @@ import { PatientBanner } from "./PatientBanner";
 import { TopBar } from "./TopBar";
 
 const roles: Role[] = ["Front Desk", "Clinical", "HIM", "Patient", "Analyst", "Implementation Lead"];
+const PATIENT_VIEWS = new Set<View>(["Worklist", "Schedule", "Registration", "Patients", "MPI", "Encounter", "Orders & Results", "Portal", "HIE", "AI Review", "Audit Review"]);
 const defaultViewForRole: Record<Role, View> = { "Front Desk": "Schedule", Clinical: "Worklist", HIM: "MPI", Patient: "Portal", Analyst: "Query Studio", "Implementation Lead": "Implementation" };
 
 export interface PreviewTarget { email: string; name: string; workspace: EHRState | null; progress: ProgressRow[]; submissions: unknown[] }
@@ -142,7 +143,7 @@ export function AppShell() {
     <div className="storage-line" role="status" aria-live="polite"><span className={storage.tone === "error" ? "storage-error" : storage.tone === "busy" ? "storage-busy" : "storage-ok"} />{courseError && !courseData ? `${courseError} ` : ""}{storage.message}</div>
     {notice && <div className="notice-line" role="status"><span className="storage-ok" />{notice}<button className="text-button" onClick={() => setNotice("")}>Dismiss</button></div>}
     <nav className="nav-tabs" aria-label="FordMS EHR modules">{visibleViews.map((item) => <button key={item} className={view === item ? "active" : ""} aria-current={view === item ? "page" : undefined} onClick={() => setView(item)}>{item}</button>)}</nav>
-    {view !== "Gradebook" && view !== "Admin" && <PatientBanner patient={patient} />}
+    {PATIENT_VIEWS.has(view) && <PatientBanner patient={patient} />}
     <main id="practice-ehr-main" tabIndex={-1}>
       {!ready && view !== "Gradebook" && view !== "Admin" && <p className="empty">Preparing the workspace…</p>}
       {view === "Worklist" && <Worklist {...viewProps} />}
