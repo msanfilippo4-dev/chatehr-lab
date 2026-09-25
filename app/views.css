@@ -68,3 +68,39 @@
 .quiz-option input { margin-top: 3px; }
 .quiz-letter { font-weight: 800; color: var(--muted); }
 .quiz-rationale { margin: 10px 0 0; padding: 8px 10px; border-left: 3px solid var(--teal); background: var(--surface-2); font-size: 13px; }
+
+/* Weekly quizzes: windows, timer, autosave, review */
+.quiz-item fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.quiz-item legend { padding: 0; }
+.quiz-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+.quiz-chips .status { white-space: normal; }
+.quiz-facts { margin-top: 0; margin-bottom: 0; }
+.panel.quiz-attempt-panel { overflow: visible; }
+.quiz-toolbar { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; padding: 10px 12px; margin: 0 0 14px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm); box-shadow: var(--shadow); }
+.quiz-toolbar.warning { background: var(--amberbg); border-color: #e5c56f; }
+.quiz-timer { display: inline-flex; align-items: baseline; gap: 6px; font-variant-numeric: tabular-nums; font-size: 22px; font-weight: 800; color: var(--navy); }
+.quiz-timer small { font-size: 12px; font-weight: 600; color: var(--muted); }
+.quiz-toolbar.warning .quiz-timer, .quiz-toolbar.warning .quiz-timer small { color: var(--amber); }
+.quiz-timer.untimed { font-size: 14px; }
+.quiz-progress { font-size: 13px; color: var(--muted); }
+.quiz-autosave { margin-left: auto; font-size: 12px; color: var(--muted); }
+.quiz-autosave.saved { color: var(--green); }
+.quiz-autosave.error { color: var(--red); font-weight: 600; }
+.quiz-review-options { list-style: none; padding: 0; margin: 0; }
+.quiz-review-options .quiz-option { cursor: default; grid-template-columns: 16px 26px 1fr; }
+.quiz-review-options .quiz-option:hover { background: inherit; }
+.quiz-mark { font-weight: 800; }
+.quiz-option.correct .quiz-mark { color: var(--green); }
+.quiz-option.wrong .quiz-mark { color: var(--red); }
+.quiz-verdict { margin: 8px 0 0; font-size: 13px; }
+.quiz-book { display: block; color: var(--muted); margin-top: 4px; }
+.quiz-rules { margin: 0 0 12px; padding-left: 18px; display: grid; gap: 4px; font-size: 14px; }
+.quiz-attempts td small { display: inline; margin-left: 6px; }
+.quiz-review { margin-top: 14px; }
+.quiz-review h3 { font-size: 15px; margin-bottom: 8px; }
+.quiz-locked { font-style: italic; }
+@media (max-width: 720px) {
+  .quiz-option { padding: 10px; }
+  .quiz-autosave { margin-left: 0; width: 100%; }
+  .quiz-timer { font-size: 18px; }
+}

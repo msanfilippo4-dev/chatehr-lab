@@ -5,6 +5,7 @@ import { Field, InlineAlert, Panel, Status } from "@/components/ui/primitives";
 import { apiFetch, postJson } from "@/lib/api";
 import type { CourseAssignment } from "@/lib/config/types";
 import { formatWhen } from "@/components/views/shared";
+import { AutoChecks, type AutoChecksPayload } from "./AutoChecks";
 
 interface EvidenceItem { eventId: string; action: string; label: string; timestamp: string; detail: string; context: string | null; provenance: "earned" | "imported"; patient: { id: string; name: string; mrn: string } | null }
 interface Detail {
@@ -16,6 +17,7 @@ interface Detail {
     rubric: { version: number; criterion_index: number; criterion: string; points_possible: number; points_awarded: number; comment: string | null; graded_by: string; graded_at: string }[];
     events: { id: number; version: number; event_type: string; actor: string; score: number | null; rubric: unknown; feedback: string | null; created_at: string }[];
   } | null;
+  autoChecks?: AutoChecksPayload | null;
 }
 
 export function SubmissionReview({ email, assignment, onChanged }: { email: string; assignment: CourseAssignment; onChanged: () => Promise<void> }) {
@@ -83,6 +85,8 @@ export function SubmissionReview({ email, assignment, onChanged }: { email: stri
       <div className="evidence-list">{requirements.map((requirement, index) => <div key={index} className={requirement.complete ? "evidence-complete" : ""}><span aria-hidden="true">{requirement.complete ? "✓" : "○"}</span><span><strong>{requirement.label}</strong><small>{requirement.completedCount}/{requirement.minimumCount}{requirement.importedCount ? ` · ${requirement.importedCount} imported` : ""}</small></span></div>)}{!requirements.length && <p className="empty">No progress recorded yet.</p>}</div>
       <details><summary>Rubric standards and instructor benchmark</summary><div className="assignment-body"><h3>Rubric</h3><ul>{rubric.map((item) => <li key={item.criterion}><strong>{item.criterion} · {item.points}</strong><br />{item.standard}</li>)}</ul><h3>Instructor benchmark</h3><ul>{detail.assignment.instructorBenchmark.map((item) => <li key={item}>{item}</li>)}</ul></div></details>
     </Panel>
+
+    <AutoChecks checks={detail.autoChecks} />
 
     <Panel title="Student submission" subtitle={header ? `Version ${header.version} · ${new Date(header.submitted_at).toLocaleString()}${header.late ? " · late" : ""} · status ${header.status}${header.graded_by ? ` · graded by ${header.graded_by}` : ""}` : "No submission received"}>
       {header ? <div className="submission-box">

@@ -26,7 +26,7 @@ export async function POST(request: Request) {
     const now = new Date().toISOString();
     const effective = await loadEffectiveAssignments(admin);
 
-    const workspaceWrite = await admin.from("ehr_user_workspaces").upsert({ email: user.email, workspace, schema_version: 3, updated_at: now }, { onConflict: "email" });
+    const workspaceWrite = await admin.from("ehr_user_workspaces").upsert({ email: user.email, workspace, schema_version: 4, updated_at: now }, { onConflict: "email" });
     if (workspaceWrite.error) throw workspaceWrite.error;
 
     const events = toEventRows(user.email, workspace.audit, now);

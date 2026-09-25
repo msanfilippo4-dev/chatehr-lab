@@ -15,7 +15,7 @@ export const AuditEventSchema = z.object({
 
 /** Loose shape check for the workspace envelope; the full document is stored as JSON. */
 export const WorkspaceEnvelopeSchema = z.object({
-  version: z.union([z.literal(2), z.literal(3)]),
+  version: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]),
   meta: z.object({ owner: z.string().max(120), createdAt: z.string(), configVersion: z.number().int().min(0) }).passthrough().optional(),
   patients: z.array(z.unknown()).min(1).max(200),
   audit: z.array(AuditEventSchema).max(2000),
@@ -88,4 +88,46 @@ export const ReleaseBodySchema = z.object({
   dueAt: z.string().datetime({ offset: true }).nullable().optional(),
   closeAt: z.string().datetime({ offset: true }).nullable().optional(),
   acceptLate: z.boolean().optional(),
+});
+
+// ---------------------------------------------------------------- weekly quizzes
+
+const QuizAnswer = z.number().int().min(0).max(9).nullable();
+
+/** One-step submit for fixed (legacy) quizzes: answers aligned to the fixed items. */
+export const QuizFixedSubmitSchema = z.object({ answers: z.array(QuizAnswer).min(1).max(100) });
+
+/** Submit or autosave for a drawn attempt: answers in DISPLAYED option order. */
+export const QuizAttemptAnswersSchema = z.object({
+  attempt: z.number().int().min(1).max(1000),
+  answers: z.array(QuizAnswer).min(1).max(100),
+});
+
+/** Submit accepts either shape; `attempt` selects the drawn flow. */
+export const QuizSubmitSchema = z.union([QuizAttemptAnswersSchema, QuizFixedSubmitSchema]);
+
+const IsoTimestamp = z.string().trim().refine((value) => !Number.isNaN(Date.parse(value)), "Invalid date and time.");
+
+export const QuizSettingsBodySchema = z.object({
+  week: z.number().int().min(1).max(12),
+  opens_at: IsoTimestamp.nullable(),
+  closes_at: IsoTimestamp.nullable(),
+  time_limit_min: z.number().int().min(0).max(600).nullable(),
+  draw_count: z.number().int().min(1).max(100).nullable(),
+  attempts_allowed: z.number().int().min(0).max(100).nullable(),
+  show_answers: z.enum(["after_close", "after_submit"]).nullable(),
+}).refine((value) => !value.opens_at || !value.closes_at || Date.parse(value.opens_at) < Date.parse(value.closes_at), {
+  message: "The quiz must open before it closes.",
+  path: ["closes_at"],
+});
+
+export const QuizExtensionBodySchema = z.object({
+  email: z.string().trim().toLowerCase().email().max(200),
+  week: z.number().int().min(1).max(12),
+  extra_minutes: z.number().int().min(0).max(600).default(0),
+  closes_at_override: IsoTimestamp.nullable().default(null),
+  reason: z.string().trim().max(500).nullable().default(null),
+}).refine((value) => value.extra_minutes > 0 || Boolean(value.closes_at_override), {
+  message: "Give extra minutes, a later close, or both.",
+  path: ["extra_minutes"],
 });

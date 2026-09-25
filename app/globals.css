@@ -2,33 +2,44 @@
    Feature-specific additions live in views.css, instructor.css, admin.css, advanced.css. */
 
 :root {
+  /* Palette shared with the course slides (v5/content/visuals/svg.ts and ehr.ts). */
   --fordham-maroon: #8b1538;
-  --fordham-maroon-dark: #67102a;
-  --fordham-blush: #f8edf1;
-  --navy: #173a59;
-  --navy2: #24577f;
-  --teal: #2a7c7d;
-  --teal2: #e0f3f2;
-  --ink: #172638;
-  --muted: #5a6675;
-  --line: #e3e8ee;
-  --line-strong: #cbd5e1;
-  --bg: #f4f6f9;
+  --fordham-maroon-dark: #6a0f2a;
+  --fordham-blush: #f7e8ed;
+  --navy: #16324f;
+  --navy2: #2f6fb2;
+  --blue: #2f6fb2;
+  --teal: #0f7c82;
+  --teal2: #e2f2f2;
+  --violet: #5b4ba8;
+  --violetbg: #eeebfa;
+  --ink: #1c2230;
+  --body: #384152;
+  --muted: #6b7385;
+  --line: #e6e9ef;
+  --line-strong: #d9dee7;
+  --bg: #f5f6f9;
   --surface: #ffffff;
-  --surface-2: #f8fafc;
-  --red: #b61f45;
-  --redbg: #fff0f3;
-  --amber: #8a5a00;
-  --amberbg: #fff7df;
-  --green: #176b4b;
-  --greenbg: #e8f7ef;
-  --bluebg: #eaf3ff;
-  --focus: #2a7c7d;
-  --radius: 12px;
-  --radius-sm: 8px;
+  --surface-2: #f8f9fb;
+  --table-head: #f1f3f6;
+  --red: #c0392b;
+  --redbg: #fdecea;
+  --amber: #a86400;
+  --amberbg: #fff3dc;
+  --green: #2e7d32;
+  --greenbg: #e8f5e9;
+  --bluebg: #e7f0fa;
+  --top: #1d2433;
+  --top-2: #2b3446;
+  --top-text: #e7eaf0;
+  --rail: #f3f4f7;
+  --rail-selected: #e9eef8;
+  --focus: #2f6fb2;
+  --radius: 10px;
+  --radius-sm: 7px;
   --shadow: 0 1px 2px rgba(16, 24, 40, 0.05), 0 1px 3px rgba(16, 24, 40, 0.04);
-  --shadow-md: 0 8px 24px rgba(16, 24, 40, 0.08);
-  --font: "Inter", "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --shadow-md: 0 10px 28px rgba(16, 24, 40, 0.12);
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", Roboto, "Helvetica Neue", Arial, sans-serif;
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
@@ -51,7 +62,7 @@ p { margin: 6px 0; }
 small { font-size: 12px; }
 a { color: var(--teal); }
 mark { background: #ffe9a8; padding: 0 2px; border-radius: 3px; }
-::selection { background: #d9ecec; }
+::selection { background: #d6e4f5; }
 
 /* Controls */
 button, .buttonlike {
@@ -96,8 +107,8 @@ input, select, textarea {
   width: 100%;
   transition: border-color 0.12s ease, box-shadow 0.12s ease;
 }
-input[type="checkbox"], input[type="radio"] { width: auto; padding: 0; accent-color: var(--teal); }
-input:focus, select:focus, textarea:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(42, 124, 125, 0.18); }
+input[type="checkbox"], input[type="radio"] { width: auto; padding: 0; accent-color: var(--blue); }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(47, 111, 178, 0.2); }
 select { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%235a6675' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
 textarea { resize: vertical; min-height: 64px; }
 label { font-size: 13px; font-weight: 600; color: #3f5064; }
@@ -105,7 +116,7 @@ label { font-size: 13px; font-weight: 600; color: #3f5064; }
 
 /* Tables */
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
-th { text-align: left; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); padding: 10px 12px; border-bottom: 1px solid var(--line); background: var(--surface-2); }
+th { text-align: left; font-size: 12px; font-weight: 700; letter-spacing: 0.01em; color: var(--muted); padding: 9px 12px; border-bottom: 1px solid var(--line); background: var(--table-head); }
 td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
 tbody tr:hover { background: #fbfcfd; }
 td small { display: block; color: var(--muted); margin-top: 2px; }

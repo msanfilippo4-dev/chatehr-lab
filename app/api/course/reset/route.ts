@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     const effective = await loadEffectiveAssignments(admin);
     if (body.workspace) {
       const workspace = normalizeState(body.workspace, user.email);
-      const write = await admin.from("ehr_user_workspaces").upsert({ email: user.email, workspace, schema_version: 3, updated_at: now, ...(body.scope === "import" ? { last_import_at: now } : {}) }, { onConflict: "email" });
+      const write = await admin.from("ehr_user_workspaces").upsert({ email: user.email, workspace, schema_version: 4, updated_at: now, ...(body.scope === "import" ? { last_import_at: now } : {}) }, { onConflict: "email" });
       if (write.error) throw write.error;
       const events = toEventRows(user.email, workspace.audit, now);
       if (events.length) {

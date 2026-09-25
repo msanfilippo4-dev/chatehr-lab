@@ -1,0 +1,23 @@
+/* v5 styles for the shell-owned views: Assignments guide, Worklist, Patients chart, Portal, Encounter, Orders. */
+.guide-body { padding: 0 18px 4px; }
+.guide-panel .panel-head p { max-width: none; }
+.assignments-view .assignment-layout { grid-template-columns: 320px minmax(0, 1fr); }
+.assignments-view aside .panel { position: sticky; top: 72px; }
+.text-link { color: var(--blue); font-weight: 600; text-decoration: none; }
+.text-link:hover { text-decoration: underline; }
+.small-link { display: block; font-size: 12px; margin-top: 4px; }
+tr.row-critical { background: #fff5f4; }
+tr.row-critical td:first-child { box-shadow: inset 3px 0 0 var(--red); }
+.care-team { list-style: none; padding: 0; margin: 4px 0 10px; display: grid; gap: 6px; }
+.care-team li { display: flex; justify-content: space-between; gap: 10px; border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; background: var(--surface-2); font-size: 13px; }
+.care-team li span { color: var(--muted); text-align: right; }
+.note-tags { display: flex; gap: 6px; flex-wrap: wrap; margin: 4px 0 6px; }
+.timeline article.confidential-note { border-left-color: var(--red); background: #fffafa; }
+.cosign-pending { color: var(--amber); font-weight: 600; font-size: 12px; }
+.panel-pad { padding: 4px 20px 0; }
+.chart-help { margin-left: 20px; margin-right: 20px; }
+.copy-verify { margin: 8px 20px 0; }
+.facts dd.danger-text { font-weight: 600; }
+code { font-family: var(--mono); font-size: 12px; color: var(--body); }
+.encounter-view .soap-grid textarea { min-height: 110px; }
+.worklist-view .task-list li small { display: block; }

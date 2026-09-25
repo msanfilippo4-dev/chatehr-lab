@@ -1,6 +1,7 @@
 import { defaultCourseConfig } from "./defaults";
 import { CourseConfigSchema, SECTION_SCHEMAS } from "./schema";
 import type { CourseConfig, CourseConfigSection } from "./types";
+import { upgradePublishedConfig } from "./upgrade";
 
 export interface MergeResult {
   config: CourseConfig;
@@ -15,7 +16,7 @@ export interface MergeResult {
 export function mergeConfig(defaults: CourseConfig, published: unknown): MergeResult {
   if (!published || typeof published !== "object") return { config: defaults, invalidSections: [] };
   const full = CourseConfigSchema.safeParse(published);
-  if (full.success) return { config: { ...defaults, ...(full.data as CourseConfig) }, invalidSections: [] };
+  if (full.success) return { config: upgradePublishedConfig({ ...defaults, ...(full.data as CourseConfig) }, defaults), invalidSections: [] };
 
   const source = published as Record<string, unknown>;
   const merged: CourseConfig = { ...defaults };
@@ -29,7 +30,7 @@ export function mergeConfig(defaults: CourseConfig, published: unknown): MergeRe
       invalid.push({ section: key, problems: parsed.error.issues.slice(0, 5).map((issue) => `${issue.path.join(".") || key}: ${issue.message}`) });
     }
   }
-  return { config: merged, invalidSections: invalid };
+  return { config: upgradePublishedConfig(merged, defaults), invalidSections: invalid };
 }
 
 export function studentSafeConfig(config: CourseConfig): CourseConfig {

@@ -1,0 +1,45 @@
+/* v5-billing: Billing & claims (matches ehrClaim in the slide mocks). */
+.billing-toolbar { margin: 0 0 12px; }
+.billing-list { padding: 0; overflow: hidden; }
+.billing-list .queue > li:last-child { border-bottom: 0; }
+.billing-empty { padding: 18px 16px; }
+.billing-detail { padding: 18px 20px; }
+.claim-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.claim-head .pane-title { font-size: 18px; }
+.claim-facts { margin: 4px 0 8px; }
+.claim-section { font-size: 15px; margin: 16px 0 8px; color: var(--ink); }
+.dx-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13.5px; }
+.dx-list strong { color: var(--navy); margin-right: 4px; }
+.claim-lines { margin-top: 12px; }
+.claim-table th, .claim-table td { text-align: left; }
+.claim-table th:first-child, .claim-table td:first-child { min-width: 0; width: 48px; position: static; }
+.claim-table .num { text-align: right; white-space: nowrap; }
+.claim-table tbody tr.highlight { background: var(--amberbg); }
+.claim-table .total-row td { font-weight: 800; background: var(--table-head); }
+.scrubber-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 8px; }
+.scrubber-head .claim-section { margin: 8px 0; }
+.edit-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 10px 14px; border-radius: 8px; margin: 0 0 8px; font-size: 13.5px; }
+.edit-row strong { display: block; font-weight: 600; color: var(--ink); }
+.edit-row small { display: block; color: var(--body); margin-top: 2px; }
+.edit-row.error { background: var(--redbg); border-left: 4px solid var(--red); }
+.edit-row.warning { background: var(--amberbg); border-left: 4px solid var(--amber); }
+.edit-row.ok { display: block; background: var(--greenbg); border-left: 4px solid var(--green); color: var(--green); font-weight: 700; }
+.edit-fix { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+.edit-fix select { width: auto; max-width: 260px; }
+.scrubber .analyst-tip, .denial .analyst-tip { margin: 14px 0 0; }
+.denial-card { margin-top: 14px; }
+.denial-top { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+.denial-code { font-size: 14px; }
+.denial-amount { margin-left: auto; font-weight: 700; color: var(--red); }
+.denial-form { margin-top: 14px; }
+.denial-form label { display: flex; flex-direction: column; gap: 5px; }
+.denial-summary { border-top: 1px solid var(--line); padding: 12px 16px; background: var(--surface-2); }
+.denial-summary h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin: 0 0 6px; }
+.denial-summary ul { list-style: none; margin: 0; padding: 0; }
+.denial-summary li { display: flex; justify-content: space-between; font-size: 13.5px; padding: 3px 0; }
+.claim-history { margin: 0; padding-left: 18px; font-size: 13px; }
+.claim-history li { margin: 4px 0; }
+.claim-history span { color: var(--muted); margin-right: 8px; }
+@media (max-width: 700px) { .edit-row { grid-template-columns: 1fr; } .edit-fix { justify-content: flex-start; } }
+.split.list-detail > .card + .card { margin-top: 0; }
+.billing-detail .step-link { margin-bottom: 4px; }

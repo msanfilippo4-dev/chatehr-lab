@@ -1,0 +1,609 @@
+{
+  "generatedAt": "2026-09-24T00:00:00.000Z",
+  "source": "unit test fixture",
+  "policy": {
+    "draw": 6,
+    "timeLimitMin": 15,
+    "gradedAttempts": 2
+  },
+  "weeks": [
+    {
+      "week": 1,
+      "title": "EHR foundations and digital maturity",
+      "date": "2026-09-21",
+      "dueAt": "2026-09-27T23:59:00-04:00",
+      "graded": true,
+      "items": [
+        {
+          "id": "W01-Q01",
+          "question": "What distinguishes a personal health record from the other record types discussed this week?",
+          "options": [
+            "The patient controls or maintains it and may connect it to provider systems",
+            "Hospitals produce it only for patients who have been discharged",
+            "It contains only information entered by clinicians during visits",
+            "It is stored on the patient's phone and can never be shared"
+          ],
+          "correct": 0,
+          "rationale": "A personal health record is defined by who controls it: the individual maintains it, decides what it contains, and may connect it to provider systems. It is not limited to discharge summaries, it is not clinician-authored, and it can certainly be shared; control by the person is the distinguishing feature.",
+          "kind": "definition",
+          "objective": "W01-O3"
+        },
+        {
+          "id": "W01-Q02",
+          "question": "A group practice keeps scanned records in one system and clinical data in four specialty systems that do not exchange information. How should you classify it?",
+          "options": [
+            "A single electronic health record, because every record is electronic",
+            "A clinical data warehouse serving the whole practice",
+            "A collection of electronic medical records plus a document repository",
+            "A personal health record, because patients can request copies"
+          ],
+          "correct": 2,
+          "rationale": "Each specialty system serves one department and does not exchange information, which is the boundary that defines an EMR, and the scanned archive holds images rather than structured data, which makes it a document repository. Being electronic does not make a system an EHR, and patient copies do not make it a PHR.",
+          "kind": "scenario",
+          "objective": "W01-O1"
+        },
+        {
+          "id": "W01-Q03",
+          "question": "A patient's uploaded home blood pressure readings arrive without a device name or units. What is the most important first step?",
+          "options": [
+            "Enter the readings into the vital signs flowsheet as clinical values",
+            "Discard the readings because they cannot be trusted",
+            "Ask the patient to stop using the portal for readings",
+            "Label them as patient-reported with source and verification status before anyone acts on them"
+          ],
+          "correct": 3,
+          "rationale": "Patient-generated data is valuable, but its provenance must travel with it. Labeling the readings with their source, units when known, and a verification status preserves patient control while preventing an unverified number from being treated as a clinical measurement. Discarding the data or entering it as verified both destroy information.",
+          "kind": "scenario",
+          "objective": "W01-O3"
+        },
+        {
+          "id": "W01-Q04",
+          "question": "An abnormal laboratory result has been finalized and appears in the chart, but no one has opened it. Which core function has not yet finished its work?",
+          "options": [
+            "Order management, because the order was never actually placed",
+            "Results management, because the result has not reached a reviewer who acts on it",
+            "Administrative processes, because the visit has not been billed",
+            "Health information and data, because the value is not stored"
+          ],
+          "correct": 1,
+          "rationale": "Results management covers the whole lifecycle from final result through review, communication, and follow-up, so a final but unopened result means the function is only half complete. The order clearly was placed, the value is stored, and billing is unrelated to whether the patient was told.",
+          "kind": "scenario",
+          "objective": "W01-O2"
+        },
+        {
+          "id": "W01-Q05",
+          "question": "A hospital reports the highest possible maturity score and asks whether it can stop auditing result follow-up. What should you recommend?",
+          "options": [
+            "Stop auditing, because the score demonstrates that the workflow is safe",
+            "Audit only the departments that scored lowest on the model",
+            "Keep auditing, because the score reflects adopted capabilities rather than local performance",
+            "Replace the audit with an annual clinician satisfaction survey"
+          ],
+          "correct": 2,
+          "rationale": "A maturity score is a structured assessment of adopted capabilities and governance; it does not measure whether a specific closed loop, such as result follow-up, actually closes for each patient. Local evidence must confirm performance, so the audit continues, and the score is used to decide which loops deserve the closest look.",
+          "kind": "action",
+          "objective": "W01-O4"
+        },
+        {
+          "id": "W01-Q06",
+          "question": "In the practice chart, the audit history for a result shows created at 09:14, finalized at 10:02, and no viewed entry. What does this evidence support?",
+          "options": [
+            "The result was reviewed but the audit log failed to record it",
+            "The result exists and is final but has not been opened by anyone",
+            "The order was never placed, so the result is an error",
+            "The patient was notified of the result at 10:02"
+          ],
+          "correct": 1,
+          "rationale": "Audit evidence supports exactly what it records: a result was created, then finalized, and no view event exists. Assuming a silent log failure or a patient notification adds facts the evidence does not contain, and a finalized result cannot exist without an order, so the honest reading is final and unopened.",
+          "kind": "data",
+          "objective": "W01-O5"
+        }
+      ],
+      "legacy": true
+    },
+    {
+      "week": 2,
+      "title": "How an EHR is built: systems, sources, and chart sections",
+      "date": "2026-09-28",
+      "graded": false,
+      "opensAt": "2026-09-28T21:00:00-04:00",
+      "dueAt": "2026-10-04T23:59:00-04:00",
+      "draw": 6,
+      "timeLimitMin": null,
+      "items": [
+        {
+          "id": "W02-Q01",
+          "question": "According to information systems theory, which set of components makes up a health information system?",
+          "options": [
+            "Hardware and software only",
+            "Servers, networks, and databases",
+            "Hardware, software, and people, policy, and process",
+            "The EHR vendor's modules and their interfaces"
+          ],
+          "correct": 2,
+          "rationale": "Houser defines an information system as hardware, software, and a human element (people, policy, process) working toward a common purpose. The other options leave out the human layer, where most failures occur.",
+          "kind": "recall",
+          "objective": "W02-O1",
+          "book": "Houser Ch. 2, pp. 30-31"
+        },
+        {
+          "id": "W02-Q02",
+          "question": "A nurse notices that the potassium in the EHR shows 5.9 but the lab called a corrected value of 4.8 an hour ago. Where should the analyst look first?",
+          "options": [
+            "The EHR's display settings",
+            "The interface: whether the correction message was sent and filed",
+            "The nurse's documentation in the flowsheet",
+            "The physician's inbox rules"
+          ],
+          "correct": 1,
+          "rationale": "The LIS is the source system. If it holds a corrected value but the EHR does not, the correction message did not arrive or did not file. The interface log is the first evidence to check.",
+          "kind": "apply",
+          "objective": "W02-O2",
+          "book": "Houser Ch. 2, pp. 31-34"
+        },
+        {
+          "id": "W02-Q03",
+          "question": "Which of the following is an example of structured (discrete) data?",
+          "options": [
+            "A pain score of 7 entered in the flowsheet pain row",
+            "A nurse's narrative note describing the patient's mood",
+            "A scanned referral letter from an outside cardiologist",
+            "An audio recording of a telehealth visit"
+          ],
+          "correct": 0,
+          "rationale": "A flowsheet row stores a defined value the computer can graph, alert on, and report. The others are unstructured: text, images, or audio that people can read but computers cannot easily use.",
+          "kind": "recall",
+          "objective": "W02-O3",
+          "book": "Houser Ch. 10, pp. 283-286"
+        },
+        {
+          "id": "W02-Q04",
+          "question": "A patient's penicillin allergy appears only in a scanned outside record. A penicillin-class antibiotic is ordered. What is the most likely result?",
+          "options": [
+            "A drug–allergy alert fires because the allergy is in the chart",
+            "The interface engine flags the order",
+            "The pharmacy system blocks the order automatically",
+            "No alert fires because the allergy is not stored as structured data"
+          ],
+          "correct": 3,
+          "rationale": "Decision support runs on structured data. An allergy that exists only in a scanned document is invisible to the alert logic. This is why allergy reconciliation into the coded allergy list matters.",
+          "kind": "apply",
+          "objective": "W02-O3",
+          "book": "Houser Ch. 10, pp. 283-286"
+        },
+        {
+          "id": "W02-Q05",
+          "question": "What is the main job of an interface engine?",
+          "options": [
+            "Store the patient's longitudinal record",
+            "Display results to clinicians",
+            "Route, translate, and log messages between systems",
+            "Generate clinical decision support alerts"
+          ],
+          "correct": 2,
+          "rationale": "An interface engine sits between systems, routing messages, translating codes and formats, and logging traffic. Storage is the repository's job; display and alerts are the EHR's.",
+          "kind": "recall",
+          "objective": "W02-O2",
+          "book": "Houser Ch. 13, pp. 412-417"
+        },
+        {
+          "id": "W02-Q06",
+          "question": "A quality dashboard shows yesterday's sepsis bundle compliance but none of today's cases. What best explains this?",
+          "options": [
+            "The EHR is malfunctioning",
+            "The data warehouse is loaded overnight from the repository",
+            "Sepsis cases are stored as unstructured data",
+            "Today's nurses have not documented yet"
+          ],
+          "correct": 1,
+          "rationale": "Warehouses are typically refreshed on a schedule, often nightly, so reports lag the live repository. That lag is by design, not a malfunction.",
+          "kind": "apply",
+          "objective": "W02-O3",
+          "book": "Houser Ch. 10, pp. 308-310"
+        },
+        {
+          "id": "W02-Q07",
+          "question": "Which statement best distinguishes a clinical data repository from a clinical data warehouse?",
+          "options": [
+            "The repository supports real-time care for one patient; the warehouse supports analysis across many patients",
+            "The repository is for billing; the warehouse is for care",
+            "The repository is cloud-based; the warehouse is on-premises",
+            "They are two names for the same database"
+          ],
+          "correct": 0,
+          "rationale": "The repository is optimized for fast, current, single-patient access during care. The warehouse holds copies reorganized for population queries and reporting.",
+          "kind": "recall",
+          "objective": "W02-O3",
+          "book": "Houser Ch. 10, pp. 308-310"
+        },
+        {
+          "id": "W02-Q08",
+          "question": "In the DIKW continuum, 'Marcus's potassium is 6.2 mmol/L and flagged high' is an example of:",
+          "options": [
+            "Data",
+            "Wisdom",
+            "Knowledge",
+            "Information"
+          ],
+          "correct": 3,
+          "rationale": "A value with units, a reference range, and a patient is information. Knowledge would connect it to what we know (ACE inhibitor, arrhythmia risk); wisdom is the right action.",
+          "kind": "apply",
+          "objective": "W02-O1",
+          "book": "Houser Ch. 2, pp. 37-40"
+        },
+        {
+          "id": "W02-Q09",
+          "question": "A hospital moves its EHR to vendor hosting. Which responsibility shifts most directly to the vendor?",
+          "options": [
+            "Deciding which order sets clinicians use",
+            "Training nurses on documentation",
+            "Running and patching the servers and meeting uptime commitments",
+            "Approving clinical content changes"
+          ],
+          "correct": 2,
+          "rationale": "Hosting moves infrastructure operations (servers, patches, uptime) to the vendor under a contract. Clinical content, governance, and training remain the organization's responsibility.",
+          "kind": "apply",
+          "objective": "W02-O4",
+          "book": "Houser Ch. 11, pp. 331-332"
+        },
+        {
+          "id": "W02-Q10",
+          "question": "The July 2024 CrowdStrike outage disrupted hospital care even where EHR servers were running. Why?",
+          "options": [
+            "EHR vendors used CrowdStrike to store patient data",
+            "Workstations clinicians use to reach the EHR crashed",
+            "The outage deleted EHR databases",
+            "HL7 interfaces were shut down by regulators"
+          ],
+          "correct": 1,
+          "rationale": "The faulty update crashed Windows computers, including the workstations clinicians use. The EHR can be healthy while the devices people use to reach it are not, which is why downtime planning must include endpoints.",
+          "kind": "analyze",
+          "objective": "W02-O4",
+          "book": "Houser Ch. 11, pp. 322-326"
+        },
+        {
+          "id": "W02-Q11",
+          "question": "A nurse proposes changing a required field in the admission assessment. According to good governance, what should happen first?",
+          "options": [
+            "The request is triaged and reviewed by the appropriate clinical council",
+            "The analyst builds it in the live system that afternoon",
+            "The vendor is asked to add it to the next upgrade",
+            "The nurse manager emails all staff about the change"
+          ],
+          "correct": 0,
+          "rationale": "Changes are triaged and approved by the right governance body before build, because a change that helps one unit may affect others. Building directly in production skips testing.",
+          "kind": "apply",
+          "objective": "W02-O5",
+          "book": "Houser Ch. 3, pp. 53-60"
+        },
+        {
+          "id": "W02-Q12",
+          "question": "Which SDLC phase most directly would have caught a mismatch between the reference lab's critical flag (6.5) and hospital policy (6.0)?",
+          "options": [
+            "Planning",
+            "Implementation",
+            "Maintenance",
+            "Testing"
+          ],
+          "correct": 3,
+          "rationale": "Testing with realistic scenarios, such as a potassium of 6.2, would show the result arriving as 'H' rather than critical. Analysis can identify requirements, but testing is where the mismatch becomes visible before go-live.",
+          "kind": "analyze",
+          "objective": "W02-O5",
+          "book": "Houser Ch. 2, pp. 45-51"
+        },
+        {
+          "id": "W02-Q13",
+          "question": "In health IT (as opposed to general systems theory), a 'closed system' usually means:",
+          "options": [
+            "A system with no feedback loops",
+            "A system that is offline during downtime",
+            "Proprietary technology that is not freely shared with others",
+            "A system that only clinicians can access"
+          ],
+          "correct": 2,
+          "rationale": "Houser notes that in health IT, 'closed' refers to proprietary technology, while 'open' refers to standards-based systems that can interconnect.",
+          "kind": "recall",
+          "objective": "W02-O1",
+          "book": "Houser Ch. 2, pp. 33-34"
+        },
+        {
+          "id": "W02-Q14",
+          "question": "Marcus Reed's critical potassium went unseen over a weekend. Which fix addresses the root cause rather than a symptom?",
+          "options": [
+            "Remind physicians to check their inbox more often",
+            "Create inbox coverage rules and route unacknowledged critical results to the on-call clinician",
+            "Add a second pop-up alert for high potassium",
+            "Discipline the physician who ordered the test"
+          ],
+          "correct": 1,
+          "rationale": "The root cause was routing: results went to an unavailable person with no coverage. Coverage rules plus escalation fix the pathway. Reminders, extra alerts, and discipline target individuals and tend not to last.",
+          "kind": "analyze",
+          "objective": "W02-O2",
+          "book": "Houser Ch. 2, pp. 31-34"
+        },
+        {
+          "id": "W02-Q15",
+          "question": "Which chart section most commonly causes useless alerts when data is entered incorrectly, for example logging nausea from codeine as a 'drug allergy'?",
+          "options": [
+            "Allergy list",
+            "Problem list",
+            "Flowsheets",
+            "Demographics"
+          ],
+          "correct": 0,
+          "rationale": "Intolerances recorded as allergies generate drug–allergy alerts that clinicians learn to override, which contributes to alert fatigue. Accurate allergy type and reaction data make alerts meaningful.",
+          "kind": "apply",
+          "objective": "W02-O3",
+          "book": "Houser Ch. 10, pp. 283-286"
+        },
+        {
+          "id": "W02-Q16",
+          "question": "Sittig and Singh's sociotechnical model is most useful for which purpose?",
+          "options": [
+            "Calculating EHR return on investment",
+            "Designing HL7 interface messages",
+            "Choosing between Epic and Oracle Health",
+            "Showing that health IT problems usually span several dimensions such as workflow, people, and policy"
+          ],
+          "correct": 3,
+          "rationale": "The model's eight dimensions show why health IT problems rarely have a single technical cause. It is an analysis tool, not a financial or technical design method.",
+          "kind": "recall",
+          "objective": "W02-O1",
+          "book": "Houser Ch. 2, pp. 30-31"
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "title": "Fixture graded week",
+      "date": "2026-10-05",
+      "graded": true,
+      "opensAt": "2026-10-05T21:00:00-04:00",
+      "dueAt": "2026-10-11T23:59:00-04:00",
+      "draw": 6,
+      "timeLimitMin": 15,
+      "items": [
+        {
+          "id": "W03-Q01",
+          "question": "Week 3 fixture question 1?",
+          "options": [
+            "Alpha 0",
+            "Bravo 0",
+            "Charlie 0",
+            "Delta 0"
+          ],
+          "correct": 0,
+          "rationale": "Because fixture 1.",
+          "kind": "recall",
+          "objective": "W03-O1",
+          "book": "Houser Ch. 3"
+        },
+        {
+          "id": "W03-Q02",
+          "question": "Week 3 fixture question 2?",
+          "options": [
+            "Alpha 1",
+            "Bravo 1",
+            "Charlie 1",
+            "Delta 1"
+          ],
+          "correct": 1,
+          "rationale": "Because fixture 2.",
+          "kind": "recall",
+          "objective": "W03-O1",
+          "book": "Houser Ch. 3"
+        },
+        {
+          "id": "W03-Q03",
+          "question": "Week 3 fixture question 3?",
+          "options": [
+            "Alpha 2",
+            "Bravo 2",
+            "Charlie 2",
+            "Delta 2"
+          ],
+          "correct": 2,
+          "rationale": "Because fixture 3.",
+          "kind": "recall",
+          "objective": "W03-O1",
+          "book": "Houser Ch. 3"
+        },
+        {
+          "id": "W03-Q04",
+          "question": "Week 3 fixture question 4?",
+          "options": [
+            "Alpha 3",
+            "Bravo 3",
+            "Charlie 3",
+            "Delta 3"
+          ],
+          "correct": 3,
+          "rationale": "Because fixture 4.",
+          "kind": "recall",
+          "objective": "W03-O1",
+          "book": "Houser Ch. 3"
+        },
+        {
+          "id": "W03-Q05",
+          "question": "Week 3 fixture question 5?",
+          "options": [
+            "Alpha 4",
+            "Bravo 4",
+            "Charlie 4",
+            "Delta 4"
+          ],
+          "correct": 0,
+          "rationale": "Because fixture 5.",
+          "kind": "recall",
+          "objective": "W03-O1",
+          "book": "Houser Ch. 3"
+        },
+        {
+          "id": "W03-Q06",
+          "question": "Week 3 fixture question 6?",
+          "options": [
+            "Alpha 5",
+            "Bravo 5",
+            "Charlie 5",
+            "Delta 5"
+          ],
+          "correct": 1,
+          "rationale": "Because fixture 6.",
+          "kind": "recall",
+          "objective": "W03-O1",
+          "book": "Houser Ch. 3"
+        },
+        {
+          "id": "W03-Q07",
+          "question": "Week 3 fixture question 7?",
+          "options": [
+            "Alpha 6",
+            "Bravo 6",
+            "Charlie 6",
+            "Delta 6"
+          ],
+          "correct": 2,
+          "rationale": "Because fixture 7.",
+          "kind": "recall",
+          "objective": "W03-O1",
+          "book": "Houser Ch. 3"
+        },
+        {
+          "id": "W03-Q08",
+          "question": "Week 3 fixture question 8?",
+          "options": [
+            "Alpha 7",
+            "Bravo 7",
+            "Charlie 7",
+            "Delta 7"
+          ],
+          "correct": 3,
+          "rationale": "Because fixture 8.",
+          "kind": "recall",
+          "objective": "W03-O1",
+          "book": "Houser Ch. 3"
+        },
+        {
+          "id": "W03-Q09",
+          "question": "Week 3 fixture question 9?",
+          "options": [
+            "Alpha 8",
+            "Bravo 8",
+            "Charlie 8",
+            "Delta 8"
+          ],
+          "correct": 0,
+          "rationale": "Because fixture 9.",
+          "kind": "recall",
+          "objective": "W03-O1",
+          "book": "Houser Ch. 3"
+        },
+        {
+          "id": "W03-Q10",
+          "question": "Week 3 fixture question 10?",
+          "options": [
+            "Alpha 9",
+            "Bravo 9",
+            "Charlie 9",
+            "Delta 9"
+          ],
+          "correct": 1,
+          "rationale": "Because fixture 10.",
+          "kind": "recall",
+          "objective": "W03-O1",
+          "book": "Houser Ch. 3"
+        },
+        {
+          "id": "W03-Q11",
+          "question": "Week 3 fixture question 11?",
+          "options": [
+            "Alpha 10",
+            "Bravo 10",
+            "Charlie 10",
+            "Delta 10"
+          ],
+          "correct": 2,
+          "rationale": "Because fixture 11.",
+          "kind": "recall",
+          "objective": "W03-O1",
+          "book": "Houser Ch. 3"
+        },
+        {
+          "id": "W03-Q12",
+          "question": "Week 3 fixture question 12?",
+          "options": [
+            "Alpha 11",
+            "Bravo 11",
+            "Charlie 11",
+            "Delta 11"
+          ],
+          "correct": 3,
+          "rationale": "Because fixture 12.",
+          "kind": "recall",
+          "objective": "W03-O1",
+          "book": "Houser Ch. 3"
+        },
+        {
+          "id": "W03-Q13",
+          "question": "Week 3 fixture question 13?",
+          "options": [
+            "Alpha 12",
+            "Bravo 12",
+            "Charlie 12",
+            "Delta 12"
+          ],
+          "correct": 0,
+          "rationale": "Because fixture 13.",
+          "kind": "recall",
+          "objective": "W03-O1",
+          "book": "Houser Ch. 3"
+        },
+        {
+          "id": "W03-Q14",
+          "question": "Week 3 fixture question 14?",
+          "options": [
+            "Alpha 13",
+            "Bravo 13",
+            "Charlie 13",
+            "Delta 13"
+          ],
+          "correct": 1,
+          "rationale": "Because fixture 14.",
+          "kind": "recall",
+          "objective": "W03-O1",
+          "book": "Houser Ch. 3"
+        },
+        {
+          "id": "W03-Q15",
+          "question": "Week 3 fixture question 15?",
+          "options": [
+            "Alpha 14",
+            "Bravo 14",
+            "Charlie 14",
+            "Delta 14"
+          ],
+          "correct": 2,
+          "rationale": "Because fixture 15.",
+          "kind": "recall",
+          "objective": "W03-O1",
+          "book": "Houser Ch. 3"
+        },
+        {
+          "id": "W03-Q16",
+          "question": "Week 3 fixture question 16?",
+          "options": [
+            "Alpha 15",
+            "Bravo 15",
+            "Charlie 15",
+            "Delta 15"
+          ],
+          "correct": 3,
+          "rationale": "Because fixture 16.",
+          "kind": "recall",
+          "objective": "W03-O1",
+          "book": "Houser Ch. 3"
+        }
+      ]
+    }
+  ]
+}

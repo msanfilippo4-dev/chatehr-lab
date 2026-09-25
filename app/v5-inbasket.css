@@ -1,0 +1,42 @@
+/* v5-inbasket: In Basket three-pane view (matches ehrInbasket in the slide mocks). */
+.inbasket .page-actions { gap: 12px; }
+.inbasket .split.three { min-height: 560px; }
+.ib-show-done { display: flex; align-items: center; gap: 8px; margin: 14px 8px 0; padding-top: 12px; border-top: 1px solid var(--line); font-size: 12.5px; font-weight: 500; color: var(--body); }
+.inbasket .folder-list button > span:first-child { flex: 1; min-width: 0; }
+.ib-list { padding: 0; }
+.ib-list .queue-item strong { font-size: 13.5px; }
+.ib-list .queue-item .queue-tags { align-items: center; }
+.ib-empty { padding: 18px 16px; }
+.ib-detail { background: #fff; }
+.ib-detail-body { display: flex; flex-direction: column; gap: 12px; }
+.ib-detail-head .def-grid { margin: 6px 0 10px; }
+.ib-routing { margin: 0; }
+.ib-message { margin: 0; font-size: 14.5px; line-height: 1.55; color: var(--ink); background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
+.ib-patient-message { border-left: 3px solid var(--blue); padding: 4px 0 4px 12px; }
+.ib-patient-message span { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.ib-patient-message p { margin: 4px 0 0; font-size: 14.5px; line-height: 1.55; }
+.ib-ai-card { margin: 0; }
+.ib-ai-card h3 { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
+.ib-ai-card h3::before { content: "✦"; font-size: 15px; }
+.ib-ai-meta { margin: 0 0 8px; font-size: 12px; color: #8a4a5e; }
+.ib-ai-text { margin: 0; font-size: 14px; line-height: 1.6; color: var(--ink); }
+.ib-result { display: grid; grid-template-columns: auto auto 1fr; gap: 4px 12px; align-items: center; margin: 0; }
+.ib-result .def-grid { grid-column: 1 / -1; }
+.ib-result-name { grid-column: 1 / -1; font-size: 12.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.ib-result-value { font-size: 30px; font-weight: 800; letter-spacing: -0.02em; color: var(--ink); }
+.ib-result-value.abnormal { color: var(--red); }
+.ib-result.critical { border-color: #f1b7ae; background: #fffafa; }
+.ib-result .chip-pill { justify-self: start; }
+.ib-note p { margin: 4px 0; font-size: 13.5px; }
+.ib-action { margin: 0; }
+.ib-action h3 { margin-bottom: 10px; }
+.ib-action label { display: flex; flex-direction: column; gap: 5px; }
+.ib-issues { border: 0; padding: 0; margin: 0 0 12px; }
+.ib-issues legend { font-size: 13px; font-weight: 600; color: #3f5064; margin-bottom: 6px; }
+.ib-issues .check-grid label { flex-direction: row; display: grid; }
+.ib-task-grid { display: grid; grid-template-columns: 1fr 170px; gap: 10px 12px; }
+.ib-task-grid .wide { grid-column: 1 / -1; }
+.ib-done { margin: 0; }
+.ib-done .form-message { margin: 0 0 8px; }
+.ib-detail-body .analyst-tip { margin: 0; }
+@media (max-width: 640px) { .ib-task-grid { grid-template-columns: 1fr; } }

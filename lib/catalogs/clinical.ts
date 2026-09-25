@@ -5,6 +5,7 @@ export const medicationExamples: MedicationExample[] = [
   { id: "MED-AZI", name: "Azithromycin 250 mg tablet", sig: "Two tablets on day 1, then one tablet daily for 4 days", drugClass: "Macrolide antibiotic", teachingNote: "A common alternative when penicillin is contraindicated." },
   { id: "MED-LIS", name: "Lisinopril 10 mg tablet", sig: "Take one tablet daily", drugClass: "ACE inhibitor", teachingNote: "Raises potassium in some patients; pairs with the hyperkalemia result." },
   { id: "MED-MET", name: "Metformin 500 mg tablet", sig: "Take one tablet twice daily with meals", drugClass: "Biguanide", teachingNote: "Ties to the A1c cohort and the Z79.84 status code." },
+  { id: "MED-SZC", name: "Sodium zirconium cyclosilicate 10 g oral packet", sig: "Mix one packet in water and drink now; repeat BMP in 6 hours", drugClass: "Potassium binder", teachingNote: "A reasonable first step for a potassium of 6.1 while the ACE inhibitor dose is reconsidered." },
   { id: "MED-NAP", name: "Naproxen 500 mg tablet", sig: "Take one tablet twice daily with food for 5 days", drugClass: "NSAID", teachingNote: "Appears in the HIE inbox as an external short-course medication." },
 ];
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** Verify that migration 009 has been applied to the configured Supabase project. */
+/** Verify that migrations 009, 011, and 012 have been applied to the configured Supabase project. */
 import { createClient } from "@supabase/supabase-js";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -39,4 +39,27 @@ const rpc = await admin.rpc("ehr_rate_limit_hit", { p_bucket: "check:migration",
 console.log(`${rpc.error ? "MISSING" : "ok     "} function ehr_rate_limit_hit${rpc.error ? ` (${rpc.error.message})` : ""}`);
 if (rpc.error) failed += 1;
 console.log(failed ? `Migration 009 is NOT fully applied (${failed} missing).` : "Migration 009 is applied.");
+
+/** Check a list of [table, columns] pairs and report the migration's status. */
+async function checkMigration(label, list) {
+  let missing = 0;
+  for (const [table, column] of list) {
+    const { error } = await admin.from(table).select(column).limit(1);
+    console.log(`${error ? "MISSING" : "ok     "} ${table}.${column}${error ? ` (${error.message})` : ""}`);
+    if (error) missing += 1;
+  }
+  console.log(missing ? `Migration ${label} is NOT fully applied (${missing} missing).` : `Migration ${label} is applied.`);
+  return missing;
+}
+
+failed += await checkMigration("011 (quizzes)", [["ehr_quiz_attempts", "id,email,week,attempt,answers,score,late,submitted_at"]]);
+failed += await checkMigration("012 (quiz windows)", [
+  ["ehr_quiz_attempts", "status"],
+  ["ehr_quiz_attempts", "drawn_item_ids"],
+  ["ehr_quiz_attempts", "option_orders"],
+  ["ehr_quiz_attempts", "saved_answers"],
+  ["ehr_quiz_attempts", "expires_at"],
+  ["ehr_quiz_settings", "week,opens_at,closes_at,time_limit_min,draw_count,attempts_allowed,show_answers,updated_by,updated_at"],
+  ["ehr_quiz_extensions", "email,week,extra_minutes,closes_at_override,reason,created_by,created_at"],
+]);
 process.exit(failed ? 1 : 0);

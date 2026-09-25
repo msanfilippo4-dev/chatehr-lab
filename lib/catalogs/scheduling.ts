@@ -4,6 +4,7 @@ export const specialties: Specialty[] = [
   { id: "SPC-IM", name: "Internal medicine" },
   { id: "SPC-FM", name: "Family medicine" },
   { id: "SPC-PT", name: "Physical therapy" },
+  { id: "SPC-ENDO", name: "Endocrinology" },
 ];
 
 export const providerRoles: ProviderRole[] = [
@@ -18,6 +19,8 @@ export const providers: Provider[] = [
   { id: "PRV-CHEN", name: "Dr. Chen", credentials: "MD", specialtyId: "SPC-IM", roleId: "ROLE-ATT", facilityId: "FAC-LC", availability: weekdays("08:00", "17:00") },
   { id: "PRV-PATEL", name: "Dr. Patel", credentials: "MD", specialtyId: "SPC-FM", roleId: "ROLE-ATT", facilityId: "FAC-LC", availability: weekdays("09:00", "18:00") },
   { id: "PRV-OKAFOR", name: "Nadia Okafor, NP", credentials: "NP", specialtyId: "SPC-IM", roleId: "ROLE-NP", facilityId: "FAC-LC", availability: weekdays("08:00", "16:00") },
+  { id: "PRV-BROOKS", name: "Sam Brooks, NP", credentials: "NP", specialtyId: "SPC-IM", roleId: "ROLE-NP", facilityId: "FAC-LC", availability: weekdays("08:00", "16:00") },
+  { id: "PRV-OSEI", name: "Dr. Osei", credentials: "MD", specialtyId: "SPC-ENDO", roleId: "ROLE-ATT", facilityId: "FAC-LC", availability: [2, 4].map((day) => ({ day, start: "09:00", end: "15:00" })) },
 ];
 
 export const visitTypes: VisitType[] = [

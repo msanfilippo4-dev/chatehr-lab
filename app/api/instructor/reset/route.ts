@@ -35,7 +35,7 @@ export async function POST(request: Request) {
       next = scopedReset(current, assignment, `Instructor (${instructor.email})`, now);
       await recordResetMarker(admin, email, assignment.id, now);
     }
-    const write = await admin.from("ehr_user_workspaces").update({ workspace: next, schema_version: 3, updated_at: now }).eq("email", email);
+    const write = await admin.from("ehr_user_workspaces").update({ workspace: next, schema_version: 4, updated_at: now }).eq("email", email);
     if (write.error) throw write.error;
     const { rows } = await computeServerProgress(admin, email, effective.assignments, effective.version);
     await logAdminEvent(admin, instructor.email, "instructor_reset", "user", email, { scope: body.scope, assignmentId: body.assignmentId ?? null });

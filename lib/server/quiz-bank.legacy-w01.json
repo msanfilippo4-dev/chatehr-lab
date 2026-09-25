@@ -1,0 +1,93 @@
+{
+  "week": 1,
+  "title": "EHR foundations and digital maturity",
+  "date": "2026-09-21",
+  "dueAt": "2026-09-27T23:59:00-04:00",
+  "graded": true,
+  "items": [
+    {
+      "id": "W01-Q01",
+      "question": "What distinguishes a personal health record from the other record types discussed this week?",
+      "options": [
+        "The patient controls or maintains it and may connect it to provider systems",
+        "Hospitals produce it only for patients who have been discharged",
+        "It contains only information entered by clinicians during visits",
+        "It is stored on the patient's phone and can never be shared"
+      ],
+      "correct": 0,
+      "rationale": "A personal health record is defined by who controls it: the individual maintains it, decides what it contains, and may connect it to provider systems. It is not limited to discharge summaries, it is not clinician-authored, and it can certainly be shared; control by the person is the distinguishing feature.",
+      "kind": "definition",
+      "objective": "W01-O3"
+    },
+    {
+      "id": "W01-Q02",
+      "question": "A group practice keeps scanned records in one system and clinical data in four specialty systems that do not exchange information. How should you classify it?",
+      "options": [
+        "A single electronic health record, because every record is electronic",
+        "A clinical data warehouse serving the whole practice",
+        "A collection of electronic medical records plus a document repository",
+        "A personal health record, because patients can request copies"
+      ],
+      "correct": 2,
+      "rationale": "Each specialty system serves one department and does not exchange information, which is the boundary that defines an EMR, and the scanned archive holds images rather than structured data, which makes it a document repository. Being electronic does not make a system an EHR, and patient copies do not make it a PHR.",
+      "kind": "scenario",
+      "objective": "W01-O1"
+    },
+    {
+      "id": "W01-Q03",
+      "question": "A patient's uploaded home blood pressure readings arrive without a device name or units. What is the most important first step?",
+      "options": [
+        "Enter the readings into the vital signs flowsheet as clinical values",
+        "Discard the readings because they cannot be trusted",
+        "Ask the patient to stop using the portal for readings",
+        "Label them as patient-reported with source and verification status before anyone acts on them"
+      ],
+      "correct": 3,
+      "rationale": "Patient-generated data is valuable, but its provenance must travel with it. Labeling the readings with their source, units when known, and a verification status preserves patient control while preventing an unverified number from being treated as a clinical measurement. Discarding the data or entering it as verified both destroy information.",
+      "kind": "scenario",
+      "objective": "W01-O3"
+    },
+    {
+      "id": "W01-Q04",
+      "question": "An abnormal laboratory result has been finalized and appears in the chart, but no one has opened it. Which core function has not yet finished its work?",
+      "options": [
+        "Order management, because the order was never actually placed",
+        "Results management, because the result has not reached a reviewer who acts on it",
+        "Administrative processes, because the visit has not been billed",
+        "Health information and data, because the value is not stored"
+      ],
+      "correct": 1,
+      "rationale": "Results management covers the whole lifecycle from final result through review, communication, and follow-up, so a final but unopened result means the function is only half complete. The order clearly was placed, the value is stored, and billing is unrelated to whether the patient was told.",
+      "kind": "scenario",
+      "objective": "W01-O2"
+    },
+    {
+      "id": "W01-Q05",
+      "question": "A hospital reports the highest possible maturity score and asks whether it can stop auditing result follow-up. What should you recommend?",
+      "options": [
+        "Stop auditing, because the score demonstrates that the workflow is safe",
+        "Audit only the departments that scored lowest on the model",
+        "Keep auditing, because the score reflects adopted capabilities rather than local performance",
+        "Replace the audit with an annual clinician satisfaction survey"
+      ],
+      "correct": 2,
+      "rationale": "A maturity score is a structured assessment of adopted capabilities and governance; it does not measure whether a specific closed loop, such as result follow-up, actually closes for each patient. Local evidence must confirm performance, so the audit continues, and the score is used to decide which loops deserve the closest look.",
+      "kind": "action",
+      "objective": "W01-O4"
+    },
+    {
+      "id": "W01-Q06",
+      "question": "In the practice chart, the audit history for a result shows created at 09:14, finalized at 10:02, and no viewed entry. What does this evidence support?",
+      "options": [
+        "The result was reviewed but the audit log failed to record it",
+        "The result exists and is final but has not been opened by anyone",
+        "The order was never placed, so the result is an error",
+        "The patient was notified of the result at 10:02"
+      ],
+      "correct": 1,
+      "rationale": "Audit evidence supports exactly what it records: a result was created, then finalized, and no view event exists. Assuming a silent log failure or a patient notification adds facts the evidence does not contain, and a finalized result cannot exist without an order, so the honest reading is final and unopened.",
+      "kind": "data",
+      "objective": "W01-O5"
+    }
+  ]
+}

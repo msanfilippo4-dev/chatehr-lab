@@ -1,5 +1,6 @@
 import type { CourseConfig } from "@/lib/config/types";
 import type { View } from "@/lib/config/defaults";
+import type { NavTarget } from "@/lib/navigation";
 import type { WorkspaceAction } from "@/lib/store/reducer";
 import type { EHRState, Patient, Role } from "@/lib/types";
 
@@ -13,6 +14,10 @@ export interface ViewProps {
   setView: (view: View) => void;
   makeId: (prefix: string) => string;
   readOnly: boolean;
+  /** Navigate to any view (optionally a patient, role, and chart tab); updates the URL. */
+  navigate: (target: NavTarget) => void;
+  /** Chart tab requested by the URL (Patients view). */
+  chartTab?: string;
 }
 
 export function nowIso() {

@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { openPatientChart, openTab, signIn, testEmail, waitForSave } from "./helpers";
+import { openPatientChart, openTab, openWorkspaceMenu, signIn, testEmail, waitForSave } from "./helpers";
 
 test("imported evidence is labeled, scoped reset keeps signed notes, and keyboard navigation works", async ({ browser, browserName }) => {
   const sourceEmail = testEmail("import-source");
@@ -11,6 +11,7 @@ test("imported evidence is labeled, scoped reset keeps signed notes, and keyboar
   await openPatientChart(source, "Liu", "Liu Huang");
   await source.getByRole("button", { name: /Send to HIM identity queue/ }).click();
   await waitForSave(source);
+  await openWorkspaceMenu(source);
   const [download] = await Promise.all([source.waitForEvent("download"), source.getByRole("button", { name: "Export evidence" }).click()]);
   const path = await download.path();
   expect(path).toBeTruthy();
@@ -25,7 +26,7 @@ test("imported evidence is labeled, scoped reset keeps signed notes, and keyboar
   await expect(target.getByText("Imported evidence", { exact: true })).toBeVisible();
 
   // Scoped reset of A2 keeps a signed note but clears orders.
-  await target.getByLabel("Select simulated role").selectOption("Clinical");
+  await target.getByLabel("Select simulated role").selectOption("Physician/APP");
   await openPatientChart(target, "Liu", "Liu Huang");
   await openTab(target, "Encounter");
   for (const label of ["S · subjective", "O · objective", "A · assessment", "P · plan"]) await target.getByLabel(label).fill("Documented for the reset test.");
@@ -54,9 +55,9 @@ test("imported evidence is labeled, scoped reset keeps signed notes, and keyboar
   await expect(target.locator(".skip-link")).toBeFocused();
   await target.keyboard.press("Enter");
   await expect(target.locator("#practice-ehr-main")).toBeFocused();
-  await target.getByRole("navigation", { name: "FordMS EHR modules" }).getByRole("button").first().focus();
+  await target.getByRole("navigation", { name: "FordMS EHR modules" }).getByRole("link").first().focus();
   await target.keyboard.press(browserName === "webkit" ? "Alt+Tab" : "Tab");
-  await expect(target.getByRole("navigation", { name: "FordMS EHR modules" }).getByRole("button").nth(1)).toBeFocused();
+  await expect(target.getByRole("navigation", { name: "FordMS EHR modules" }).getByRole("link").nth(1)).toBeFocused();
 
   await sourceContext.close();
   await targetContext.close();

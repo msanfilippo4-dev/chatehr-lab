@@ -7,6 +7,8 @@ export interface AssignmentRequirement {
   minimumCount: number;
   /** When set, only events whose context (or legacy detail) starts with this prefix count. */
   contextMatch?: string;
+  /** Other actions that also satisfy this requirement (e.g. administer OR hold a dose). */
+  anyOf?: string[];
 }
 
 export interface ProgressEvent {
@@ -66,11 +68,11 @@ function dedupKey(event: ProgressEvent): string {
   return `${event.action}|${event.patientId ?? ""}|${event.detail}`;
 }
 
-function matchesRequirement(requirement: AssignmentRequirement, event: ProgressEvent): boolean {
-  if (event.action !== requirement.action) return false;
+export function matchesRequirement(requirement: Pick<AssignmentRequirement, "action" | "contextMatch" | "anyOf">, event: Pick<ProgressEvent, "action" | "context" | "detail">): boolean {
+  if (event.action !== requirement.action && !(requirement.anyOf ?? []).includes(event.action)) return false;
   if (!requirement.contextMatch) return true;
   const prefix = requirement.contextMatch.toLowerCase();
-  return (event.context ?? "").toLowerCase().startsWith(prefix) || event.detail.toLowerCase().startsWith(prefix);
+  return (event.context ?? "").toLowerCase().startsWith(prefix) || (event.detail ?? "").toLowerCase().startsWith(prefix);
 }
 
 export function computeProgress(

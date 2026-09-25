@@ -23,11 +23,48 @@ export async function selectRole(page: Page, role: string) {
 }
 
 export async function openTab(page: Page, name: string) {
-  await page.getByRole("navigation", { name: "FordMS EHR modules" }).getByRole("button", { name, exact: true }).click();
+  await page.getByRole("navigation", { name: "FordMS EHR modules" }).getByRole("link", { name, exact: true }).click();
 }
 
 export async function waitForSave(page: Page) {
+  // Let a just-dispatched change reach the debounced sync before checking.
+  await page.waitForTimeout(300);
   await expect(page.locator(".storage-line")).toContainText("Saved to your Fordham course account", { timeout: 30_000 });
+}
+
+/** Open a deep link (e.g. "/?view=emar&patient=PT-008&role=nurse") after the cloud copy is saved. */
+export async function gotoApp(page: Page, url: string) {
+  await waitForSave(page);
+  await page.goto(url);
+  await expect(page.getByRole("navigation", { name: "FordMS EHR modules" })).toBeVisible({ timeout: 30_000 });
+  await expect(page.locator(".storage-line")).toContainText(/restored|Saved to your Fordham/, { timeout: 30_000 });
+}
+
+export async function openWorkspaceMenu(page: Page) {
+  const menu = page.locator("details.workspace-menu");
+  if (!(await menu.evaluate((node) => (node as HTMLDetailsElement).open))) await menu.locator("summary").click();
+}
+
+/** Triage, record evidence, and resolve a ticket from the Tickets view. */
+export async function resolveTicket(page: Page, id: string, options: { evidence: string[]; rootCauseIndex?: number; notify?: string[] }) {
+  await gotoApp(page, "/?view=tickets&role=analyst");
+  await page.getByRole("button", { name: new RegExp(`^${id}`) }).click();
+  if (await page.getByRole("button", { name: "Save triage" }).isVisible()) {
+    await page.getByLabel("Category", { exact: true }).selectOption("Safety");
+    await page.getByLabel("Priority", { exact: true }).selectOption("High");
+    await page.getByLabel("Owner", { exact: true }).selectOption("Me (clinical informatics analyst)");
+    await page.getByRole("button", { name: "Save triage" }).click();
+  }
+  for (const label of options.evidence) await page.getByLabel(label, { exact: true }).check();
+  await page.getByRole("button", { name: "Save evidence" }).click();
+  const rootCause = page.getByLabel("Root cause", { exact: true });
+  await rootCause.selectOption({ index: (options.rootCauseIndex ?? 1) + 1 });
+  await page.getByLabel("Root cause detail").fill("The evidence shows a system cause rather than an individual error; details recorded for the requester.");
+  await page.getByLabel("Fix or recommendation").fill("Correct the upstream build or process, monitor for recurrence for two weeks, and report back.");
+  for (const name of options.notify ?? []) await page.getByLabel(name, { exact: true }).check();
+  await page.getByLabel("Message to requester").fill("Thank you for reporting this. We found the cause, the fix is in progress, and I will confirm when it is complete.");
+  await page.getByRole("button", { name: "Resolve ticket" }).click();
+  await expect(page.locator(".form-message.success", { hasText: "Ticket resolved" })).toBeVisible();
 }
 
 export async function openPatientChart(page: Page, query: string, name: string) {

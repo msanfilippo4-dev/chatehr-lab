@@ -36,3 +36,23 @@
 .evidence-bundle article header { display: flex; justify-content: space-between; gap: 8px; }
 .roster-edit { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px 12px; }
 @media (max-width: 900px) { .roster-table { display: block; overflow-x: auto; } }
+
+/* Quiz administration */
+.status-pill.quiz-dropped { text-decoration: line-through; opacity: 0.75; }
+.quiz-settings-form, .quiz-extension-form { margin-top: 14px; display: grid; gap: 10px; }
+.quiz-settings-form h3 { font-size: 15px; }
+.quiz-items td.quiz-key { font-weight: 800; color: var(--green); background: var(--greenbg); }
+.quiz-items tr.quiz-flagged td:first-child { box-shadow: inset 3px 0 0 var(--amber); }
+.quiz-table .quiz-item-question { white-space: normal; max-width: 48ch; }
+.quiz-settings td small { white-space: normal; max-width: 28ch; }
+.quiz-table-wrap { width: 100%; overflow-x: auto; }
+.quiz-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.quiz-table th, .quiz-table td { padding: 8px; border-bottom: 1px solid var(--line); vertical-align: top; text-align: left; white-space: nowrap; }
+.quiz-table th:first-child, .quiz-table td:first-child { padding-left: 20px; white-space: normal; min-width: 200px; }
+.quiz-table tbody tr:hover { background: var(--bg); }
+.quiz-table tr.selected { background: var(--teal2); }
+.quiz-table td small { display: block; color: var(--muted); }
+.quiz-table th:last-child, .quiz-table td:last-child { padding-right: 20px; }
+.autochecks { padding: 0 20px 6px; display: grid; gap: 14px; }
+.autochecks h3 { margin: 4px 0 6px; }
+.autochecks td small { display: block; color: var(--muted); }

@@ -14,7 +14,8 @@
     "capture:screens": "node scripts/capture_screens.mjs",
     "cleanup:test-users": "node scripts/cleanup_test_users.mjs",
     "enroll:students": "node scripts/enroll_students.mjs",
-    "export:quiz-bank": "node scripts/export_quiz_bank.mjs"
+    "import:quiz-bank": "node scripts/import_quiz_bank.mjs",
+    "check:migration": "node scripts/check_migration.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.116.0",

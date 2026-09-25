@@ -1,6 +1,19 @@
 import type { ActionId } from "./actions";
 
-export type Role = "Front Desk" | "Clinical" | "HIM" | "Patient" | "Analyst" | "Implementation Lead";
+/**
+ * Simulated roles. "Clinical" is the pre-v5 combined clinical role; it stays valid in
+ * stored audit events and older published configurations, and maps to Nurse and Physician/APP.
+ */
+export type Role =
+  | "Analyst"
+  | "Front Desk"
+  | "Nurse"
+  | "Physician/APP"
+  | "HIM"
+  | "Revenue Cycle"
+  | "Implementation Lead"
+  | "Patient"
+  | "Clinical";
 export type AppointmentStatus = "Scheduled" | "Checked in" | "Completed" | "Canceled" | "No-show";
 export type OrderStatus = "Draft" | "Submitted" | "Final" | "Reviewed";
 export type Provenance = "earned" | "imported";
@@ -36,6 +49,13 @@ export interface NoteVersion {
   copiedForwardFrom?: string;
   cosignedBy?: string;
   cosignedAt?: string;
+  /** Seeded history: who wrote it and how the content was produced. */
+  source?: "Typed" | "Copied forward" | "AI scribe draft accepted";
+  /** Adolescent confidential note: must not be visible to a parent proxy. */
+  confidential?: boolean;
+  encounterId?: string;
+  /** Co-signature requested from this provider (seeded NP notes). */
+  cosignRequestedFrom?: string;
 }
 
 export interface Order {
@@ -76,11 +96,56 @@ export interface PortalMessage {
   proxy?: boolean;
 }
 
-export interface PatientProblem { code: string; display: string; onset: string }
-export interface PatientMedication { name: string; sig: string; status: string }
-export interface PatientAllergy { allergen: string; reaction: string; severity: string }
-export interface PatientVital { date: string; bp: string; hr: number; weight: string }
-export interface PatientResult { date: string; name: string; value: string; flag: string; status: string }
+export interface PatientProblem { code: string; display: string; onset: string; status?: "Active" | "Resolved" }
+export interface PatientMedication {
+  name: string;
+  sig: string;
+  status: string;
+  dose?: string;
+  route?: string;
+  frequency?: string;
+  prescriber?: string;
+  indication?: string;
+}
+export interface PatientAllergy {
+  allergen: string;
+  reaction: string;
+  severity: string;
+  type?: "Allergy" | "Intolerance";
+  verified?: string;
+}
+export interface PatientVital {
+  date: string;
+  bp: string;
+  hr: number;
+  weight: string;
+  temp?: string;
+  rr?: number;
+  spo2?: number;
+  bmi?: string;
+}
+export interface PatientResult {
+  date: string;
+  name: string;
+  value: string;
+  flag: string;
+  status: string;
+  unit?: string;
+  range?: string;
+  loinc?: string;
+  orderedBy?: string;
+}
+export interface CareTeamMember { name: string; role: string }
+export interface PatientEncounter {
+  id: string;
+  date: string;
+  type: "Office visit" | "Telehealth" | "Inpatient" | "Emergency" | "Urgent care (external)" | "Nurse visit";
+  provider: string;
+  department: string;
+  reason: string;
+  status: "Completed" | "Active admission" | "Scheduled" | "No-show";
+  location?: string;
+}
 
 export interface Patient {
   id: string;
@@ -104,6 +169,20 @@ export interface Patient {
   memberId?: string;
   proxyAccess?: { name: string; relationship: string; scope: string }[];
   registeredAt?: string;
+  /** v4 chart context (optional so registered patients and v3 workspaces stay valid). */
+  preferredName?: string;
+  legalNameOnCoverage?: string;
+  genderIdentity?: string;
+  sexAssignedAtBirth?: string;
+  interpreterNeeded?: boolean;
+  pcp?: string;
+  careTeam?: CareTeamMember[];
+  encounters?: PatientEncounter[];
+  codeStatus?: string;
+  flags?: string[];
+  location?: string;
+  admittedAt?: string;
+  weightKg?: number;
 }
 
 export interface AuditEvent {
@@ -224,6 +303,16 @@ export interface WaitlistEntry {
   status: "Waiting" | "Offered" | "Booked" | "Removed";
 }
 
+export type SentenceLabel = "Supported" | "Unsupported" | "Contradicts source" | "Wrong patient detail" | "Omission";
+
+export interface SentenceClassification {
+  sentenceId: string;
+  label: SentenceLabel;
+  /** Source line id (e.g. "S5") or "none" when no source supports the sentence. */
+  citation: string;
+  comment?: string;
+}
+
 export interface AIReviewRecord {
   id: string;
   patientId: string;
@@ -231,6 +320,202 @@ export interface AIReviewRecord {
   disposition: string;
   note: string;
   reviewedAt: string;
+  /** v4: sentence-level review of a fixed draft. Scored only on the server. */
+  draftId?: string;
+  classifications?: SentenceClassification[];
+}
+
+/* ---------------------------------------------------------------- v4 clinical slices */
+
+export interface MarOrder {
+  id: string;
+  patientId: string;
+  drug: string;
+  /** Generic drug key used for five-rights matching, e.g. "metoprolol tartrate". */
+  drugKey: string;
+  doseMg: number;
+  doseLabel: string;
+  route: "PO" | "IV" | "SC" | "INH";
+  frequency: string;
+  /** Scheduled times (HH:MM) on the simulated day; empty for PRN-only orders. */
+  times: string[];
+  prn?: { indication: string; minHoursBetween: number; requiresPainScore: boolean };
+  parameters?: string;
+  orderedBy: string;
+  notes?: string;
+}
+
+export interface DrawerItem {
+  id: string;
+  patientId: string;
+  label: string;
+  drugKey: string;
+  strengthMg: number;
+  route: "PO" | "IV" | "SC" | "INH";
+  barcode: string;
+  /** Teaching note shown after a mismatch, never before. */
+  pitfall?: "wrong-dose" | "look-alike" | "wrong-patient";
+}
+
+export interface WristbandOption {
+  id: string;
+  label: string;
+  mrn: string;
+  dob: string;
+}
+
+export interface MarAdministration {
+  id: string;
+  orderId: string;
+  patientId: string;
+  /** Scheduled slot "HH:MM" or "PRN". */
+  slot: string;
+  /** Calendar date of the administration; omitted means SIMULATION_DATE. */
+  date?: string;
+  outcome: "Given" | "Held" | "Given with override";
+  recordedAt: string;
+  /** Simulated clock time of the administration (HH:MM). */
+  simTime: string;
+  performer: string;
+  itemId?: string;
+  wristbandMrn?: string;
+  warnings?: string[];
+  reason?: string;
+  painScore?: number;
+  late?: boolean;
+  seeded?: boolean;
+}
+
+export interface MarScanRecord {
+  id: string;
+  orderId: string;
+  patientId: string;
+  slot: string;
+  wristbandId: string;
+  itemId: string;
+  scannedAt: string;
+  warnings: string[];
+  blocking: boolean;
+}
+
+export interface FlowsheetEntry {
+  id: string;
+  patientId: string;
+  /** ISO local time on the simulated timeline, e.g. "2026-09-21T08:00". */
+  time: string;
+  temp?: number;
+  hr?: number;
+  sbp?: number;
+  dbp?: number;
+  rr?: number;
+  spo2?: number;
+  onOxygen?: boolean;
+  consciousness?: "Alert" | "New confusion" | "Voice" | "Pain" | "Unresponsive";
+  pain?: number;
+  intake?: number;
+  output?: number;
+  fallRiskReassessed?: boolean;
+  recordedBy: string;
+  seeded?: boolean;
+  ews?: number;
+  escalation?: string;
+}
+
+export type InBasketKind = "Result" | "Advice request" | "Refill request" | "Co-sign" | "AI draft reply";
+
+export interface InBasketItem {
+  id: string;
+  kind: InBasketKind;
+  pool: "Physician/APP" | "Nurse";
+  patientId: string;
+  subject: string;
+  body: string;
+  from: string;
+  receivedAt: string;
+  recipient: string;
+  priority: "Routine" | "High" | "Critical";
+  status: "Open" | "Done";
+  /** Links back to existing workspace records. */
+  messageId?: string;
+  noteId?: string;
+  result?: { name: string; value: string; unit: string; range: string; flag: string; collectedAt: string; orderedBy: string };
+  refill?: { medication: string; pharmacy: string; lastFilled: string; note?: string };
+  aiDraft?: { text: string; generatedAt: string; model: string };
+  routingNote?: string;
+  completedAt?: string;
+  outcome?: string;
+  reply?: string;
+  taskId?: string;
+  reviewIssues?: string[];
+}
+
+export interface ClaimLine {
+  line: number;
+  cpt: string;
+  description: string;
+  modifiers: string[];
+  dxPointers: string[];
+  units: number;
+  charge: number;
+  orderingProvider?: string;
+}
+
+export interface ClaimDenial {
+  group: "CO" | "PR" | "OA";
+  carc: string;
+  plain: string;
+  rarc?: string;
+  deniedAt: string;
+  amount: number;
+  line?: number;
+}
+
+export interface Claim {
+  id: string;
+  patientId: string;
+  dos: string;
+  provider: string;
+  department: string;
+  insurerId: string;
+  payer: string;
+  memberId: string;
+  diagnoses: { code: string; display: string }[];
+  lines: ClaimLine[];
+  eligibility: "Active" | "Inactive" | "Needs verification";
+  requiresReferral: boolean;
+  referralNumber?: string;
+  requiresPriorAuth?: boolean;
+  priorAuthNumber?: string;
+  /** Documentation that supports a significant, separately identifiable E/M (modifier 25). */
+  separateEmDocumented?: boolean;
+  status: "Charge review" | "Ready to submit" | "Submitted" | "Denied" | "Denial worked";
+  denial?: ClaimDenial;
+  denialWork?: { action: string; note: string; workedAt: string };
+  history: { at: string; change: string }[];
+  scrubbedAt?: string;
+}
+
+export type TicketCategory = "Break-fix" | "Safety" | "Enhancement" | "Training" | "Data request";
+export type TicketPriority = "Low" | "Medium" | "High" | "Urgent";
+
+export interface Ticket {
+  id: string;
+  /** Assignment that uses this ticket ("A2"…), or "GEN" for practice tickets. */
+  assignment: "A1" | "A2" | "A3" | "A4" | "GEN";
+  requester: string;
+  requesterRole: string;
+  subject: string;
+  body: string;
+  openedAt: string;
+  patientId?: string;
+  links: { label: string; view: string; patientId?: string; role?: string }[];
+  evidenceOptions: { id: string; label: string }[];
+  rootCauseOptions: string[];
+  notifyOptions: string[];
+  status: "New" | "Triaged" | "Resolved";
+  triage?: { category: TicketCategory; priority: TicketPriority; owner: string; at: string };
+  evidence: { id: string; note: string; at: string }[];
+  resolution?: { rootCause: string; detail: string; fix: string; notify: string[]; communication: string; at: string };
 }
 
 export interface WorkspaceMeta {
@@ -243,7 +528,7 @@ export interface WorkspaceMeta {
 }
 
 export interface EHRState {
-  version: 3;
+  version: 4;
   meta: WorkspaceMeta;
   appointments: Appointment[];
   patients: Patient[];
@@ -261,6 +546,14 @@ export interface EHRState {
   referrals: Referral[];
   waitlist: WaitlistEntry[];
   aiReviews: AIReviewRecord[];
+  /* v4 slices */
+  marOrders: MarOrder[];
+  marAdministrations: MarAdministration[];
+  marScans: MarScanRecord[];
+  flowsheets: FlowsheetEntry[];
+  inBasket: InBasketItem[];
+  claims: Claim[];
+  tickets: Ticket[];
 }
 
 /** Maximum number of audit events retained in a workspace. */

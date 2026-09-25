@@ -32,9 +32,10 @@ describe("computeProgress", () => {
 
   it("requires three distinct readiness checkpoints", () => {
     const same = [1, 2, 3].map(() => event({ action: ACTION.UPDATE_IMPLEMENTATION_READINESS, context: "IMP-01" }));
-    expect(computeProgress(a4, same).requirements[1].completedCount).toBe(1);
+    const readiness = (result: ReturnType<typeof computeProgress>) => result.requirements.find((r) => r.action === ACTION.UPDATE_IMPLEMENTATION_READINESS)!;
+    expect(readiness(computeProgress(a4, same)).completedCount).toBe(1);
     const distinct = ["IMP-01", "IMP-02", "IMP-03"].map((context) => event({ action: ACTION.UPDATE_IMPLEMENTATION_READINESS, context }));
-    expect(computeProgress(a4, distinct).requirements[1].complete).toBe(true);
+    expect(readiness(computeProgress(a4, distinct)).complete).toBe(true);
   });
 
   it("falls back to patient + detail for legacy events without context", () => {

@@ -14,7 +14,7 @@ describe("normalizeState", () => {
   it("upgrades a version 2 workspace", () => {
     const legacy = { version: 2, patients: buildInitialState().patients, audit: [{ id: "AUD-1", timestamp: "2026-09-21T10:00:00.000Z", actor: "Clinical learner", action: "Open chart", detail: "Liu Huang", patientId: "PT-001" }], exercises: [] };
     const state = normalizeState(legacy, "someone@fordham.edu");
-    expect(state.version).toBe(3);
+    expect(state.version).toBe(4);
     expect(state.meta.owner).toBe("someone@fordham.edu");
     expect(state.registrations).toEqual([]);
     expect(state.audit[0].action).toBe("Open chart");
@@ -53,7 +53,7 @@ describe("ehrReducer", () => {
     state = ehrReducer(state, { type: "saveNote", patientId: "PT-001", note: signed }, meta);
     const amendment: NoteVersion = { ...signed, id: "NOTE-2", kind: "Amendment", amendmentReason: "Correct laterality" };
     state = ehrReducer(state, { type: "saveNote", patientId: "PT-001", note: amendment }, meta);
-    const notes = state.patients[0].notes;
+    const notes = state.patients[0].notes.filter((note) => !note.id.startsWith("NOTE-SEED"));
     expect(notes.map((note) => note.kind)).toEqual(["Signed", "Amendment"]);
     expect(state.audit[0].action).toBe(ACTION.AMEND_SIGNED_NOTE);
     expect(state.audit[1].action).toBe(ACTION.SIGNED_SOAP_NOTE);
@@ -82,7 +82,7 @@ describe("scoped reset", () => {
     state = ehrReducer(state, { type: "placeOrder", order: { id: "ORD-1", patientId: "PT-001", type: "Laboratory", name: "Basic metabolic panel", details: "", status: "Final", orderedAt: meta.at, result: "5.9" } }, meta);
     const reset = scopedReset(state, defaultAssignments[1], "learner", "2026-10-05T00:00:00.000Z");
     expect(reset.orders).toEqual([]);
-    expect(reset.patients[0].notes.map((note) => note.kind)).toEqual(["Signed"]);
+    expect(reset.patients[0].notes.filter((note) => !note.id.startsWith("NOTE-SEED")).map((note) => note.kind)).toEqual(["Signed"]);
     expect(reset.appointments.some((item) => item.id === "APT-T")).toBe(true);
     expect(reset.audit.some((event) => event.action === ACTION.CREATE_APPOINTMENT)).toBe(true);
     expect(reset.audit.some((event) => event.action === ACTION.PLACE_SIMULATED_ORDER)).toBe(false);

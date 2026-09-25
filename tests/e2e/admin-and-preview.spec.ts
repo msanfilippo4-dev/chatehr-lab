@@ -15,6 +15,9 @@ test("admin publishes a configuration version that students receive, and preview
   const adminContext = await browser.newContext();
   const admin = await adminContext.newPage();
   await signIn(admin, adminEmail, "admin");
+  // Remember the live configuration so it can be restored: this suite runs against the course database.
+  const before = await (await admin.request.get("/api/admin/config")).json();
+  const previousVersion: number = before.version;
   await openTab(admin, "Admin");
   await admin.getByRole("button", { name: "ICD-10-CM examples" }).click();
   await admin.getByRole("button", { name: "Add row" }).click();
@@ -55,6 +58,12 @@ test("admin publishes a configuration version that students receive, and preview
   const payload = await preview.json();
   const opened = (payload.workspace.audit as { action: string; detail: string }[]).filter((event) => event.action === "Open chart");
   expect(opened.some((event) => event.detail.includes("Amina"))).toBe(false);
+
+  // Republish the configuration that was live before this test (restores never delete history).
+  if (previousVersion > 0) {
+    const restore = await admin.request.post("/api/admin/config/history", { data: { version: previousVersion, changeSummary: "Restore after automated test publish" } });
+    expect(restore.status()).toBe(200);
+  }
 
   await studentContext.close();
   await adminContext.close();

@@ -63,7 +63,14 @@ export const RequirementSchema = z.object({
   label: short,
   minimumCount: z.number().int().min(1).max(10),
   contextMatch: z.string().max(60).optional(),
+  anyOf: z.array(z.string().refine(isActionId, "Unknown action identifier")).max(4).optional(),
 });
+
+const GuideLinkSchema = z.object({ label: short, view: short, patient: id.optional(), role: short.optional(), tab: short.optional() });
+const GuideCheckSchema = z.object({ action: z.string().refine(isActionId, "Unknown action identifier"), contextMatch: z.string().max(60).optional(), anyOf: z.array(z.string().refine(isActionId)).max(4).optional() });
+export const GuideStepSchema = z.object({ text: text, link: GuideLinkSchema.optional(), expect: text.optional(), check: GuideCheckSchema.optional() });
+export const GuidePartSchema = z.object({ title: short, minutes: z.number().int().min(1).max(180), steps: z.array(GuideStepSchema).min(1).max(15), tip: text.optional() });
+export const AssignmentGuideSchema = z.object({ situation: text, parts: z.array(GuidePartSchema).min(1).max(8) });
 export const RubricItemSchema = z.object({ criterion: short, points: z.number().min(0).max(100), standard: text });
 export const AssignmentSchema = z.object({
   id: z.string().regex(/^FORDMS-A\d$/),
@@ -76,15 +83,17 @@ export const AssignmentSchema = z.object({
   weekIntroduced: z.number().int().min(1).max(12),
   scenario: text,
   objectives: z.array(short).min(1).max(8),
-  workflow: z.array(text).min(1).max(10),
-  requirements: z.array(RequirementSchema).min(1).max(12),
+  workflow: z.array(text).min(1).max(12),
+  requirements: z.array(RequirementSchema).min(1).max(14),
   submissionPrompt: text,
   rubric: z.array(RubricItemSchema).min(1).max(10).refine((items) => Math.abs(items.reduce((sum, item) => sum + item.points, 0) - 100) < 0.001, "Rubric points must total 100"),
   releaseState: z.enum(["hidden", "released", "closed"]),
+  contentRevision: z.number().int().min(0).max(1000).optional(),
+  guide: AssignmentGuideSchema.optional(),
 });
 
 export const CourseConfigSchema = z.object({
-  meta: z.object({ schema: z.literal(1), version: z.number().int().min(0), label: short, effectiveDate: z.string(), source: text, teachingNotes: text }),
+  meta: z.object({ schema: z.literal(1), version: z.number().int().min(0), label: short, effectiveDate: z.string(), source: text, teachingNotes: text, contentRevision: z.number().int().min(0).max(1000).optional() }),
   icd10Catalog: z.array(CodeEntrySchema).max(200),
   cptCatalog: z.array(CodeEntrySchema).max(200),
   insurers: z.array(InsurerSchema).max(50),
@@ -104,7 +113,7 @@ export const CourseConfigSchema = z.object({
   alertRules: z.array(AlertRuleSchema).max(50),
   messageCategories: z.array(MessageCategorySchema).max(20),
   routingRules: z.array(RoutingRuleSchema).max(50),
-  simulatedRoles: z.array(z.object({ role: z.enum(["Front Desk", "Clinical", "HIM", "Patient", "Analyst", "Implementation Lead"]), views: z.array(short).min(1) })).min(1),
+  simulatedRoles: z.array(z.object({ role: z.enum(["Analyst", "Front Desk", "Nurse", "Physician/APP", "HIM", "Revenue Cycle", "Implementation Lead", "Patient", "Clinical"]), views: z.array(short).min(1) })).min(1),
   assignments: z.array(AssignmentSchema).min(1).max(8),
   permissions: z.object({ instructorCanPublishConfig: z.boolean(), adminOnlyRoleChanges: z.boolean(), rosterOnlySignIn: z.boolean().default(false) }),
 });

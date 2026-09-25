@@ -42,6 +42,21 @@ export const ACTION = {
   EXPORT_LEARNER_REPORT: "Export learner report",
   IMPORT_WORKSPACE: "Import workspace",
   RESET_WORKSPACE: "Reset workspace",
+  // v4 (FordMS v5 clinical revamp). Append only; never rename a value above.
+  MAR_SCAN: "MAR scan",
+  ADMINISTER_MEDICATION: "Administer medication",
+  HOLD_MEDICATION: "Hold medication",
+  OVERRIDE_MAR_WARNING: "Override MAR warning",
+  DOCUMENT_FLOWSHEET: "Document flowsheet",
+  COMPLETE_INBASKET_ITEM: "Complete in-basket item",
+  REVIEW_AI_DRAFT_REPLY: "Review AI draft reply",
+  SCRUB_CLAIM: "Scrub claim",
+  CORRECT_CLAIM: "Correct claim",
+  SUBMIT_CLAIM: "Submit claim",
+  WORK_DENIAL: "Work denial",
+  TRIAGE_TICKET: "Triage ticket",
+  RECORD_TICKET_EVIDENCE: "Record ticket evidence",
+  RESOLVE_TICKET: "Resolve ticket",
 } as const;
 
 export type ActionId = (typeof ACTION)[keyof typeof ACTION];
@@ -95,6 +110,20 @@ export const ACTION_CONTEXT: Record<ActionId, ActionContextKind> = {
   [ACTION.EXPORT_LEARNER_REPORT]: "none",
   [ACTION.IMPORT_WORKSPACE]: "none",
   [ACTION.RESET_WORKSPACE]: "none",
+  [ACTION.MAR_SCAN]: "entity",
+  [ACTION.ADMINISTER_MEDICATION]: "entity",
+  [ACTION.HOLD_MEDICATION]: "entity",
+  [ACTION.OVERRIDE_MAR_WARNING]: "entity",
+  [ACTION.DOCUMENT_FLOWSHEET]: "entity",
+  [ACTION.COMPLETE_INBASKET_ITEM]: "entity",
+  [ACTION.REVIEW_AI_DRAFT_REPLY]: "entity",
+  [ACTION.SCRUB_CLAIM]: "entity",
+  [ACTION.CORRECT_CLAIM]: "entity",
+  [ACTION.SUBMIT_CLAIM]: "entity",
+  [ACTION.WORK_DENIAL]: "entity",
+  [ACTION.TRIAGE_TICKET]: "entity",
+  [ACTION.RECORD_TICKET_EVIDENCE]: "entity",
+  [ACTION.RESOLVE_TICKET]: "entity",
 };
 
 export function isActionId(value: unknown): value is ActionId {

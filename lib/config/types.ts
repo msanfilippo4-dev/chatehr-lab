@@ -111,6 +111,26 @@ export interface RoutingRule { categoryId: string; keywordPattern: string; route
 
 export interface AssignmentRubricItem { criterion: string; points: number; standard: string }
 
+/** An in-app deep link: view name plus optional patient, simulated role, and chart tab. */
+export interface GuideLink { label: string; view: string; patient?: string; role?: string; tab?: string }
+
+export interface GuideStep {
+  text: string;
+  link?: GuideLink;
+  /** "You should see…" confirmation. */
+  expect?: string;
+  /** When set, the step ticks off once matching audit evidence exists. */
+  check?: { action: string; contextMatch?: string; anyOf?: string[] };
+}
+
+export interface GuidePart { title: string; minutes: number; steps: GuideStep[]; tip?: string }
+
+export interface AssignmentGuide {
+  /** "Your situation", in the voice of Dana Okafor's clinical informatics analyst. */
+  situation: string;
+  parts: GuidePart[];
+}
+
 export interface CourseAssignment {
   id: string;
   title: string;
@@ -128,6 +148,9 @@ export interface CourseAssignment {
   submissionPrompt: string;
   rubric: AssignmentRubricItem[];
   releaseState: ReleaseState;
+  /** Content revision of the built-in text; published configs older than the default are upgraded. */
+  contentRevision?: number;
+  guide?: AssignmentGuide;
 }
 
 export interface CourseConfigMeta {
@@ -137,6 +160,8 @@ export interface CourseConfigMeta {
   effectiveDate: string;
   source: string;
   teachingNotes: string;
+  /** Built-in content revision this document was based on (5 = FordMS v5 clinical revamp). */
+  contentRevision?: number;
 }
 
 export interface CourseConfig {
