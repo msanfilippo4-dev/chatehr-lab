@@ -61,9 +61,14 @@ describe("installed quiz bank", () => {
     expect(week3.poolSize).toBeGreaterThanOrEqual(15);
     expect(week3.opensAt).toBe(defaultWindow(3).opensAt);
   });
-  it("gives week 2 a sixteen-item pool drawn six at a time, untimed, as a review quiz", () => {
+  it("grades week 2 from a sixteen-item pool and closes it with week 1 on October 4", () => {
     const week2 = quizDefaults(2, true);
-    expect(week2).toMatchObject({ graded: false, mode: "drawn", drawCount: 6, poolSize: 16, timeLimitMin: null, attemptsAllowed: null, showAnswers: "after_submit", closesAt: null });
+    expect(week2).toMatchObject({ graded: true, mode: "drawn", drawCount: 6, poolSize: 16, timeLimitMin: 15, attemptsAllowed: 2, showAnswers: "after_close", closesAt: "2026-10-04T23:59:00-04:00" });
+    expect(quizDefaults(1, true).closesAt).toBe("2026-10-04T23:59:00-04:00");
+  });
+  it("keeps week 5 as an untimed review quiz", () => {
+    const week5 = quizDefaults(5, true);
+    expect(week5).toMatchObject({ graded: false, mode: "drawn", drawCount: 6, timeLimitMin: null, attemptsAllowed: null, showAnswers: "after_submit", closesAt: null });
   });
   it("never sends answers or rationales to students", () => {
     expect(Object.keys(studentQuestions(quizWeek(2))[0])).toEqual(["id", "question", "options"]);
@@ -164,7 +169,7 @@ describe("effective settings and extensions", () => {
     const quiz = studentQuiz(effectiveQuiz(2, settings({ time_limit_min: 15, closes_at: "2026-10-05T04:00:00Z" }), true), null);
     expect(computeExpiresAt(quiz, Date.parse("2026-10-05T03:55:00Z"))).toBe("2026-10-05T04:00:00.000Z");
     expect(computeExpiresAt(quiz, Date.parse("2026-10-05T03:00:00Z"))).toBe("2026-10-05T03:15:00.000Z");
-    expect(computeExpiresAt(studentQuiz(quizDefaults(2, true), null), 0)).toBeNull();
+    expect(computeExpiresAt(studentQuiz(quizDefaults(5, true), null), 0)).toBeNull();
   });
   it("expires attempts only after the 30-second grace period", () => {
     const open = { status: "in_progress" as const, expires_at: "2026-10-05T03:15:00Z" };
@@ -178,12 +183,12 @@ describe("feedback gating", () => {
   it("shows graded feedback only after the student's effective close", () => {
     const graded = studentQuiz(quizDefaults(1, true), null);
     expect(feedbackState(graded, 2, Date.parse("2026-09-25T00:00:00Z")).unlocked).toBe(false);
-    expect(feedbackState(graded, 1, Date.parse("2026-09-28T04:00:00Z")).unlocked).toBe(true);
-    const extended = studentQuiz(quizDefaults(1, true), { email: "s@fordham.edu", week: 1, extra_minutes: 0, closes_at_override: "2026-09-30T23:59:00-04:00", reason: null });
-    expect(feedbackState(extended, 1, Date.parse("2026-09-28T04:00:00Z")).unlocked).toBe(false);
+    expect(feedbackState(graded, 1, Date.parse("2026-10-05T04:00:00Z")).unlocked).toBe(true);
+    const extended = studentQuiz(quizDefaults(1, true), { email: "s@fordham.edu", week: 1, extra_minutes: 0, closes_at_override: "2026-10-06T23:59:00-04:00", reason: null });
+    expect(feedbackState(extended, 1, Date.parse("2026-10-05T04:00:00Z")).unlocked).toBe(false);
   });
   it("shows review-week feedback right after each submit", () => {
-    const review = studentQuiz(quizDefaults(2, true), null);
+    const review = studentQuiz(quizDefaults(5, true), null);
     expect(feedbackState(review, 0).unlocked).toBe(false);
     expect(feedbackState(review, 1).unlocked).toBe(true);
   });

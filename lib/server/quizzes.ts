@@ -126,7 +126,7 @@ export interface StudentQuiz extends EffectiveQuiz {
 
 export const COURSE_WEEKS = 12;
 /** Graded weeks per the syllabus. */
-export const GRADED_WEEKS = [1, 3, 4, 6, 7, 9];
+export const GRADED_WEEKS = [1, 2, 3, 4, 6, 7, 9];
 /** Review weeks allow unlimited attempts; this is only a safety cap per request burst. */
 export const REVIEW_ATTEMPTS: number | null = null;
 /** Seconds after expires_at during which a manual submit is still accepted. */

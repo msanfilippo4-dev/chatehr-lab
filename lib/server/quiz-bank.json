@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-24T17:46:15.745Z",
+  "generatedAt": "2026-09-29T19:19:22.470Z",
   "source": "v5/content/weeks (npx tsx course_outputs.ts)",
   "policy": {
     "draw": 6,
@@ -11,7 +11,7 @@
       "week": 1,
       "title": "EHR foundations and digital maturity",
       "date": "2026-09-21",
-      "dueAt": "2026-09-27T23:59:00-04:00",
+      "dueAt": "2026-10-04T23:59:00-04:00",
       "graded": true,
       "items": [
         {
@@ -105,11 +105,11 @@
       "week": 2,
       "title": "How an EHR is built: systems, sources, and chart sections",
       "date": "2026-09-28",
-      "graded": false,
+      "graded": true,
       "opensAt": "2026-09-28T21:00:00-04:00",
       "dueAt": "2026-10-04T23:59:00-04:00",
       "draw": 6,
-      "timeLimitMin": null,
+      "timeLimitMin": 15,
       "items": [
         {
           "id": "W02-Q01",

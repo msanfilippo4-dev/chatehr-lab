@@ -6,7 +6,7 @@
  * against; a legacy week must match it item-for-item so existing attempt rows,
  * which store answers index-aligned to that order, stay correct.
  */
-export function validateQuizBank(bank, { legacy = null, graded = [1, 3, 4, 6, 7, 9] } = {}) {
+export function validateQuizBank(bank, { legacy = null, graded = [1, 2, 3, 4, 6, 7, 9] } = {}) {
   const errors = [];
   const fail = (message) => errors.push(message);
   if (!bank || typeof bank !== "object") return ["Bank is not an object."];
