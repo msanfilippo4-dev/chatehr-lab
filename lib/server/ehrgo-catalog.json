@@ -1,0 +1,662 @@
+{
+  "bucket": "fordms-course-materials",
+  "retrievedDate": "2026-09-30",
+  "activities": [
+    {
+      "id": "74",
+      "title": "EHR Orientation",
+      "category": "assigned",
+      "url": "https://web21.ehrgo.com/activity/index/id/74/#!/step1",
+      "due": "2026-10-04T23:59:00-04:00"
+    },
+    {
+      "id": "9114",
+      "title": "Health Information Terminology (AS)",
+      "category": "practice",
+      "url": "https://web21.ehrgo.com/activity/index/id/9114/#!/step1",
+      "due": null
+    },
+    {
+      "id": "11307",
+      "title": "Health Information Exchange (BS)",
+      "category": "assigned",
+      "url": "https://web21.ehrgo.com/activity/index/id/11307/#!/step1",
+      "due": "2026-11-22T23:59:00-05:00"
+    },
+    {
+      "id": "21433",
+      "title": "Query - Basic Orientation",
+      "category": "analytics",
+      "url": "https://web21.ehrgo.com/activity/index/id/21433/#!/step1",
+      "due": null
+    },
+    {
+      "id": "21435",
+      "title": "Query - Advanced Orientation",
+      "category": "analytics",
+      "url": "https://web21.ehrgo.com/activity/index/id/21435/#!/step1",
+      "due": null
+    },
+    {
+      "id": "13471",
+      "title": "Orientation to Data Analytics I",
+      "category": "analytics",
+      "url": "https://web21.ehrgo.com/activity/index/id/13471/#!/step1",
+      "due": null
+    },
+    {
+      "id": "13345",
+      "title": "Applied Data Analytics II",
+      "category": "analytics",
+      "url": "https://web21.ehrgo.com/activity/index/id/13345/#!/step1",
+      "due": null
+    },
+    {
+      "id": "13351",
+      "title": "Applied Data Analytics III",
+      "category": "analytics",
+      "url": "https://web21.ehrgo.com/activity/index/id/13351/#!/step1",
+      "due": null
+    },
+    {
+      "id": "13450",
+      "title": "Orientation to Data Visualization IV",
+      "category": "analytics",
+      "url": "https://web21.ehrgo.com/activity/index/id/13450/#!/step1",
+      "due": null
+    },
+    {
+      "id": "13403",
+      "title": "Clinical Reminder Data Visualization V",
+      "category": "analytics",
+      "url": "https://web21.ehrgo.com/activity/index/id/13403/#!/step1",
+      "due": null
+    },
+    {
+      "id": "24842",
+      "title": "MPI Duplication Analysis",
+      "category": "practice",
+      "url": "https://web21.ehrgo.com/activity/index/id/24842/#!/step1",
+      "due": null
+    },
+    {
+      "id": "99698",
+      "title": "EHR Implementation (HINF-6101)",
+      "category": "practice",
+      "url": "https://web21.ehrgo.com/activity/index/id/99698/#!/step1",
+      "due": null
+    }
+  ],
+  "files": [
+    {
+      "id": "file-529542",
+      "activityId": "74",
+      "name": "EHR Orientation AS1000.12.docx",
+      "audience": "student",
+      "bytes": 1243747,
+      "sha256": "fc09b938fd2ae342a7a6eae4a7bfb5819fbd50b50ffb05c45f6c9e5ad7754812",
+      "contentType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "storagePath": "fall-2026/ehrgo/529542-fc09b938fd2ae342.docx"
+    },
+    {
+      "id": "file-526294",
+      "activityId": "74",
+      "name": "EHR Orientation AS1000.12 KEY.docx",
+      "audience": "instructor",
+      "bytes": 143161,
+      "sha256": "cdf01305a575434a84158c39c4f23138bfaed01dca6a4506c85c8e57ebbb20c4",
+      "contentType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "storagePath": "fall-2026/ehrgo/526294-cdf01305a575434a.docx"
+    },
+    {
+      "id": "file-267484",
+      "activityId": "9114",
+      "name": "Health Information Terminology (Associate) AK1008.4.docx",
+      "audience": "student",
+      "bytes": 144255,
+      "sha256": "d7614689b4c5fe7ea877727ec798589408fe6677d8829d7eb6276037a635713d",
+      "contentType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "storagePath": "fall-2026/ehrgo/267484-d7614689b4c5fe7e.docx"
+    },
+    {
+      "id": "file-267485",
+      "activityId": "9114",
+      "name": "Health Information Terminology (Associate) AK1008.4 KEY.docx",
+      "audience": "instructor",
+      "bytes": 135213,
+      "sha256": "3ed1409444674916986c42562d7f7398e5faed85802750da9f4c79a5e2c91bb0",
+      "contentType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "storagePath": "fall-2026/ehrgo/267485-3ed1409444674916.docx"
+    },
+    {
+      "id": "file-335165",
+      "activityId": "11307",
+      "name": "Health Information Exchange (Baccalaureate) HBK1012.5.docx",
+      "audience": "student",
+      "bytes": 148289,
+      "sha256": "3a3ff9f2867fee657be2c546f4a5453b74d51a052104cb3b3602e40beee0b6ed",
+      "contentType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "storagePath": "fall-2026/ehrgo/335165-3a3ff9f2867fee65.docx"
+    },
+    {
+      "id": "file-462566",
+      "activityId": "11307",
+      "name": "Health Information Exchange (Baccalaureate) HBK1012.5 KEY.docx",
+      "audience": "instructor",
+      "bytes": 144901,
+      "sha256": "6b27abcda998a789736d547dc0afe36375423a74af5f3c344d366de338f8218d",
+      "contentType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "storagePath": "fall-2026/ehrgo/462566-6b27abcda998a789.docx"
+    },
+    {
+      "id": "file-61214",
+      "activityId": "11307",
+      "name": "Understanding the Continuity of Care Record CCR.pdf",
+      "audience": "student",
+      "bytes": 513963,
+      "sha256": "d82e269bc26ae4ac48d8f4a3accb35f26fc66f3695617179f042b9b82d7778b0",
+      "contentType": "application/pdf",
+      "storagePath": "fall-2026/ehrgo/61214-d82e269bc26ae4ac.pdf"
+    },
+    {
+      "id": "file-487852",
+      "activityId": "21433",
+      "name": "Query - Basic Orientation (Informatics) IS1033.3.docx",
+      "audience": "student",
+      "bytes": 824839,
+      "sha256": "343eb5b54370e4008420a2b8d2c37a12c9af25f49fca61d4e380b78c07149df3",
+      "contentType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "storagePath": "fall-2026/ehrgo/487852-343eb5b54370e400.docx"
+    },
+    {
+      "id": "file-452313",
+      "activityId": "21433",
+      "name": "Query - Basic Orientation (Informatics) IS1033.3 KEY.pdf",
+      "audience": "instructor",
+      "bytes": 60719,
+      "sha256": "cfc1eee628e0d299170a7e19528131d50b9b6586eae74d9faa3003e5effc1812",
+      "contentType": "application/pdf",
+      "storagePath": "fall-2026/ehrgo/452313-cfc1eee628e0d299.pdf"
+    },
+    {
+      "id": "file-452297",
+      "activityId": "21435",
+      "name": "Query - Advanced Orientation (Informatics) IK1034.4.docx",
+      "audience": "student",
+      "bytes": 1394731,
+      "sha256": "00b6e608437996d5c42732443c6e9c4939f137bc2f25108e7b583c889eb6da15",
+      "contentType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "storagePath": "fall-2026/ehrgo/452297-00b6e608437996d5.docx"
+    },
+    {
+      "id": "file-452296",
+      "activityId": "21435",
+      "name": "Query - Advanced Orientation (Informatics) IK1034.4 KEY.docx",
+      "audience": "instructor",
+      "bytes": 139810,
+      "sha256": "96a41ed5352fc04aa3bf3fb93f1bba186aec20e5b5756c5123d21bc636f4e904",
+      "contentType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "storagePath": "fall-2026/ehrgo/452296-96a41ed5352fc04a.docx"
+    },
+    {
+      "id": "file-561366",
+      "activityId": "13471",
+      "name": "Orientation to Data Analytics I, 2.0 Part A IK1023.5.docx",
+      "audience": "student",
+      "bytes": 143054,
+      "sha256": "eb3ba176a508a007b397ad14c4777c7907962c5341f407c641b0e9982c24ddd6",
+      "contentType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "storagePath": "fall-2026/ehrgo/561366-eb3ba176a508a007.docx"
+    },
+    {
+      "id": "file-561367",
+      "activityId": "13471",
+      "name": "Orientation to Data Analytics I, 2.0 Part B IK1023.5.docx",
+      "audience": "student",
+      "bytes": 142122,
+      "sha256": "905ffc77b624cd3149d517e9811053747e72fa439c58471b2cf9ed79e40114dc",
+      "contentType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "storagePath": "fall-2026/ehrgo/561367-905ffc77b624cd31.docx"
+    },
+    {
+      "id": "file-561370",
+      "activityId": "13471",
+      "name": "Orientation to Data Analytics I, 2.0 Part A IK1023.5 KEY.docx",
+      "audience": "instructor",
+      "bytes": 141894,
+      "sha256": "60ec5698d8201f46519a9ca7385122046df3fd579d13c178a4718222afb58f47",
+      "contentType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "storagePath": "fall-2026/ehrgo/561370-60ec5698d8201f46.docx"
+    },
+    {
+      "id": "file-561371",
+      "activityId": "13471",
+      "name": "Orientation to Data Analytics I , 2.0 Part B IK1023.5 KEY.docx",
+      "audience": "instructor",
+      "bytes": 136797,
+      "sha256": "539d603245d2078d6826a091f95eda8356ab9f3352e68c7c23b3abef46bbe63d",
+      "contentType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "storagePath": "fall-2026/ehrgo/561371-539d603245d2078d.docx"
+    },
+    {
+      "id": "file-523615",
+      "activityId": "13471",
+      "name": "Mass Sensitivities EHR Export.xlsx",
+      "audience": "student",
+      "bytes": 38041,
+      "sha256": "1d28297ed17b4e5a05f6d538b9ce617aa725b9f44fade2a757130e4d9d3b272f",
+      "contentType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "storagePath": "fall-2026/ehrgo/523615-1d28297ed17b4e5a.xlsx"
+    },
+    {
+      "id": "file-523616",
+      "activityId": "13471",
+      "name": "Excel Tip Sheet.pdf",
+      "audience": "student",
+      "bytes": 3940166,
+      "sha256": "66aeb24f1c1903e9f396ce2a33f96aa5d68061b3db1cf40b33651f8c0f87f5f0",
+      "contentType": "application/pdf",
+      "storagePath": "fall-2026/ehrgo/523616-66aeb24f1c1903e9.pdf"
+    },
+    {
+      "id": "file-523617",
+      "activityId": "13471",
+      "name": "Antimicrobial Susceptibility.pdf",
+      "audience": "student",
+      "bytes": 246023,
+      "sha256": "de88d73349a472d991409309e217016551ec3386c0a5420bbc26f40deab4e08f",
+      "contentType": "application/pdf",
+      "storagePath": "fall-2026/ehrgo/523617-de88d73349a472d9.pdf"
+    },
+    {
+      "id": "file-449307",
+      "activityId": "13345",
+      "name": "Applied Data Analytics II (Informatics) IK1024.4.docx",
+      "audience": "student",
+      "bytes": 160729,
+      "sha256": "7951979c45fa530f066970828ef70aaba3ef7c4935c0b240520008c6ad808d4b",
+      "contentType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "storagePath": "fall-2026/ehrgo/449307-7951979c45fa530f.docx"
+    },
+    {
+      "id": "file-449309",
+      "activityId": "13345",
+      "name": "Applied Data Analytics II (Informatics) IK1024.4 KEY.docx",
+      "audience": "instructor",
+      "bytes": 159892,
+      "sha256": "cb1ea28a2e3b86f2084a5dd4384b551c9119f127cfb0ebaa75d7a1fddaf0a213",
+      "contentType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "storagePath": "fall-2026/ehrgo/449309-cb1ea28a2e3b86f2.docx"
+    },
+    {
+      "id": "file-67076",
+      "activityId": "13345",
+      "name": "Descriptive vs Inferential Statistics.pdf",
+      "audience": "student",
+      "bytes": 136521,
+      "sha256": "cbdd1a3d2ca18b6f42253451d730a05335d6b75dbde240a63726642c735b5d73",
+      "contentType": "application/pdf",
+      "storagePath": "fall-2026/ehrgo/67076-cbdd1a3d2ca18b6f.pdf"
+    },
+    {
+      "id": "file-67080",
+      "activityId": "13345",
+      "name": "Your Biggest C-Section Risk May Be Your Hospital.pdf",
+      "audience": "student",
+      "bytes": 4837936,
+      "sha256": "578fb4dc70bc093b7f012ee85fc5041e6a92f78b36b542f0e3ea185422d1cd99",
+      "contentType": "application/pdf",
+      "storagePath": "fall-2026/ehrgo/67080-578fb4dc70bc093b.pdf"
+    },
+    {
+      "id": "file-449302",
+      "activityId": "13345",
+      "name": "National Birth Statistics.pdf",
+      "audience": "student",
+      "bytes": 1102276,
+      "sha256": "5574c74089b3ddedd4b1b56844a0477d24e8d678545fc7772e480a318f1ff997",
+      "contentType": "application/pdf",
+      "storagePath": "fall-2026/ehrgo/449302-5574c74089b3dded.pdf"
+    },
+    {
+      "id": "file-449304",
+      "activityId": "13345",
+      "name": "Shoreline birth data.xlsx",
+      "audience": "student",
+      "bytes": 251894,
+      "sha256": "8214d6c06fc028ecf8201e6c6fdf7700aeef6eb1139c20e73dfaaeb281581b14",
+      "contentType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "storagePath": "fall-2026/ehrgo/449304-8214d6c06fc028ec.xlsx"
+    },
+    {
+      "id": "file-508965",
+      "activityId": "13351",
+      "name": "Applied Data Analytics III (Informatics) IK1025.8.docx",
+      "audience": "student",
+      "bytes": 192055,
+      "sha256": "d1cbfbeb3ef167cf77672654e84ab4d761b26121bd7b0ae924e1c4203d1bc01a",
+      "contentType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "storagePath": "fall-2026/ehrgo/508965-d1cbfbeb3ef167cf.docx"
+    },
+    {
+      "id": "file-510615",
+      "activityId": "13351",
+      "name": "Applied Data Analytics III (Informatics) IK1025.8 KEY.docx",
+      "audience": "instructor",
+      "bytes": 207805,
+      "sha256": "73aecf4c80c458aa3349559f47cd3345d4cf1315dcba9fb331eebc28e3d3afc3",
+      "contentType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "storagePath": "fall-2026/ehrgo/510615-73aecf4c80c458aa.docx"
+    },
+    {
+      "id": "file-67141",
+      "activityId": "13351",
+      "name": "Measuring Perioperative Mortality Rate (POMR).pdf",
+      "audience": "student",
+      "bytes": 215215,
+      "sha256": "98de7ad0bc868b9f3606e11258cd69d3273c9e257d158474227f430a27cb7f36",
+      "contentType": "application/pdf",
+      "storagePath": "fall-2026/ehrgo/67141-98de7ad0bc868b9f.pdf"
+    },
+    {
+      "id": "file-67142",
+      "activityId": "13351",
+      "name": "Perioperative mortality rate meta-analysis.pdf",
+      "audience": "student",
+      "bytes": 654819,
+      "sha256": "41eee89004b9b466c8d390b1e4dfc4c702c423d289466ad3d5ff77a3e19e8f94",
+      "contentType": "application/pdf",
+      "storagePath": "fall-2026/ehrgo/67142-41eee89004b9b466.pdf"
+    },
+    {
+      "id": "file-67143",
+      "activityId": "13351",
+      "name": "Tracking perioperative mortality and maternal mortality.pdf",
+      "audience": "student",
+      "bytes": 33904,
+      "sha256": "38c10de08047ac3c0b0397a5dc773a8465f638987a96dfd788b70d976831d426",
+      "contentType": "application/pdf",
+      "storagePath": "fall-2026/ehrgo/67143-38c10de08047ac3c.pdf"
+    },
+    {
+      "id": "file-449461",
+      "activityId": "13351",
+      "name": "What is a high-risk pregnancy.pdf",
+      "audience": "student",
+      "bytes": 300698,
+      "sha256": "b490f037ae77f091379d0527d23a66fc0cdc69dad15864a82875fa725e941316",
+      "contentType": "application/pdf",
+      "storagePath": "fall-2026/ehrgo/449461-b490f037ae77f091.pdf"
+    },
+    {
+      "id": "file-449464",
+      "activityId": "13351",
+      "name": "2022 Shoreline patient data CONFIDENTIAL.xlsx",
+      "audience": "student",
+      "bytes": 413880,
+      "sha256": "6406bdf064bf6453c4e47f222e5307e9cc1dd818baac21504512d6bbbe5898f4",
+      "contentType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "storagePath": "fall-2026/ehrgo/449464-6406bdf064bf6453.xlsx"
+    },
+    {
+      "id": "file-545353",
+      "activityId": "13450",
+      "name": "Orientation to Data Visualization IV (Informatics) IK1026.5.docx",
+      "audience": "student",
+      "bytes": 4620934,
+      "sha256": "89a516abfa2e1ee517238170de97dc60bf39736f33e96bd88ec514d7cf44fce3",
+      "contentType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "storagePath": "fall-2026/ehrgo/545353-89a516abfa2e1ee5.docx"
+    },
+    {
+      "id": "file-545352",
+      "activityId": "13450",
+      "name": "Orientation to Data Visualization IV (Informatics) IK1026.5 KEY.docx",
+      "audience": "instructor",
+      "bytes": 182951,
+      "sha256": "d210167102a9e7af46c503ea46410c6ef46ee6ca6dbc8503951bd7361396fb82",
+      "contentType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "storagePath": "fall-2026/ehrgo/545352-d210167102a9e7af.docx"
+    },
+    {
+      "id": "file-455363",
+      "activityId": "13450",
+      "name": "CDC Leading Causes of Death Data Set Excerpt.xlsx",
+      "audience": "student",
+      "bytes": 17203,
+      "sha256": "f18d11d67f816238cea35a5a7b7a70c06e7221d9407e4e844ff0ebe1e9cc0252",
+      "contentType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "storagePath": "fall-2026/ehrgo/455363-f18d11d67f816238.xlsx"
+    },
+    {
+      "id": "file-523669",
+      "activityId": "13403",
+      "name": "Clinical Reminder Data Visualization V (Informatics) IK1027.3.docx",
+      "audience": "student",
+      "bytes": 188215,
+      "sha256": "957007273cd9163a4bb2df9af4cc1b5e8da767f0a78913f2254db707fb45e0b9",
+      "contentType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "storagePath": "fall-2026/ehrgo/523669-957007273cd9163a.docx"
+    },
+    {
+      "id": "file-522183",
+      "activityId": "13403",
+      "name": "Clinical Reminder Data Visualization V (Informatics) IK1027.3 KEY.docx",
+      "audience": "instructor",
+      "bytes": 168655,
+      "sha256": "e4fb799aac5e1e41de6568afe2b6c7bfc7f81ce25fabe795427141ffdfd87a1f",
+      "contentType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "storagePath": "fall-2026/ehrgo/522183-e4fb799aac5e1e41.docx"
+    },
+    {
+      "id": "file-522184",
+      "activityId": "13403",
+      "name": "ScreenSmart.pdf",
+      "audience": "student",
+      "bytes": 163372,
+      "sha256": "aa6d1a39e3f248305272bfe1a61f7a821dadd3c6d40500fedebdd9978b8f67a4",
+      "contentType": "application/pdf",
+      "storagePath": "fall-2026/ehrgo/522184-aa6d1a39e3f24830.pdf"
+    },
+    {
+      "id": "file-522185",
+      "activityId": "13403",
+      "name": "System-Wide Implementation of Colorectal Cancer.pdf",
+      "audience": "student",
+      "bytes": 903827,
+      "sha256": "e1e9e21dacf5f2cbee05d2bc38da5929ffe7908007135b873c1f2ccd2b96e1d0",
+      "contentType": "application/pdf",
+      "storagePath": "fall-2026/ehrgo/522185-e1e9e21dacf5f2cb.pdf"
+    },
+    {
+      "id": "file-522186",
+      "activityId": "13403",
+      "name": "Clinical Reminder Data ScreenSmart.csv.xlsx",
+      "audience": "student",
+      "bytes": 406815,
+      "sha256": "07d5edccf328b304689fad203fb645c1d0b258ebc384a2485f9b2b653ba700af",
+      "contentType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "storagePath": "fall-2026/ehrgo/522186-07d5edccf328b304.xlsx"
+    },
+    {
+      "id": "file-350033",
+      "activityId": "24842",
+      "name": "MPI Duplication Analysis (Informatics) HIK1046.5.docx",
+      "audience": "student",
+      "bytes": 1905464,
+      "sha256": "629804b22784fd4f72253b323a21a82272c34329b61b6a121bb1f697e684f4ed",
+      "contentType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "storagePath": "fall-2026/ehrgo/350033-629804b22784fd4f.docx"
+    },
+    {
+      "id": "file-350032",
+      "activityId": "24842",
+      "name": "MPI Duplication Analysis (Informatics) HIK1046.5 KEY.docx",
+      "audience": "instructor",
+      "bytes": 143553,
+      "sha256": "49be0a523deee7c7f75be05e35f2853f22cf1a52cde271f88c16b8f73c6d0e2c",
+      "contentType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "storagePath": "fall-2026/ehrgo/350032-49be0a523deee7c7.docx"
+    },
+    {
+      "id": "file-125896",
+      "activityId": "24842",
+      "name": "Fundamentals for Building a Master Patient Index_Enterprise Master Patient I.pdf",
+      "audience": "student",
+      "bytes": 86077,
+      "sha256": "f52589d3a31c733e443e31204be701d76e3c97caafb0f5b66e7aaea7f8650e70",
+      "contentType": "application/pdf",
+      "storagePath": "fall-2026/ehrgo/125896-f52589d3a31c733e.pdf"
+    },
+    {
+      "id": "file-125897",
+      "activityId": "24842",
+      "name": "MPI Duplicate Resolution.pdf",
+      "audience": "student",
+      "bytes": 33719,
+      "sha256": "bcf59161115a801f9c14a6af4a9ef1d482d8bbf89a0273d7d120988441fe8728",
+      "contentType": "application/pdf",
+      "storagePath": "fall-2026/ehrgo/125897-bcf59161115a801f.pdf"
+    },
+    {
+      "id": "file-125899",
+      "activityId": "24842",
+      "name": "Challenges in MPI Duplicate Resolution.pdf",
+      "audience": "student",
+      "bytes": 152273,
+      "sha256": "4c47cecca8f0605064e42bee24441e6772cccc67b606f2914de1ec0ecad08c98",
+      "contentType": "application/pdf",
+      "storagePath": "fall-2026/ehrgo/125899-4c47cecca8f06050.pdf"
+    },
+    {
+      "id": "file-542295",
+      "activityId": "99698",
+      "name": "01_EHR Implementation_Project.docx",
+      "audience": "student",
+      "bytes": 146236,
+      "sha256": "3f1ed1a697f6864b0c2b4c2ca37e55818cb8b94a76e6326b18d5e311ef372652",
+      "contentType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "storagePath": "fall-2026/ehrgo/542295-3f1ed1a697f6864b.docx"
+    },
+    {
+      "id": "file-542287",
+      "activityId": "99698",
+      "name": "EHR Implementation Baccalaureate HBK1022.3 KEY.docx",
+      "audience": "instructor",
+      "bytes": 140723,
+      "sha256": "fd7675d03193f90f4e9bd491714658c9304983adf15f83b80562b34bd6de8407",
+      "contentType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "storagePath": "fall-2026/ehrgo/542287-fd7675d03193f90f.docx"
+    },
+    {
+      "id": "file-542276",
+      "activityId": "99698",
+      "name": "An analysis of contemporary leadership approaches.pdf",
+      "audience": "student",
+      "bytes": 178469,
+      "sha256": "ccbcdf5e98a022b2a63aa8e82cdb686a9b51913f06720f3a798bd0353c58e81b",
+      "contentType": "application/pdf",
+      "storagePath": "fall-2026/ehrgo/542276-ccbcdf5e98a022b2.pdf"
+    },
+    {
+      "id": "file-542277",
+      "activityId": "99698",
+      "name": "EHR Cost Benefit Analysis.PNG",
+      "audience": "student",
+      "bytes": 100060,
+      "sha256": "f07ba6c3daa83cc130ed2d72f330ccc6e5460dc5e17d8815cad9527b9b3d2654",
+      "contentType": "image/png",
+      "storagePath": "fall-2026/ehrgo/542277-f07ba6c3daa83cc1.png"
+    },
+    {
+      "id": "file-542278",
+      "activityId": "99698",
+      "name": "eMAR workflow diagram.pdf",
+      "audience": "student",
+      "bytes": 100046,
+      "sha256": "235bfc5041be552358b3ce76b3dc358742ef5609615ba4cd9b33abb8bf6e7abc",
+      "contentType": "application/pdf",
+      "storagePath": "fall-2026/ehrgo/542278-235bfc5041be5523.pdf"
+    },
+    {
+      "id": "file-542279",
+      "activityId": "99698",
+      "name": "General Hospital barcoded eMAR implementation.pdf",
+      "audience": "student",
+      "bytes": 799654,
+      "sha256": "cd289a460c7ef22545309456ff8fb7d86ace7e71f04dfe1db38ba2413667fc5d",
+      "contentType": "application/pdf",
+      "storagePath": "fall-2026/ehrgo/542279-cd289a460c7ef225.pdf"
+    },
+    {
+      "id": "file-542280",
+      "activityId": "99698",
+      "name": "EHR_Contracts_Untangled.pdf",
+      "audience": "student",
+      "bytes": 818108,
+      "sha256": "29f76fe074d06adfb3a20dcc72d67913d2e515430eea5d20db1e65a2c8b0f1c0",
+      "contentType": "application/pdf",
+      "storagePath": "fall-2026/ehrgo/542280-29f76fe074d06adf.pdf"
+    },
+    {
+      "id": "file-542281",
+      "activityId": "99698",
+      "name": "How to successfully implement a patient portal for Meaningful Use and beyond.pdf",
+      "audience": "student",
+      "bytes": 1721364,
+      "sha256": "007f8bf11987338e234bccb1672b405a7b7b965f4da7c2b3037270626b360bd1",
+      "contentType": "application/pdf",
+      "storagePath": "fall-2026/ehrgo/542281-007f8bf11987338e.pdf"
+    },
+    {
+      "id": "file-542282",
+      "activityId": "99698",
+      "name": "PeaceHealth EHR Implementation Case Study.pdf",
+      "audience": "student",
+      "bytes": 528466,
+      "sha256": "e5a238402bb797906f4ab342eb1e203464e5170e87a75ff2f52100b9f9a9c4b2",
+      "contentType": "application/pdf",
+      "storagePath": "fall-2026/ehrgo/542282-e5a238402bb79790.pdf"
+    },
+    {
+      "id": "file-542284",
+      "activityId": "99698",
+      "name": "Goal Setting & SMART Objectives.pdf",
+      "audience": "student",
+      "bytes": 91178,
+      "sha256": "3b7e60e07a00519085fe765aff864b1e636b355f539841da5f916620298852fd",
+      "contentType": "application/pdf",
+      "storagePath": "fall-2026/ehrgo/542284-3b7e60e07a005190.pdf"
+    },
+    {
+      "id": "file-542286",
+      "activityId": "99698",
+      "name": "Health Information Exchange.pdf",
+      "audience": "student",
+      "bytes": 1351595,
+      "sha256": "bf61bc784966d0c4ccd16d3d10a0d4f704d20ab72f931552573df528f86881bd",
+      "contentType": "application/pdf",
+      "storagePath": "fall-2026/ehrgo/542286-bf61bc784966d0c4.pdf"
+    }
+  ],
+  "packages": [
+    {
+      "id": "student-package",
+      "name": "HINF6105_EHRGo_Student_Materials.zip",
+      "audience": "student",
+      "bytes": 27437218,
+      "sha256": "50e4f3f70786d4852d6e959df28fee1b72d976f4e4bdd73962b6f20c3d18d9f0",
+      "contentType": "application/zip",
+      "storagePath": "fall-2026/ehrgo/student-package-50e4f3f70786d485.zip"
+    },
+    {
+      "id": "faculty-package",
+      "name": "HINF6105_EHRGo_Faculty_Keys.zip",
+      "audience": "instructor",
+      "bytes": 1547278,
+      "sha256": "05320829d587260391ff6d8c1fd22441d9bca2a8fd94aa1509c89b07ce03885c",
+      "contentType": "application/zip",
+      "storagePath": "fall-2026/ehrgo/faculty-package-05320829d5872603.zip"
+    }
+  ]
+}

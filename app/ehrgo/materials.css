@@ -1,0 +1,45 @@
+.materials-shell { min-height: 100vh; display: flex; flex-direction: column; }
+.materials-shell > .skip-link { position: absolute; top: -60px; left: 16px; z-index: 10; padding: 10px 14px; background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--radius-sm); }
+.materials-shell > .skip-link:focus { top: 8px; }
+.materials-brand { text-decoration: none; color: inherit; }
+.materials-nav { display: flex; flex-wrap: wrap; gap: 20px; }
+.materials-nav a { font-size: 13px; font-weight: 600; text-decoration: none; color: var(--muted); }
+.materials-nav a[aria-current="page"] { color: var(--fordham-maroon); }
+.materials-main { max-width: 1120px; padding: 36px 24px 60px; }
+.materials-heading { max-width: 760px; margin-bottom: 24px; }
+.materials-kicker { color: var(--fordham-maroon); font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; margin: 0 0 6px; }
+.materials-heading h1 { font-size: clamp(28px, 4vw, 36px); line-height: 1.2; margin-bottom: 12px; }
+.materials-heading > p:not(.materials-kicker) { font-size: 16px; line-height: 1.6; color: var(--body); }
+.materials-access { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600; }
+.materials-packages { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 16px; margin-bottom: 34px; }
+.materials-package { display: flex; align-items: center; gap: 14px; border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--surface); padding: 20px; text-decoration: none; color: var(--navy); box-shadow: var(--shadow); }
+.materials-package:hover { border-color: var(--fordham-maroon); background: #fffafb; }
+.materials-package > .icon:first-child { flex-shrink: 0; color: var(--fordham-maroon); }
+.materials-package > .icon:last-child { margin-left: auto; flex-shrink: 0; }
+.materials-package strong { display: block; font-size: 15px; }
+.materials-package small { display: block; color: var(--muted); font-size: 12px; margin-top: 3px; }
+.materials-section { margin-top: 32px; }
+.materials-section > h2 { font-size: 22px; margin-bottom: 6px; }
+.materials-section > p { color: var(--body); max-width: 90ch; margin: 0 0 18px; line-height: 1.6; }
+.materials-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
+.materials-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; min-width: 0; box-shadow: var(--shadow); }
+.materials-card-heading { padding: 18px 20px 12px; }
+.materials-label { font-size: 11px; color: var(--fordham-maroon); font-weight: 700; letter-spacing: .03em; }
+.materials-card h3 { font-size: 17px; margin: 4px 0 0; line-height: 1.4; }
+.materials-due { font-size: 12px; color: var(--muted); margin: 6px 0 0; }
+.materials-open { display: inline-flex; gap: 6px; align-items: center; margin: 0 20px 17px; font-size: 13px; font-weight: 600; }
+.materials-files { border-top: 1px solid var(--line); }
+.materials-files summary { cursor: pointer; padding: 12px 20px; font-size: 13px; font-weight: 600; background: var(--surface-2); }
+.materials-files summary span { display: inline-block; font-size: 11px; padding: 0 6px; border-radius: 4px; color: var(--muted); background: var(--line); margin-left: 5px; }
+.materials-files ul { list-style: none; padding: 0; margin: 0; }
+.materials-files li + li { border-top: 1px solid var(--line); }
+.materials-files li a { display: block; padding: 11px 20px; text-decoration: none; }
+.materials-files li a:hover { background: var(--bluebg); }
+.materials-files li span { display: block; font-size: 13px; overflow-wrap: anywhere; }
+.materials-files li small { display: block; font-size: 11px; color: var(--muted); margin-top: 3px; }
+@media (max-width: 640px) {
+  .materials-shell .topbar { align-items: flex-start; flex-direction: column; padding: 12px 18px; }
+  .materials-nav { gap: 16px; }
+  .materials-main { padding: 26px 16px 40px; }
+  .materials-grid { grid-template-columns: minmax(0, 1fr); }
+}

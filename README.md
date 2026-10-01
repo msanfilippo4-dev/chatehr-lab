@@ -14,6 +14,7 @@ Production: <https://fordms.com/> (Vercel, deployed from the `main` branch of th
 - Four graded assignments (FORDMS-A1 to A4) that together form the FordMS share (18%) of the Applied EHR activities category (30%); each assignment counts equally. Each has an in-app step-by-step guide (situation, parts with time estimates, deep links, "You should see…" confirmations, analyst tips) that ticks off as audit evidence arrives; the same text is in `docs/ASSIGNMENT_GUIDES.md`. Instructor notes and answer keys are in `docs/INSTRUCTOR_NOTES.md`. Progress is computed on the server from timestamped audit events, each required action is credited once per distinct item, imported evidence is labeled separately, submissions are versioned, and the instructor can return work for revision.
 - Weekly quizzes at `/quizzes` (also `/quiz`). Graded weeks 1, 3, 4, 6, 7, 9: two attempts, highest kept, lowest graded week dropped, 6 questions drawn at random from each week's pool with shuffled options, a 15-minute timer, a window from Monday 9:00 PM ET to Sunday 11:59 PM ET, and answers/rationales shown only after the close. Other weeks are untimed review quizzes with unlimited attempts and immediate feedback. Week 1 is a legacy quiz (fixed six items, no timer) so attempts already recorded stay valid. The bank is authored in `v5/build` and installed with `npm run import:quiz-bank` (validates `../../v5final/quiz-bank.json` and writes `lib/server/quiz-bank.json`); weeks not in the bank show as "Not yet available". Timers, draws, per-week settings, and extensions need migration `012_fordms_quiz_windows.sql`; without it quizzes fall back to fixed, untimed questions. Check with `npm run check:migration`. Instructors manage settings, extensions, results, item analysis, and CSV exports in Gradebook → Quizzes.
 - A cloud workspace per account, a local IndexedDB recovery copy, and versioned JSON export and import.
+- EHR Go materials at `/ehrgo`, linked from Course navigation: 42 worksheets, datasets, and references across 12 activity sets, with individual downloads and a student ZIP. Faculty also see 13 answer keys and a separate faculty ZIP. Files live in the private `fordms-course-materials` storage bucket; every download checks the course session and faculty downloads require the live instructor/admin role before issuing a 60-second URL.
 
 ## What instructors get
 
@@ -53,6 +54,16 @@ Screens for the course slides are captured with `npm run capture:screens` agains
 4. Verify on production: unauthenticated `/` redirects to `/login`, unauthenticated `/api/course/bootstrap` returns JSON 401, the instructor sees Gradebook and Admin, and a test student can save, submit, and receive feedback. Then run the cleanup script.
 
 Rollback: redeploy the previous Vercel build (older code ignores the new tables and columns) and, only if necessary, run `009_fordms_course_ops_down.sql`.
+
+### EHR Go files
+
+The server catalog is `lib/server/ehrgo-catalog.json`. Upload the verified local downloads before deploying catalog changes:
+
+```bash
+node scripts/upload_ehrgo_materials.mjs /absolute/path/to/output/ehrgo-course-sheets
+```
+
+The script uses the existing course storage service credential, checks every file's size and SHA-256, and refuses a public bucket. Course file binaries and faculty keys are not included in the Git repository or `public/`. Analytics exercises are preparation/practice until the instructor identifies the exact Activity 2 exercise; the current Activity 1 link uses EHR Orientation while the terminology worksheet is retained as additional practice.
 
 ## Integrity limits of a course simulator
 

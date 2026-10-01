@@ -51,6 +51,9 @@ export function NavRail({ role, view, visible, counts, open, onNavigate }: Props
                   </a>
                 </li>
               ))}
+              {group.label === "Course" && (
+                <li><a href="/ehrgo"><Icon name="book" /><span className="rail-label">EHR Go materials</span></a></li>
+              )}
             </ul>
           </div>
         );
