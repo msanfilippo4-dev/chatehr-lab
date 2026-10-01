@@ -4,6 +4,9 @@ import { redirect } from "next/navigation";
 import { requireCourseUser } from "@/lib/server/session";
 import { EHRGO_ACTIVITIES, EHRGO_PACKAGES, materialSize, visibleEhrgoFiles, type EhrgoActivity } from "@/lib/server/ehrgo";
 import { Icon } from "@/components/ui/Icon";
+import UploadMaterials from "@/components/ehrgo/UploadMaterials";
+import { listUploadedEhrgoMaterials } from "@/lib/server/ehrgo-uploads";
+import type { UploadedEhrgoMaterial } from "@/lib/ehrgo-materials";
 import "./materials.css";
 
 export const metadata: Metadata = { title: "EHR Go materials | FordMS" };
@@ -16,6 +19,7 @@ export default async function EhrgoMaterialsPage() {
   });
   const instructor = user.role === "instructor" || user.role === "admin";
   const packages = EHRGO_PACKAGES.filter((item) => item.audience === "student" || instructor);
+  const uploads = await listUploadedEhrgoMaterials(instructor);
 
   return (
     <div className="materials-shell">
@@ -44,17 +48,19 @@ export default async function EhrgoMaterialsPage() {
           {packages.map((item) => (
             <a className="materials-package" key={item.id} href={`/api/ehrgo/downloads/${item.id}`}>
               <Icon name={item.audience === "student" ? "book" : "shield"} size={25} />
-              <span><strong>{item.audience === "student" ? "Download all student materials" : "Download faculty answer keys"}</strong><small>{item.audience === "student" ? "42 worksheets, datasets, and references" : "13 keys · Instructor access"} · ZIP · {materialSize(item.bytes)}</small></span>
+              <span><strong>{item.audience === "student" ? "Download student materials ZIP" : "Download faculty answer keys ZIP"}</strong><small>{item.audience === "student" ? "42 original worksheets, datasets, and references" : "13 original keys · Instructor access"} · ZIP · {materialSize(item.bytes)}</small></span>
               <Icon name="arrow" />
             </a>
           ))}
         </div>
+        {uploads.length > 0 && <p className="materials-package-note">Newly uploaded files are listed under their activity below and are downloaded individually.</p>}
+        {instructor && <UploadMaterials activities={EHRGO_ACTIVITIES.map(({ id, title }) => ({ id, title }))} />}
 
         <section className="materials-section" aria-labelledby="assigned-heading">
           <h2 id="assigned-heading">Assigned activities</h2>
           <p>For Activity 1, use the answer sheet assigned to you in Blackboard. The EHR Orientation worksheet below supports your chart review.</p>
           <div className="materials-grid">
-            {EHRGO_ACTIVITIES.filter((item) => item.category === "assigned").map((item) => <Activity key={item.id} activity={item} instructor={instructor} assigned />)}
+            {EHRGO_ACTIVITIES.filter((item) => item.category === "assigned").map((item) => <Activity key={item.id} activity={item} instructor={instructor} uploads={uploads} assigned />)}
           </div>
         </section>
 
@@ -62,7 +68,7 @@ export default async function EhrgoMaterialsPage() {
           <h2 id="analytics-heading">Data querying and analytics</h2>
           <p>Your instructor will identify the exercise for Activity 2, due November 15. These query prerequisites and analytics activities are available for preparation and practice.</p>
           <div className="materials-grid">
-            {EHRGO_ACTIVITIES.filter((item) => item.category === "analytics").map((item) => <Activity key={item.id} activity={item} instructor={instructor} />)}
+            {EHRGO_ACTIVITIES.filter((item) => item.category === "analytics").map((item) => <Activity key={item.id} activity={item} instructor={instructor} uploads={uploads} />)}
           </div>
         </section>
 
@@ -70,7 +76,7 @@ export default async function EhrgoMaterialsPage() {
           <h2 id="practice-heading">Additional practice</h2>
           <p>Terminology, patient identity, and implementation resources for course demonstrations and optional practice. The implementation example supports practice; use the Crescent Health instructions for your graded paper.</p>
           <div className="materials-grid">
-            {EHRGO_ACTIVITIES.filter((item) => item.category === "practice").map((item) => <Activity key={item.id} activity={item} instructor={instructor} />)}
+            {EHRGO_ACTIVITIES.filter((item) => item.category === "practice").map((item) => <Activity key={item.id} activity={item} instructor={instructor} uploads={uploads} />)}
           </div>
         </section>
       </main>
@@ -79,8 +85,8 @@ export default async function EhrgoMaterialsPage() {
   );
 }
 
-function Activity({ activity, instructor, assigned = false }: { activity: EhrgoActivity; instructor: boolean; assigned?: boolean }) {
-  const files = visibleEhrgoFiles(activity.id, instructor);
+function Activity({ activity, instructor, uploads, assigned = false }: { activity: EhrgoActivity; instructor: boolean; uploads: UploadedEhrgoMaterial[]; assigned?: boolean }) {
+  const files = [...uploads.filter((file) => file.activityId === activity.id), ...visibleEhrgoFiles(activity.id, instructor)];
   const due = activity.due ? new Date(activity.due).toLocaleDateString("en-US", { timeZone: "America/New_York", month: "long", day: "numeric" }) : null;
   return (
     <article className="materials-card">
@@ -97,7 +103,7 @@ function Activity({ activity, instructor, assigned = false }: { activity: EhrgoA
             <li key={file.id}>
               <a href={`/api/ehrgo/downloads/${file.id}`}>
                 <span>{file.name}</span>
-                <small>{file.audience === "instructor" ? "Faculty key · " : ""}{materialSize(file.bytes)}</small>
+                <small>{file.audience === "instructor" ? "Faculty only · " : ""}{materialSize(file.bytes)}{"uploadedAt" in file && ` · Uploaded ${new Date(file.uploadedAt).toLocaleDateString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric" })}`}</small>
               </a>
             </li>
           ))}

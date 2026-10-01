@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({ courseUser: vi.fn(), instructor: vi.fn(), sign: vi.fn() }));
+const mocks = vi.hoisted(() => ({ courseUser: vi.fn(), instructor: vi.fn(), sign: vi.fn(), uploaded: vi.fn() }));
+vi.mock("@/lib/server/ehrgo-uploads", () => ({ findUploadedEhrgoDownload: mocks.uploaded }));
 vi.mock("@/lib/server/session", () => ({ requireCourseUser: mocks.courseUser, requireInstructor: mocks.instructor }));
 vi.mock("@/lib/server/course-db", () => ({ createCourseAdminClient: () => ({ storage: { from: () => ({ createSignedUrl: mocks.sign }) } }) }));
 vi.mock("@/lib/server/ehrgo", () => ({
@@ -20,6 +21,7 @@ beforeEach(() => {
   mocks.courseUser.mockResolvedValue({ email: "learner@fordham.edu", role: "student" });
   mocks.instructor.mockRejectedValue(new Error("FORBIDDEN"));
   mocks.sign.mockResolvedValue({ data: { signedUrl: "https://storage.example/short-lived-download" }, error: null });
+  mocks.uploaded.mockResolvedValue(undefined);
 });
 
 describe("EHR Go download authorization", () => {
@@ -60,5 +62,15 @@ describe("EHR Go download authorization", () => {
     expect(response.status).toBe(503);
     expect(response.headers.get("location")).toBeNull();
     expect(await response.text()).not.toContain("private failure");
+  });
+  it("applies the same faculty restriction to an uploaded key", async () => {
+    mocks.uploaded.mockResolvedValue({ audience: "instructor", storagePath: "uploads/key.pdf", name: "New key.pdf" });
+    expect((await download("upload-key")).status).toBe(403);
+    expect(mocks.sign).not.toHaveBeenCalled();
+  });
+  it("allows an uploaded student resource after resolving its stored metadata", async () => {
+    mocks.uploaded.mockResolvedValue({ audience: "student", storagePath: "uploads/worksheet.pdf", name: "New worksheet.pdf" });
+    expect((await download("upload-worksheet")).status).toBe(303);
+    expect(mocks.sign).toHaveBeenCalledWith("uploads/worksheet.pdf", 60, { download: "New worksheet.pdf" });
   });
 });

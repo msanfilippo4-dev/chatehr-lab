@@ -15,6 +15,7 @@ Production: <https://fordms.com/> (Vercel, deployed from the `main` branch of th
 - Weekly quizzes at `/quizzes` (also `/quiz`). Graded weeks 1, 3, 4, 6, 7, 9: two attempts, highest kept, lowest graded week dropped, 6 questions drawn at random from each week's pool with shuffled options, a 15-minute timer, a window from Monday 9:00 PM ET to Sunday 11:59 PM ET, and answers/rationales shown only after the close. Other weeks are untimed review quizzes with unlimited attempts and immediate feedback. Week 1 is a legacy quiz (fixed six items, no timer) so attempts already recorded stay valid. The bank is authored in `v5/build` and installed with `npm run import:quiz-bank` (validates `../../v5final/quiz-bank.json` and writes `lib/server/quiz-bank.json`); weeks not in the bank show as "Not yet available". Timers, draws, per-week settings, and extensions need migration `012_fordms_quiz_windows.sql`; without it quizzes fall back to fixed, untimed questions. Check with `npm run check:migration`. Instructors manage settings, extensions, results, item analysis, and CSV exports in Gradebook → Quizzes.
 - A cloud workspace per account, a local IndexedDB recovery copy, and versioned JSON export and import.
 - EHR Go materials at `/ehrgo`, linked from Course navigation: 42 worksheets, datasets, and references across 12 activity sets, with individual downloads and a student ZIP. Faculty also see 13 answer keys and a separate faculty ZIP. Files live in the private `fordms-course-materials` storage bucket; every download checks the course session and faculty downloads require the live instructor/admin role before issuing a 60-second URL.
+- Instructors/admins can upload additional EHR Go course files at `/ehrgo` (up to 50 MB each). The form defaults to faculty-only access; selecting student access publishes a file to enrolled users. Students cannot upload through this materials form. Transfers go directly to private storage using a token for one generated, non-overwritable path, and the server verifies the received size/type before publishing a private catalog record. New files appear under their activity and are downloaded individually; the original ZIPs retain their original contents.
 
 ## What instructors get
 
@@ -64,6 +65,8 @@ node scripts/upload_ehrgo_materials.mjs /absolute/path/to/output/ehrgo-course-sh
 ```
 
 The script uses the existing course storage service credential, checks every file's size and SHA-256, and refuses a public bucket. Course file binaries and faculty keys are not included in the Git repository or `public/`. Analytics exercises are preparation/practice until the instructor identifies the exact Activity 2 exercise; the current Activity 1 link uses EHR Orientation while the terminology worksheet is retained as additional practice.
+
+Browser uploads use private JSON records under `fall-2026/ehrgo/uploads/records/{pending,ready/student,ready/instructor}` in the same bucket. Only server routes write these records; clients receive a token for the file object alone. Unfinished uploads expire after two hours and remain unlisted. Completed uploads are recorded in `ehr_admin_events`. No new database migration is required. `cleanup:test-users` removes files and records uploaded by the test accounts it deletes.
 
 ## Integrity limits of a course simulator
 

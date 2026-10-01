@@ -3,6 +3,7 @@ import { requireCourseUser, requireInstructor } from "@/lib/server/session";
 import { createCourseAdminClient } from "@/lib/server/course-db";
 import { ApiError, apiError } from "@/lib/server/errors";
 import { EHRGO_BUCKET, findEhrgoDownload } from "@/lib/server/ehrgo";
+import { findUploadedEhrgoDownload } from "@/lib/server/ehrgo-uploads";
 
 export const dynamic = "force-dynamic";
 
@@ -10,7 +11,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   try {
     await requireCourseUser();
     const { id } = await params;
-    const file = findEhrgoDownload(id);
+    const file = findEhrgoDownload(id) ?? (id.startsWith("upload-") ? await findUploadedEhrgoDownload(id, createCourseAdminClient()) : undefined);
     if (!file) throw new ApiError(404, "This course download was not found.", "NOT_FOUND");
     if (file.audience === "instructor") await requireInstructor();
 
