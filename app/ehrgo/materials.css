@@ -33,6 +33,11 @@
 .materials-upload-message.success { color: var(--green); }
 .materials-upload-message.error { color: var(--fordham-maroon); }
 .materials-section { margin-top: 32px; }
+.materials-submissions { list-style: none; padding: 0; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+.materials-submissions li { padding: 16px 20px; overflow-wrap: anywhere; }
+.materials-submissions li + li { border-top: 1px solid var(--line); }
+.materials-submissions a { display: block; font-weight: 600; font-size: 14px; }
+.materials-submissions span, .materials-submissions small { display: block; margin-top: 5px; font-size: 12px; color: var(--muted); }
 .materials-section > h2 { font-size: 22px; margin-bottom: 6px; }
 .materials-section > p { color: var(--body); max-width: 90ch; margin: 0 0 18px; line-height: 1.6; }
 .materials-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }

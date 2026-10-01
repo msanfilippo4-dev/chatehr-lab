@@ -11,6 +11,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { createHash } from "node:crypto";
 
 function loadEnv() {
   if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) return;
@@ -66,13 +67,35 @@ for (const folder of ["pending", "ready/student", "ready/instructor"]) {
     if ((files ?? []).length < 100) break;
   }
 }
+const submissionPrefix = "fall-2026/ehrgo/submissions";
+const submissionFolders = ["pending", ...emails.map((email) => `ready/${createHash("sha256").update(email).digest("hex")}`)];
+for (const folder of submissionFolders) {
+  const prefix = `${submissionPrefix}/${folder}`;
+  for (let offset = 0; ; offset += 100) {
+    const { data: files, error: listError } = await bucket.list(prefix, { limit: 100, offset });
+    if (listError) { console.error("Could not list test answer sheets:", listError.message); process.exit(1); }
+    for (const file of files ?? []) {
+      if (!/^[0-9a-f-]{36}\.json$/i.test(file.name)) continue;
+      const path = `${prefix}/${file.name}`;
+      const { data: blob, error: readError } = await bucket.download(path);
+      if (readError || !blob || blob.size > 4096) { console.error("Could not read a test answer-sheet record."); process.exit(1); }
+      const record = JSON.parse(await blob.text());
+      if (!testOwners.has(record.email)) continue;
+      if (record.id !== file.name.slice(0, -5) || !new RegExp(`^${submissionPrefix}/files/${record.id}\\.[a-z0-9]+$`, "i").test(record.storagePath)) {
+        console.error("Unexpected test answer-sheet path; cleanup stopped."); process.exit(1);
+      }
+      uploadObjects.add(path); uploadObjects.add(record.storagePath);
+    }
+    if ((files ?? []).length < 100) break;
+  }
+}
 const paths = [...uploadObjects];
 for (let start = 0; start < paths.length; start += 100) {
   const { error: removeError } = await bucket.remove(paths.slice(start, start + 100));
   if (removeError) { console.error("Could not remove test uploads:", removeError.message); process.exit(1); }
 }
 if (paths.length) console.log(`Removed ${paths.length} test upload objects.`);
-await admin.from("ehr_admin_events").delete().eq("action", "ehrgo.material_uploaded").in("actor", emails);
+await admin.from("ehr_admin_events").delete().in("action", ["ehrgo.material_uploaded", "ehrgo.answer_sheet_submitted"]).in("actor", emails);
 const { error: deleteError } = await admin.from("ehr_course_users").delete().in("email", emails);
 if (deleteError) {
   console.error("Cleanup failed:", deleteError.message);

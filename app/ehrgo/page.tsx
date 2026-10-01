@@ -5,7 +5,9 @@ import { requireCourseUser } from "@/lib/server/session";
 import { EHRGO_ACTIVITIES, EHRGO_PACKAGES, materialSize, visibleEhrgoFiles, type EhrgoActivity } from "@/lib/server/ehrgo";
 import { Icon } from "@/components/ui/Icon";
 import UploadMaterials from "@/components/ehrgo/UploadMaterials";
+import SubmitAnswerSheet from "@/components/ehrgo/SubmitAnswerSheet";
 import { listUploadedEhrgoMaterials } from "@/lib/server/ehrgo-uploads";
+import { listEhrgoSubmissions } from "@/lib/server/ehrgo-submissions";
 import type { UploadedEhrgoMaterial } from "@/lib/ehrgo-materials";
 import "./materials.css";
 
@@ -20,6 +22,8 @@ export default async function EhrgoMaterialsPage() {
   const instructor = user.role === "instructor" || user.role === "admin";
   const packages = EHRGO_PACKAGES.filter((item) => item.audience === "student" || instructor);
   const uploads = await listUploadedEhrgoMaterials(instructor);
+  const submissions = await listEhrgoSubmissions(user);
+  const assignments = EHRGO_ACTIVITIES.filter((activity) => activity.category === "assigned");
 
   return (
     <div className="materials-shell">
@@ -40,7 +44,8 @@ export default async function EhrgoMaterialsPage() {
         <div className="materials-heading">
           <p className="materials-kicker">Course resources</p>
           <h1>EHR Go materials</h1>
-          <p>Download worksheets, datasets, and supporting readings, then open the matching activity in EHR Go. Follow your Blackboard assignment instructions and submit completed work there.</p>
+          <p>Download your worksheet, review the matching patient chart in EHR Go, then upload your completed answer sheet here for instructor review.</p>
+          {!instructor && <p><a href="#submit-answer-sheet">Submit your answer sheet</a> · If you have trouble uploading, email your instructor with the file attached.</p>}
           <a className="materials-access" href="https://slides.fordms.com/ehrgo" target="_blank" rel="noopener noreferrer">EHR Go account setup and course access <Icon name="arrow" size={15} /></a>
         </div>
 
@@ -58,10 +63,29 @@ export default async function EhrgoMaterialsPage() {
 
         <section className="materials-section" aria-labelledby="assigned-heading">
           <h2 id="assigned-heading">Assigned activities</h2>
-          <p>For Activity 1, use the answer sheet assigned to you in Blackboard. The EHR Orientation worksheet below supports your chart review.</p>
+          <p>For Activity 1, download the student EHR Orientation worksheet below, review the chart in EHR Go, and upload your completed worksheet using “Submit your answer sheet.”</p>
           <div className="materials-grid">
             {EHRGO_ACTIVITIES.filter((item) => item.category === "assigned").map((item) => <Activity key={item.id} activity={item} instructor={instructor} uploads={uploads} assigned />)}
           </div>
+        </section>
+
+        {!instructor && <SubmitAnswerSheet activities={assignments.map((activity) => ({ id: activity.id, title: `${activity.id === "74" ? "Activity 1" : "Activity 3"} · ${activity.title}` }))} />}
+
+        <section className="materials-section" aria-labelledby="submissions-heading">
+          <h2 id="submissions-heading">{instructor ? "Student answer-sheet submissions" : "Your submissions"}</h2>
+          <p>{instructor ? "Download completed answer sheets for review. The newest file for each student and activity is their current submission; earlier versions are retained." : "A received file is ready for instructor review. You can upload a revision; your newest file will be your current submission."}</p>
+          {submissions.length === 0 ? <p>{instructor ? "No answer sheets have been submitted yet." : "You have not submitted an answer sheet yet."}</p> : (
+            <ul className="materials-submissions">
+              {submissions.map((submission) => (
+                <li key={submission.id}>
+                  <a href={`/api/ehrgo/submissions/${submission.id}`}>{submission.name}</a>
+                  {instructor && <span>{submission.studentName || submission.email} · {submission.email}</span>}
+                  <span>{EHRGO_ACTIVITIES.find((activity) => activity.id === submission.activityId)?.title} · Received {new Date(submission.submittedAt).toLocaleString("en-US", { timeZone: "America/New_York", dateStyle: "medium", timeStyle: "short" })} ET</span>
+                  {!instructor && <small>Receipt: {submission.id}</small>}
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
 
         <section className="materials-section" aria-labelledby="analytics-heading">

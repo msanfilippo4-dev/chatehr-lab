@@ -21,3 +21,13 @@ export interface UploadedEhrgoMaterial {
   bytes: number;
   uploadedAt: string;
 }
+
+export interface EhrgoSubmission {
+  id: string;
+  activityId: string;
+  name: string;
+  bytes: number;
+  email: string;
+  studentName: string | null;
+  submittedAt: string;
+}
