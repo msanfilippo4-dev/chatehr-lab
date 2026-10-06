@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import { InlineAlert, Panel, SimpleTable, SimulationBadge, Status } from "@/components/ui/primitives";
 import type { CodeEntry } from "@/lib/config/types";
+import { ACTION } from "@/lib/actions";
 import { ageOn, isAbnormal, resultValue } from "@/lib/patient";
-import type { NoteVersion, Patient } from "@/lib/types";
+import type { AuditEvent, NoteVersion, Patient } from "@/lib/types";
 import type { ViewProps } from "./shared";
 
 const TABS = ["Summary", "Problems", "Medications", "Allergies", "Vitals", "Results", "Notes", "Encounters", "Audit", "Coding"] as const;
@@ -76,7 +77,7 @@ export function Patients(props: ViewProps) {
           />
         )}
         {tab === "Coding" && (
-          <CodeSearch patientId={patient.id} icd={props.config.icd10Catalog} cpt={props.config.cptCatalog} version={props.config.meta.version} onUse={(entry) => dispatch({ type: "useCode", patientId: patient.id, entry })} />
+          <CodeSearch patientId={patient.id} audit={state.audit} icd={props.config.icd10Catalog} cpt={props.config.cptCatalog} version={props.config.meta.version} onUse={(entry) => dispatch({ type: "useCode", patientId: patient.id, entry })} />
         )}
       </Panel>
     </div>
@@ -227,16 +228,18 @@ function NoteCard({ note }: { note: NoteVersion }) {
   );
 }
 
-export function CodeSearch({ patientId, icd, cpt, version, onUse }: { patientId: string; icd: CodeEntry[]; cpt: CodeEntry[]; version: number; onUse: (entry: CodeEntry) => void }) {
+export function CodeSearch({ patientId, audit, icd, cpt, version, onUse }: { patientId: string; audit: AuditEvent[]; icd: CodeEntry[]; cpt: CodeEntry[]; version: number; onUse: (entry: CodeEntry) => void }) {
   const [query, setQuery] = useState("");
   const [system, setSystem] = useState<"All" | "ICD-10-CM" | "CPT">("All");
   const rows = [...icd, ...cpt].filter((code) => (system === "All" || code.system === system) && `${code.system} ${code.code} ${code.display} ${code.use}`.toLowerCase().includes(query.toLowerCase()));
   const icdVersion = icd[0]?.version ?? "FY2027";
+  const recorded = audit.filter((event) => event.action === ACTION.USE_CODE_EXAMPLE && event.patientId === patientId && event.provenance !== "imported");
   return (
     <div>
       <InlineAlert tone="info" title={`Teaching code list · configuration version ${version}`}>
         <p>Examples only. {icdVersion} ICD-10-CM applies to dates of service beginning {icd[0]?.effectiveDate ?? "October 1, 2026"}. CPT descriptions are plain-language summaries, not official descriptors. Verify the official code set effective on the date of service.</p>
       </InlineAlert>
+      {recorded.length > 0 && <p className="form-message success" role="status">Code recorded: {recorded[0].detail}. Return to Assignments to see your completed steps. You do not need to record the same code again.</p>}
       <div className="filter-bar">
         <input className="search" aria-label="Search codes" placeholder="Search code, term, or use" value={query} onChange={(event) => setQuery(event.target.value)} />
         <label>
@@ -258,7 +261,7 @@ export function CodeSearch({ patientId, icd, cpt, version, onUse }: { patientId:
               <td>{row.display}</td>
               <td>{row.use}</td>
               <td><small>{row.teachingNote}</small></td>
-              <td><button onClick={() => onUse(row)} aria-label={`Record use of ${row.system} ${row.code} for ${patientId}`}>Record use</button></td>
+              <td><button onClick={() => onUse(row)} aria-label={`Record use of ${row.system} ${row.code} for ${patientId}`}>{recorded.some((event) => event.context === `${row.system}:${row.code}`) ? "Recorded ✓ (record again)" : "Record use"}</button></td>
             </tr>
           ))}
         </tbody>

@@ -111,6 +111,26 @@ export function computeProgress(
     };
   });
 
+  return summarizeProgress(requirements);
+}
+
+/** Keep immediate local feedback while also showing work saved from another tab. */
+export function mergeSavedProgress(local: AssignmentProgressResult, row?: { progress?: unknown; updated_at: string }, resetCutoff?: string | null): AssignmentProgressResult {
+  if (!row || (resetCutoff && Date.parse(row.updated_at) < Date.parse(resetCutoff))) return local;
+  const saved = row.progress as Partial<AssignmentProgressResult> | null | undefined;
+  if (!saved || !Array.isArray(saved.requirements)) return local;
+  const requirements = local.requirements.map((item) => {
+    const remote = saved.requirements!.find((candidate) => candidate.action === item.action && candidate.contextMatch === item.contextMatch && candidate.minimumCount === item.minimumCount &&
+      [...(candidate.anyOf ?? [])].sort().join("|") === [...(item.anyOf ?? [])].sort().join("|"));
+    if (!remote || remote.completedCount > item.minimumCount || remote.completedCount < 0) return item;
+    // Choose one snapshot, rather than adding counts for overlapping audit events.
+    const useRemote = remote.completedCount > item.completedCount || (remote.completedCount === item.completedCount && remote.earnedCount > item.earnedCount);
+    return useRemote ? { ...remote, label: item.label } : item;
+  });
+  return summarizeProgress(requirements);
+}
+
+function summarizeProgress(requirements: RequirementProgress[]): AssignmentProgressResult {
   const totalUnits = requirements.reduce((sum, item) => sum + item.minimumCount, 0);
   const completedUnits = requirements.reduce((sum, item) => sum + item.completedCount, 0);
   const importedUnits = requirements.reduce((sum, item) => sum + Math.min(item.importedCount, item.minimumCount), 0);

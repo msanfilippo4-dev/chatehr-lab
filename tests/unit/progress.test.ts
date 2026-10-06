@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ACTION } from "@/lib/actions";
 import { defaultAssignments } from "@/lib/assignments";
-import { computeProgress, type ProgressEvent } from "@/lib/progress";
+import { computeProgress, mergeSavedProgress, type ProgressEvent } from "@/lib/progress";
 
 function event(partial: Partial<ProgressEvent> & { action: string }): ProgressEvent {
   return { id: partial.id ?? Math.random().toString(36).slice(2), timestamp: partial.timestamp ?? "2026-10-01T12:00:00.000Z", detail: partial.detail ?? "", provenance: partial.provenance ?? "earned", patientId: partial.patientId ?? null, context: partial.context ?? null, action: partial.action };
@@ -82,5 +82,57 @@ describe("computeProgress", () => {
     expect(result.complete).toBe(true);
     expect(result.percent).toBe(100);
     expect(result.status).toBe("ready");
+  });
+});
+
+describe("assignment progress from other tabs", () => {
+  const codeEvents = [
+    event({ id: "ICD", action: ACTION.USE_CODE_EXAMPLE, context: "ICD-10-CM:M75.51", detail: "ICD-10-CM M75.51" }),
+    event({ id: "CPT", action: ACTION.USE_CODE_EXAMPLE, context: "CPT:99214", detail: "CPT 99214" }),
+  ];
+  const saved = (events: ProgressEvent[], updated_at = "2026-10-06T10:00:00.000Z") => ({ progress: computeProgress(a1, events), updated_at });
+
+  it("shows both saved code requirements and their guide evidence in a tab with an older workspace", () => {
+    const merged = mergeSavedProgress(computeProgress(a1, []), saved(codeEvents));
+    expect(merged.completedUnits).toBe(2);
+    expect(merged.requirements.filter((item) => item.action === ACTION.USE_CODE_EXAMPLE).map((item) => [item.complete, item.latestEvidence?.id])).toEqual([[true, "ICD"], [true, "CPT"]]);
+  });
+
+  it("keeps immediate local credit while a server save is still pending", () => {
+    const local = computeProgress(a1, codeEvents);
+    expect(mergeSavedProgress(local, saved([]))).toEqual(local);
+  });
+
+  it("does not double-count a repeated code or add local and server copies of the same action", () => {
+    const local = computeProgress(a1, codeEvents);
+    const repeated = [...codeEvents, { ...codeEvents[0], id: "REPEAT", timestamp: "2026-10-06T09:00:00.000Z" }];
+    const result = mergeSavedProgress(local, saved(repeated));
+    expect(result.completedUnits).toBe(2);
+    expect(result.earnedUnits).toBe(2);
+  });
+
+  it("ignores server evidence calculated before an assignment reset", () => {
+    const local = computeProgress(a1, []);
+    expect(mergeSavedProgress(local, saved(codeEvents), "2026-10-06T11:00:00.000Z")).toEqual(local);
+  });
+
+  it("does not reuse a saved count after a requirement changes", () => {
+    const changed = { requirements: a1.requirements.map((item) => item.contextMatch === "ICD-10-CM" ? { ...item, minimumCount: 2 } : item) };
+    const result = mergeSavedProgress(computeProgress(changed, []), saved(codeEvents));
+    expect(result.requirements.find((item) => item.contextMatch === "ICD-10-CM")?.completedCount).toBe(0);
+    expect(result.requirements.find((item) => item.contextMatch === "CPT")?.completedCount).toBe(1);
+  });
+
+  it("prefers earned evidence to an imported copy", () => {
+    const imported = computeProgress(a1, codeEvents.map((item) => ({ ...item, provenance: "imported" as const })));
+    const result = mergeSavedProgress(imported, saved(codeEvents));
+    expect(result.earnedUnits).toBe(2);
+    expect(result.importedUnits).toBe(0);
+  });
+
+  it("preserves a saved multi-item requirement without inflating its count", () => {
+    const readiness = ["IMP-01", "IMP-02", "IMP-03"].map((context) => event({ action: ACTION.UPDATE_IMPLEMENTATION_READINESS, context }));
+    const result = mergeSavedProgress(computeProgress(a4, []), { progress: computeProgress(a4, readiness), updated_at: "2026-10-06T10:00:00.000Z" });
+    expect(result.requirements.find((item) => item.action === ACTION.UPDATE_IMPLEMENTATION_READINESS)?.completedCount).toBe(3);
   });
 });

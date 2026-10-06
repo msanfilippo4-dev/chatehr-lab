@@ -9,7 +9,7 @@ import { FORDMS_CATEGORY_SHARE } from "@/lib/assignments";
 import type { View } from "@/lib/config/defaults";
 import type { CourseAssignment, GuidePart, GuideStep } from "@/lib/config/types";
 import { roleFromSlug, viewFromSlug, type NavTarget } from "@/lib/navigation";
-import { computeProgress, matchesRequirement, toProgressEvent, type AssignmentProgressResult, type ProgressEvent } from "@/lib/progress";
+import { computeProgress, matchesRequirement, mergeSavedProgress, toProgressEvent, type AssignmentProgressResult, type ProgressEvent } from "@/lib/progress";
 import { scopedReset } from "@/lib/store/reset";
 import type { CourseSubmission, EHRState, ProgressRow } from "@/lib/types";
 import { formatWhen } from "./shared";
@@ -28,7 +28,7 @@ interface Props {
 type Message = { text: string; tone: "success" | "error" };
 
 function cutoffFor(courseData: CourseData | null, id: string) {
-  return courseData?.resetMarkers?.[id] ?? courseData?.resetMarkers?.["*"] ?? null;
+  return [courseData?.resetMarkers?.[id], courseData?.resetMarkers?.["*"]].filter(Boolean).sort().at(-1) ?? null;
 }
 
 function statusFor(submission: CourseSubmission | undefined, progress: AssignmentProgressResult): { label: string; tone: Tone } {
@@ -46,18 +46,23 @@ export function Assignments(props: Props) {
   const [active, setActive] = useState(assignments[0]?.id ?? "FORDMS-A1");
   const [message, setMessage] = useState<Message>({ text: "", tone: "success" });
   const events = useMemo(() => state.audit.map(toProgressEvent), [state.audit]);
+  const guideEvents = useMemo(() => [...events, ...(courseData?.workspace?.audit ?? []).map(toProgressEvent)], [events, courseData?.workspace?.audit]);
   const assignment = assignments.find((item) => item.id === active) ?? assignments[0];
 
   if (!assignment) {
     return <Panel title="Assignments"><p className="empty">Assignments are loading.</p></Panel>;
   }
 
-  const progressFor = (item: CourseAssignment) => computeProgress(item, events, { resetCutoff: cutoffFor(courseData, item.id) });
+  const progressFor = (item: CourseAssignment) => {
+    const cutoff = cutoffFor(courseData, item.id);
+    const local = computeProgress(item, events, { resetCutoff: cutoff });
+    return mergeSavedProgress(local, courseData?.progress.find((row) => row.assignment_id === item.id), cutoff);
+  };
   const progress = progressFor(assignment);
   const submission = courseData?.submissions.find((item) => item.assignment_id === assignment.id);
   const serverRow = courseData?.progress.find((row) => row.assignment_id === assignment.id);
   const cutoff = cutoffFor(courseData, assignment.id);
-  const usableEvents = cutoff ? events.filter((event) => Date.parse(event.timestamp) >= Date.parse(cutoff)) : events;
+  const usableEvents = cutoff ? guideEvents.filter((event) => Date.parse(event.timestamp) >= Date.parse(cutoff)) : guideEvents;
 
   return (
     <div className="assignments-view">
@@ -87,7 +92,7 @@ export function Assignments(props: Props) {
         <div className="stack">
           <AssignmentHeader assignment={assignment} progress={progress} submission={submission} serverRow={serverRow} />
           {assignment.guide
-            ? <Guide assignment={assignment} events={usableEvents} navigate={navigate} />
+            ? <Guide assignment={assignment} events={usableEvents} progress={progress} navigate={navigate} />
             : <LegacyBrief assignment={assignment} />}
           <EvidencePanel progress={progress} />
           <RubricPanel assignment={assignment} />
@@ -183,9 +188,10 @@ function AssignmentHeader({ assignment, progress, submission, serverRow }: {
   );
 }
 
-function stepDone(step: GuideStep, events: ProgressEvent[]): boolean {
+function stepDone(step: GuideStep, events: ProgressEvent[], progress: AssignmentProgressResult): boolean {
   if (!step.check) return false;
-  return events.some((event) => matchesRequirement(step.check!, event));
+  return events.some((event) => matchesRequirement(step.check!, event)) || progress.requirements.some((requirement) =>
+    requirement.complete && requirement.latestEvidence && matchesRequirement(step.check!, requirement.latestEvidence));
 }
 
 function linkTarget(step: GuideStep): NavTarget | null {
@@ -195,10 +201,10 @@ function linkTarget(step: GuideStep): NavTarget | null {
   return { view: view as View, patient: step.link.patient, role: roleFromSlug(step.link.role), tab: step.link.tab };
 }
 
-function Guide({ assignment, events, navigate }: { assignment: CourseAssignment; events: ProgressEvent[]; navigate: (target: NavTarget) => void }) {
+function Guide({ assignment, events, progress, navigate }: { assignment: CourseAssignment; events: ProgressEvent[]; progress: AssignmentProgressResult; navigate: (target: NavTarget) => void }) {
   const guide = assignment.guide!;
   const checked = guide.parts.flatMap((part) => part.steps.filter((step) => step.check));
-  const done = checked.filter((step) => stepDone(step, events)).length;
+  const done = checked.filter((step) => stepDone(step, events, progress)).length;
   return (
     <section className="panel guide-panel" aria-label="Step-by-step guide">
       <div className="panel-head">
@@ -213,16 +219,16 @@ function Guide({ assignment, events, navigate }: { assignment: CourseAssignment;
           <p>{guide.situation}</p>
         </div>
         {guide.parts.map((part, index) => (
-          <GuidePartCard key={part.title} part={part} index={index} events={events} navigate={navigate} />
+          <GuidePartCard key={part.title} part={part} index={index} events={events} progress={progress} navigate={navigate} />
         ))}
       </div>
     </section>
   );
 }
 
-function GuidePartCard({ part, index, events, navigate }: { part: GuidePart; index: number; events: ProgressEvent[]; navigate: (target: NavTarget) => void }) {
+function GuidePartCard({ part, index, events, progress, navigate }: { part: GuidePart; index: number; events: ProgressEvent[]; progress: AssignmentProgressResult; navigate: (target: NavTarget) => void }) {
   const tracked = part.steps.filter((step) => step.check);
-  const complete = tracked.length > 0 && tracked.every((step) => stepDone(step, events));
+  const complete = tracked.length > 0 && tracked.every((step) => stepDone(step, events, progress));
   return (
     <article className={`guide-part${complete ? " complete" : ""}`}>
       <header>
@@ -232,7 +238,7 @@ function GuidePartCard({ part, index, events, navigate }: { part: GuidePart; ind
       </header>
       <ol className="guide-steps">
         {part.steps.map((step, stepIndex) => (
-          <GuideStepRow key={stepIndex} step={step} number={stepIndex + 1} done={stepDone(step, events)} navigate={navigate} />
+          <GuideStepRow key={stepIndex} step={step} number={stepIndex + 1} done={stepDone(step, events, progress)} navigate={navigate} />
         ))}
       </ol>
       {part.tip && (
