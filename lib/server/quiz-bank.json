@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-29T19:19:22.470Z",
+  "generatedAt": "2026-10-19T18:49:00.000Z",
   "source": "v5/content/weeks (npx tsx course_outputs.ts)",
   "policy": {
     "draw": 6,
@@ -641,7 +641,7 @@
       "date": "2026-10-12",
       "graded": true,
       "opensAt": "2026-10-12T21:00:00-04:00",
-      "dueAt": "2026-10-18T23:59:00-04:00",
+      "dueAt": "2026-10-25T23:59:00-04:00",
       "draw": 6,
       "timeLimitMin": 15,
       "items": [
