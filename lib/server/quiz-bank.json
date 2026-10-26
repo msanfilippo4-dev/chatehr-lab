@@ -638,7 +638,7 @@
     {
       "week": 4,
       "title": "Medication, orders, results, and clinical decision support",
-      "date": "2026-10-12",
+      "date": "2026-10-19",
       "graded": true,
       "opensAt": "2026-10-12T21:00:00-04:00",
       "dueAt": "2026-10-25T23:59:00-04:00",
@@ -905,7 +905,7 @@
     {
       "week": 5,
       "title": "Clinical documentation and note integrity",
-      "date": "2026-10-19",
+      "date": "2026-10-26",
       "graded": false,
       "opensAt": "2026-10-19T21:00:00-04:00",
       "dueAt": "2026-10-25T23:59:00-04:00",
@@ -1187,10 +1187,10 @@
     {
       "week": 6,
       "title": "Patient engagement, portals, and consent",
-      "date": "2026-10-26",
+      "date": "2026-11-02",
       "graded": true,
-      "opensAt": "2026-10-26T21:00:00-04:00",
-      "dueAt": "2026-11-01T23:59:00-05:00",
+      "opensAt": "2026-11-02T21:00:00-05:00",
+      "dueAt": "2026-11-08T23:59:00-05:00",
       "draw": 6,
       "timeLimitMin": 15,
       "items": [
@@ -1469,10 +1469,10 @@
     {
       "week": 7,
       "title": "Usability, privacy, security, and downtime",
-      "date": "2026-11-02",
+      "date": "2026-11-09",
       "graded": true,
-      "opensAt": "2026-11-02T21:00:00-05:00",
-      "dueAt": "2026-11-08T23:59:00-05:00",
+      "opensAt": "2026-11-09T21:00:00-05:00",
+      "dueAt": "2026-11-15T23:59:00-05:00",
       "draw": 6,
       "timeLimitMin": 15,
       "items": [
@@ -1751,10 +1751,10 @@
     {
       "week": 8,
       "title": "Clinical decision support and artificial intelligence",
-      "date": "2026-11-09",
+      "date": "2026-11-16",
       "graded": false,
-      "opensAt": "2026-11-09T21:00:00-05:00",
-      "dueAt": "2026-11-15T23:59:00-05:00",
+      "opensAt": "2026-11-16T21:00:00-05:00",
+      "dueAt": "2026-11-22T23:59:00-05:00",
       "draw": 6,
       "timeLimitMin": null,
       "items": [
@@ -2033,10 +2033,10 @@
     {
       "week": 9,
       "title": "Interoperability, FHIR, and population health",
-      "date": "2026-11-16",
+      "date": "2026-11-23",
       "graded": true,
-      "opensAt": "2026-11-16T21:00:00-05:00",
-      "dueAt": "2026-11-22T23:59:00-05:00",
+      "opensAt": "2026-11-23T21:00:00-05:00",
+      "dueAt": "2026-11-29T23:59:00-05:00",
       "draw": 6,
       "timeLimitMin": 15,
       "items": [

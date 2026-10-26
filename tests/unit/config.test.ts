@@ -26,7 +26,7 @@ describe("course configuration", () => {
       const weekday = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", weekday: "short" }).format(new Date(assignment.dueAt));
       expect(weekday, assignment.id).toBe("Sun");
     }
-    expect(defaultAssignments[1].dueAt.startsWith("2026-11-01")).toBe(true);
+    expect(defaultAssignments[1].dueAt.startsWith("2026-11-08")).toBe(true);
   });
 
   it("merge keeps defaults for invalid sections and applies valid ones", () => {

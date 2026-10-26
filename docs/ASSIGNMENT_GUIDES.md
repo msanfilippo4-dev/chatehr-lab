@@ -9,7 +9,7 @@ All patients, staff, and data are fictional. FordMS is a teaching simulation, no
 
 ## A1: Identity, access, scheduling, and coding
 
-**Due:** Sunday, October 11, 2026 at 11:59 p.m. ET · **Time:** about 90 minutes · **Assignment id:** FORDMS-A1
+**Due:** Sunday, October 18, 2026 at 11:59 p.m. ET · **Time:** about 90 minutes · **Assignment id:** FORDMS-A1
 
 ### Your situation
 
@@ -99,7 +99,7 @@ In 150–250 words, explain which identity evidence drove your MPI decision, how
 
 ## A2: Closing clinical loops
 
-**Due:** Sunday, November 1, 2026 at 11:59 p.m. ET · **Time:** about 110 minutes · **Assignment id:** FORDMS-A2
+**Due:** Sunday, November 8, 2026 at 11:59 p.m. ET · **Time:** about 110 minutes · **Assignment id:** FORDMS-A2
 
 ### Your situation
 
@@ -201,7 +201,7 @@ In 175–300 words: (1) for one ticket you resolved, state the root cause, the e
 
 ## A3: Exchange, analytics, and revenue integrity
 
-**Due:** Sunday, November 22, 2026 at 11:59 p.m. ET · **Time:** about 110 minutes · **Assignment id:** FORDMS-A3
+**Due:** Sunday, November 29, 2026 at 11:59 p.m. ET · **Time:** about 110 minutes · **Assignment id:** FORDMS-A3
 
 ### Your situation
 
@@ -280,7 +280,7 @@ In 200–300 words: (1) compare your two reconciliation decisions; (2) state the
 
 ## A4: AI safety review and go-live readiness
 
-**Due:** Sunday, December 6, 2026 at 11:59 p.m. ET · **Time:** about 105 minutes · **Assignment id:** FORDMS-A4
+**Due:** Sunday, December 13, 2026 at 11:59 p.m. ET · **Time:** about 105 minutes · **Assignment id:** FORDMS-A4
 
 ### Your situation
 
