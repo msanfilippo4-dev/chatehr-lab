@@ -19,6 +19,7 @@ const meta = { at: "2026-11-08T12:00:00Z", actor: "student@fordham.edu", role: "
 let container: HTMLDivElement;
 let root: Root;
 let current: EHRState;
+let dispatchCurrent: (action: WorkspaceAction) => void;
 
 beforeEach(() => { vi.resetAllMocks(); container = document.createElement("div"); document.body.append(container); root = createRoot(container); });
 afterEach(async () => { await act(() => root.unmount()); container.remove(); });
@@ -27,6 +28,7 @@ async function mount(initial: EHRState, view: "tickets" | "assignments" = "ticke
   function Harness() {
     const [state, dispatch] = useReducer((state: EHRState, action: WorkspaceAction) => ehrReducer(state, action, meta), initial);
     current = state;
+    dispatchCurrent = dispatch;
     if (view === "assignments") return createElement(Assignments, {
       state, dispatch, readOnly: false, navigate: vi.fn(), exportLearnerReport: vi.fn(), refreshCourseData: mocks.refresh, flushSync: vi.fn(), replaceWorkspace: vi.fn(),
       courseData: { user: { email: meta.actor, role: "student" }, assignments: defaultAssignments, config: defaultCourseConfig, configVersion: 1, releases: [], workspace: state, workspaceUpdatedAt: meta.at, resetMarkers: {}, progress: [], submissions },
@@ -63,6 +65,16 @@ function completedTicket() {
 }
 
 describe("saved ticket work", () => {
+  it("shows completed summaries when saved tickets arrive after the initial render", async () => {
+    await mount(buildInitialState(undefined, meta.actor));
+    expect(field("Root cause detail")).toBeTruthy();
+    await act(() => dispatchCurrent({ type: "replace", state: completedTicket() }));
+    expect(container.querySelector(".triage-summary")?.textContent).toContain("Safety");
+    expect(container.querySelector(".resolution-card")?.textContent).toContain("The saved root cause is supported by the evidence.");
+    expect(field("Root cause detail")).toBeNull();
+    expect(field("Evidence note").value).toBe("Previously saved evidence note.");
+  });
+
   it("shows a resolved ticket and its legacy note after switching, and saves a note without extra evidence", async () => {
     await mount(completedTicket());
     await click("TKT-1042");

@@ -168,7 +168,7 @@ function TicketDetail({ ticket, state, dispatch, navigate, readOnly }: DetailPro
 }
 
 function TriageStep({ ticket, dispatch, readOnly }: { ticket: Ticket; dispatch: ViewProps["dispatch"]; readOnly: boolean }) {
-  const [editing, setEditing] = useState(Boolean(ticket.draft?.triage) || !ticket.triage);
+  const [editing, setEditing] = useState(false);
   const form: NonNullable<TicketDraft["triage"]> = ticket.draft?.triage ?? ticket.triage ?? { category: "", priority: "", owner: TICKET_OWNERS[0] };
   const { category, priority, owner } = form;
   const [message, setMessage] = useState("");
@@ -190,7 +190,7 @@ function TriageStep({ ticket, dispatch, readOnly }: { ticket: Ticket; dispatch: 
   return (
     <div className="ticket-step">
       <h3><span className="step-num">1</span> Triage</h3>
-      {ticket.triage && !editing ? (
+      {ticket.triage && !editing && !ticket.draft?.triage ? (
         <div className="triage-summary">
           <dl className="def-grid">
             <dt>Category</dt><dd>{ticket.triage.category}</dd>
@@ -312,7 +312,7 @@ function InvestigateStep({ ticket, dispatch, navigate, readOnly }: { ticket: Tic
 
 function ResolveStep({ ticket, dispatch, readOnly, enabled }: { ticket: Ticket; dispatch: ViewProps["dispatch"]; readOnly: boolean; enabled: boolean }) {
   const resolution = ticket.resolution;
-  const [editing, setEditing] = useState(Boolean(ticket.draft?.resolution) || !resolution);
+  const [editing, setEditing] = useState(false);
   const form = ticket.draft?.resolution ?? resolution ?? { rootCause: "", detail: "", fix: "", notify: [], communication: "" };
   const { rootCause, detail, fix, notify, communication } = form;
   const [message, setMessage] = useState("");
@@ -345,7 +345,7 @@ function ResolveStep({ ticket, dispatch, readOnly, enabled }: { ticket: Ticket; 
     <div className={`ticket-step${enabled ? "" : " disabled-step"}`}>
       <h3><span className="step-num">3</span> Resolve</h3>
       {!enabled && <p className="help">Save triage and at least one piece of evidence to unlock this step.</p>}
-      {resolution && !editing ? (
+      {resolution && !editing && !ticket.draft?.resolution ? (
         <div className="resolution-card">
           <p className="help">Resolution recorded {new Date(resolution.at).toLocaleString()}.</p>
           <dl className="def-grid">
