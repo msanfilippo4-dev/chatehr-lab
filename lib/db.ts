@@ -155,6 +155,7 @@ export function normalizeState(value: unknown, owner?: string): EHRState {
     inBasket: raw.inBasket ?? base.inBasket,
     claims: raw.claims ?? base.claims,
     tickets: raw.tickets ?? base.tickets,
+    assignmentDrafts: raw.assignmentDrafts ?? {},
   };
 }
 

@@ -65,6 +65,7 @@ export function scopedReset(state: EHRState, assignment: CourseAssignment, actor
   const audit = next.audit.filter((event) => !assignment.requirements.some((requirement) => matchesRequirement(requirement, event)));
   return {
     ...next,
+    assignmentDrafts: Object.fromEntries(Object.entries(next.assignmentDrafts ?? {}).filter(([assignmentId]) => assignmentId !== id)),
     audit: [{ id: `AUD-reset-${Date.now()}`, timestamp: now, actor, action: ACTION.RESET_WORKSPACE, detail: `Reset ${id} work; signed notes and other assignments preserved`, context: id, provenance: "earned" }, ...audit],
     meta: { ...next.meta, lastResetAt: now },
   };

@@ -64,6 +64,7 @@ export function ViewSwitch({ view, viewProps, courseData, readOnly, exportLearne
       return (
         <Assignments
           state={viewProps.state}
+          dispatch={viewProps.dispatch}
           courseData={courseData}
           readOnly={readOnly}
           exportLearnerReport={exportLearnerReport}

@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { NavLink } from "@/components/ui/NavLink";
 import { KpiRow, PageHeader, Segmented, Status, Tip, type Tone } from "@/components/ui/primitives";
 import type { View } from "@/lib/config/defaults";
 import { SIMULATION_DATE } from "@/lib/seed";
 import { TICKET_CATEGORIES, TICKET_OWNERS, TICKET_PRIORITIES } from "@/lib/seeds/tickets";
-import type { Role, Ticket, TicketCategory, TicketPriority } from "@/lib/types";
+import type { Role, Ticket, TicketCategory, TicketDraft, TicketPriority } from "@/lib/types";
 import type { ViewProps } from "./shared";
 
 type StatusFilter = "Open" | "Resolved" | "All";
@@ -35,7 +35,7 @@ function priorityTone(priority: TicketPriority): Tone {
 }
 
 export function Tickets({ state, dispatch, navigate, readOnly }: ViewProps) {
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("Open");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("All");
   const [assignmentFilter, setAssignmentFilter] = useState<AssignmentFilter>("All");
   const [selectedId, setSelectedId] = useState(state.tickets[0]?.id ?? "");
 
@@ -83,6 +83,7 @@ export function Tickets({ state, dispatch, navigate, readOnly }: ViewProps) {
               ))}
             </select>
           </div>
+          <p className="help">Resolved tickets stay saved. Use All or Resolved to review them.</p>
           <ul className="queue">
             {filtered.map((ticket) => (
               <li key={ticket.id}>
@@ -167,11 +168,14 @@ function TicketDetail({ ticket, state, dispatch, navigate, readOnly }: DetailPro
 }
 
 function TriageStep({ ticket, dispatch, readOnly }: { ticket: Ticket; dispatch: ViewProps["dispatch"]; readOnly: boolean }) {
-  const [editing, setEditing] = useState(!ticket.triage);
-  const [category, setCategory] = useState<TicketCategory | "">(ticket.triage?.category ?? "");
-  const [priority, setPriority] = useState<TicketPriority | "">(ticket.triage?.priority ?? "");
-  const [owner, setOwner] = useState(ticket.triage?.owner ?? TICKET_OWNERS[0]);
+  const [editing, setEditing] = useState(Boolean(ticket.draft?.triage) || !ticket.triage);
+  const form: NonNullable<TicketDraft["triage"]> = ticket.draft?.triage ?? ticket.triage ?? { category: "", priority: "", owner: TICKET_OWNERS[0] };
+  const { category, priority, owner } = form;
   const [message, setMessage] = useState("");
+
+  function update(changes: Partial<typeof form>) {
+    dispatch({ type: "draftTicket", ticketId: ticket.id, draft: { triage: { ...form, ...changes } } });
+  }
 
   function save() {
     if (!category || !priority) {
@@ -200,28 +204,28 @@ function TriageStep({ ticket, dispatch, readOnly }: { ticket: Ticket; dispatch: 
           <div className="triage-grid">
             <label className="field">
               <span>Category</span>
-              <select aria-label="Category" value={category} onChange={(event) => setCategory(event.target.value as TicketCategory)} disabled={readOnly}>
+              <select aria-label="Category" value={category} onChange={(event) => update({ category: event.target.value as TicketCategory })} disabled={readOnly}>
                 <option value="">Choose…</option>
                 {TICKET_CATEGORIES.map((item) => <option key={item}>{item}</option>)}
               </select>
             </label>
             <label className="field">
               <span>Priority</span>
-              <select aria-label="Priority" value={priority} onChange={(event) => setPriority(event.target.value as TicketPriority)} disabled={readOnly}>
+              <select aria-label="Priority" value={priority} onChange={(event) => update({ priority: event.target.value as TicketPriority })} disabled={readOnly}>
                 <option value="">Choose…</option>
                 {TICKET_PRIORITIES.map((item) => <option key={item}>{item}</option>)}
               </select>
             </label>
             <label className="field">
               <span>Owner</span>
-              <select aria-label="Owner" value={owner} onChange={(event) => setOwner(event.target.value)} disabled={readOnly}>
+              <select aria-label="Owner" value={owner} onChange={(event) => update({ owner: event.target.value })} disabled={readOnly}>
                 {TICKET_OWNERS.map((item) => <option key={item}>{item}</option>)}
               </select>
             </label>
           </div>
           <div className="button-row">
             <button type="button" className="primary" onClick={save} disabled={readOnly}>Save triage</button>
-            {ticket.triage && <button type="button" onClick={() => setEditing(false)}>Cancel</button>}
+            {ticket.triage && <button type="button" disabled={readOnly} onClick={() => { dispatch({ type: "draftTicket", ticketId: ticket.id, draft: { triage: undefined } }); setEditing(false); }}>Cancel</button>}
           </div>
           {message && <p className="form-message error" role="status">{message}</p>}
         </>
@@ -233,31 +237,30 @@ function TriageStep({ ticket, dispatch, readOnly }: { ticket: Ticket; dispatch: 
 
 function InvestigateStep({ ticket, dispatch, navigate, readOnly }: { ticket: Ticket; dispatch: ViewProps["dispatch"]; navigate: ViewProps["navigate"]; readOnly: boolean }) {
   const saved = useMemo(() => new Set(ticket.evidence.map((item) => item.id)), [ticket.evidence]);
-  const [checked, setChecked] = useState<Set<string>>(new Set(saved));
-  const [note, setNote] = useState("");
+  const checked = new Set(ticket.draft?.evidence?.ids ?? saved);
+  const savedNote = ticket.investigationNote ?? [...new Set(ticket.evidence.map((item) => item.note).filter(Boolean))].join("\n\n");
+  const note = ticket.draft?.evidence?.note ?? savedNote;
   const [message, setMessage] = useState("");
 
-  useEffect(() => { setChecked((current) => new Set([...current, ...saved])); }, [saved]);
+  function update(ids: string[], text: string) {
+    dispatch({ type: "draftTicket", ticketId: ticket.id, draft: { evidence: { ids, note: text } } });
+    setMessage("");
+  }
 
   function toggle(id: string) {
-    if (saved.has(id)) return;
-    setChecked((current) => {
-      const next = new Set(current);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+    const next = new Set(checked);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    update([...next], note);
   }
 
   function save() {
-    const fresh = [...checked].filter((id) => !saved.has(id));
-    if (!fresh.length) {
-      setMessage("Tick at least one new piece of evidence you actually checked.");
+    if (!checked.size) {
+      setMessage("Select at least one piece of evidence you actually checked.");
       return;
     }
-    for (const id of fresh) dispatch({ type: "recordTicketEvidence", ticketId: ticket.id, evidenceId: id, note: note.trim() });
-    setNote("");
-    setMessage(`Saved ${fresh.length} evidence item(s).`);
+    dispatch({ type: "saveTicketInvestigation", ticketId: ticket.id, evidenceIds: [...checked], note });
+    setMessage(`Saved ${checked.size} evidence item(s) and your note.`);
   }
 
   return (
@@ -284,7 +287,7 @@ function InvestigateStep({ ticket, dispatch, navigate, readOnly }: { ticket: Tic
           const isChecked = checked.has(option.id);
           return (
             <label key={option.id} className={isChecked ? "checked" : ""}>
-              <input type="checkbox" checked={isChecked} disabled={readOnly || isSaved} onChange={() => toggle(option.id)} />
+              <input type="checkbox" checked={isChecked} disabled={readOnly} onChange={() => toggle(option.id)} />
               <span>
                 {option.label}
                 {isSaved && <span className="saved-tag">Saved</span>}
@@ -295,8 +298,9 @@ function InvestigateStep({ ticket, dispatch, navigate, readOnly }: { ticket: Tic
       </div>
       <label className="field ticket-field">
         <span>Evidence note (optional)</span>
-        <textarea aria-label="Evidence note" rows={2} value={note} onChange={(event) => setNote(event.target.value)} placeholder="What you saw and where (e.g. 'eMAR drawer lists only 50 mg tablets')." disabled={readOnly} />
+        <textarea aria-label="Evidence note" rows={2} value={note} onChange={(event) => update([...checked], event.target.value)} placeholder="What you saw and where (e.g. 'eMAR drawer lists only 50 mg tablets')." disabled={readOnly} />
       </label>
+      <p className="help">You can update this note or correct your evidence selections without adding another item. Choose Save evidence to record your changes.</p>
       <div className="button-row">
         <button type="button" onClick={save} disabled={readOnly}>Save evidence</button>
       </div>
@@ -308,16 +312,17 @@ function InvestigateStep({ ticket, dispatch, navigate, readOnly }: { ticket: Tic
 
 function ResolveStep({ ticket, dispatch, readOnly, enabled }: { ticket: Ticket; dispatch: ViewProps["dispatch"]; readOnly: boolean; enabled: boolean }) {
   const resolution = ticket.resolution;
-  const [editing, setEditing] = useState(!resolution);
-  const [rootCause, setRootCause] = useState(resolution?.rootCause ?? "");
-  const [detail, setDetail] = useState(resolution?.detail ?? "");
-  const [fix, setFix] = useState(resolution?.fix ?? "");
-  const [notify, setNotify] = useState<string[]>(resolution?.notify ?? []);
-  const [communication, setCommunication] = useState(resolution?.communication ?? "");
+  const [editing, setEditing] = useState(Boolean(ticket.draft?.resolution) || !resolution);
+  const form = ticket.draft?.resolution ?? resolution ?? { rootCause: "", detail: "", fix: "", notify: [], communication: "" };
+  const { rootCause, detail, fix, notify, communication } = form;
   const [message, setMessage] = useState("");
 
+  function update(changes: Partial<typeof form>) {
+    dispatch({ type: "draftTicket", ticketId: ticket.id, draft: { resolution: { ...form, ...changes } } });
+  }
+
   function toggleNotify(name: string) {
-    setNotify((current) => (current.includes(name) ? current.filter((item) => item !== name) : [...current, name]));
+    update({ notify: notify.includes(name) ? notify.filter((item) => item !== name) : [...notify, name] });
   }
 
   function resolve() {
@@ -332,7 +337,7 @@ function ResolveStep({ ticket, dispatch, readOnly, enabled }: { ticket: Ticket; 
       return;
     }
     dispatch({ type: "resolveTicket", ticketId: ticket.id, resolution: { rootCause, detail: detail.trim(), fix: fix.trim(), notify, communication: communication.trim() } });
-    setMessage(`Ticket resolved. ${ticket.requester} will see your message.`);
+    setMessage("Ticket resolved. Your resolution is recorded; you can review it under All or Resolved.");
     setEditing(false);
   }
 
@@ -342,6 +347,7 @@ function ResolveStep({ ticket, dispatch, readOnly, enabled }: { ticket: Ticket; 
       {!enabled && <p className="help">Save triage and at least one piece of evidence to unlock this step.</p>}
       {resolution && !editing ? (
         <div className="resolution-card">
+          <p className="help">Resolution recorded {new Date(resolution.at).toLocaleString()}.</p>
           <dl className="def-grid">
             <dt>Root cause</dt><dd>{resolution.rootCause}</dd>
             <dt>Detail</dt><dd>{resolution.detail}</dd>
@@ -354,20 +360,21 @@ function ResolveStep({ ticket, dispatch, readOnly, enabled }: { ticket: Ticket; 
         </div>
       ) : (
         <fieldset className="resolve-form" disabled={!enabled || readOnly}>
+          <p className="help">Draft changes are saved with your workspace. Choose Resolve ticket to record completion, and wait for the cloud save confirmation before closing the page.</p>
           <label className="field ticket-field">
             <span>Root cause</span>
-            <select aria-label="Root cause" value={rootCause} onChange={(event) => setRootCause(event.target.value)}>
+            <select aria-label="Root cause" value={rootCause} onChange={(event) => update({ rootCause: event.target.value })}>
               <option value="">Choose the root cause</option>
               {ticket.rootCauseOptions.map((option) => <option key={option} value={option}>{option}</option>)}
             </select>
           </label>
           <label className="field ticket-field">
             <span>Root cause detail</span>
-            <textarea aria-label="Root cause detail" rows={3} value={detail} onChange={(event) => setDetail(event.target.value)} placeholder="Which evidence proves it, in one or two sentences." />
+            <textarea aria-label="Root cause detail" rows={3} value={detail} onChange={(event) => update({ detail: event.target.value })} placeholder="Which evidence proves it, in one or two sentences." />
           </label>
           <label className="field ticket-field">
             <span>Fix or recommendation</span>
-            <textarea aria-label="Fix or recommendation" rows={3} value={fix} onChange={(event) => setFix(event.target.value)} placeholder="The system change (build, workflow, policy) and how you will know it worked." />
+            <textarea aria-label="Fix or recommendation" rows={3} value={fix} onChange={(event) => update({ fix: event.target.value })} placeholder="The system change (build, workflow, policy) and how you will know it worked." />
           </label>
           <div className="notify-group" role="group" aria-label="Notify">
             <span className="notify-label">Notify</span>
@@ -382,11 +389,11 @@ function ResolveStep({ ticket, dispatch, readOnly, enabled }: { ticket: Ticket; 
           </div>
           <label className="field ticket-field">
             <span>Message to requester</span>
-            <textarea aria-label="Message to requester" rows={4} value={communication} onChange={(event) => setCommunication(event.target.value)} placeholder={`Hi ${ticket.requester.split(",")[0].split(" ")[0]}, here is what we found…`} />
+            <textarea aria-label="Message to requester" rows={4} value={communication} onChange={(event) => update({ communication: event.target.value })} placeholder={`Hi ${ticket.requester.split(",")[0].split(" ")[0]}, here is what we found…`} />
           </label>
           <div className="button-row">
             <button type="button" className="primary" onClick={resolve}>Resolve ticket</button>
-            {resolution && <button type="button" onClick={() => setEditing(false)}>Cancel</button>}
+            {resolution && <button type="button" onClick={() => { dispatch({ type: "draftTicket", ticketId: ticket.id, draft: { resolution: undefined } }); setEditing(false); }}>Cancel</button>}
           </div>
           {message && <p className={`form-message ${message.startsWith("Ticket resolved") ? "success" : "error"}`} role="status">{message}</p>}
         </fieldset>

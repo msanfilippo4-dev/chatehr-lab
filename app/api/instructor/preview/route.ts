@@ -16,7 +16,7 @@ export async function GET(request: Request) {
       admin.from("ehr_course_users").select("email,name,role,enrollment_status,last_login_at").eq("email", email).maybeSingle(),
       admin.from("ehr_user_workspaces").select("workspace,updated_at,reset_markers").eq("email", email).maybeSingle(),
       admin.from("ehr_assignment_progress").select("assignment_id,progress,percent_complete,status,earned_units,imported_units,total_units,completed_at,updated_at").eq("email", email),
-      admin.from("ehr_assignment_submissions").select("assignment_id,status,version,score,rubric_total,feedback,submitted_at,graded_at,graded_by,returned_at,return_comment,late").eq("email", email),
+      admin.from("ehr_assignment_submissions").select("assignment_id,reflection,status,version,score,rubric_total,feedback,submitted_at,graded_at,graded_by,returned_at,return_comment,late").eq("email", email),
     ]);
     for (const result of [user, workspace, progress, submissions]) if (result.error) throw result.error;
     if (!user.data) throw new ApiError(404, "That student has not signed in to FordMS.", "NOT_FOUND");

@@ -498,6 +498,12 @@ export interface Claim {
 export type TicketCategory = "Break-fix" | "Safety" | "Enhancement" | "Training" | "Data request";
 export type TicketPriority = "Low" | "Medium" | "High" | "Urgent";
 
+export interface TicketDraft {
+  triage?: { category: TicketCategory | ""; priority: TicketPriority | ""; owner: string };
+  evidence?: { ids: string[]; note: string };
+  resolution?: Omit<NonNullable<Ticket["resolution"]>, "at">;
+}
+
 export interface Ticket {
   id: string;
   /** Assignment that uses this ticket ("A2"…), or "GEN" for practice tickets. */
@@ -515,6 +521,8 @@ export interface Ticket {
   status: "New" | "Triaged" | "Resolved";
   triage?: { category: TicketCategory; priority: TicketPriority; owner: string; at: string };
   evidence: { id: string; note: string; at: string }[];
+  investigationNote?: string;
+  draft?: TicketDraft;
   resolution?: { rootCause: string; detail: string; fix: string; notify: string[]; communication: string; at: string };
 }
 
@@ -554,6 +562,7 @@ export interface EHRState {
   inBasket: InBasketItem[];
   claims: Claim[];
   tickets: Ticket[];
+  assignmentDrafts?: Record<string, string>;
 }
 
 /** Maximum number of audit events retained in a workspace. */
@@ -566,6 +575,7 @@ export type ReleaseState = "hidden" | "released" | "closed";
 
 export interface CourseSubmission {
   assignment_id: string;
+  reflection?: string;
   status: SubmissionStatus;
   version: number;
   score: number | null;

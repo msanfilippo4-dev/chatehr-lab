@@ -2,7 +2,7 @@ import { ACTION, type ActionId } from "../actions";
 import type { CodeEntry } from "../config/types";
 import type {
   AIReviewRecord, Appointment, AuditEvent, Claim, EHRState, EligibilityCheck, ExchangeItem, FlowsheetEntry, IdentityReview, ImplementationCheckpoint,
-  MarAdministration, MarScanRecord, NoteVersion, Order, Patient, QueryRun, Referral, Role, SavedQueryDefinition, Task, Ticket, TicketCategory, TicketPriority, WaitlistEntry,
+  MarAdministration, MarScanRecord, NoteVersion, Order, Patient, QueryRun, Referral, Role, SavedQueryDefinition, Task, Ticket, TicketCategory, TicketDraft, TicketPriority, WaitlistEntry,
 } from "../types";
 import { AUDIT_LIMIT } from "../types";
 import { ticketContext } from "../seeds/tickets";
@@ -57,6 +57,9 @@ export type WorkspaceAction =
   | { type: "correctClaim"; claimId: string; changes: Partial<Claim>; description: string }
   | { type: "submitClaim"; claimId: string }
   | { type: "workDenial"; claimId: string; action: string; note: string }
+  | { type: "draftTicket"; ticketId: string; draft: Partial<TicketDraft> }
+  | { type: "saveTicketInvestigation"; ticketId: string; evidenceIds: string[]; note: string }
+  | { type: "draftAssignment"; assignmentId: string; text: string }
   | { type: "triageTicket"; ticketId: string; category: TicketCategory; priority: TicketPriority; owner: string }
   | { type: "recordTicketEvidence"; ticketId: string; evidenceId: string; note: string }
   | { type: "resolveTicket"; ticketId: string; resolution: Omit<NonNullable<Ticket["resolution"]>, "at"> };
@@ -322,10 +325,28 @@ export function ehrReducer(state: EHRState, action: WorkspaceAction, meta: Actio
       const next = updateClaim(state, claim.id, (row) => ({ ...row, status: "Denial worked" as const, denialWork: { action: action.action, note: action.note, workedAt: meta.at }, history: [...row.history, { at: meta.at, change: `Denial worked: ${action.action}` }] }));
       return withAudit(next, meta, ACTION.WORK_DENIAL, `${claim.id} ${claim.denial ? `${claim.denial.group}-${claim.denial.carc}` : ""}: ${action.action}. ${action.note}`, claim.patientId, claim.id);
     }
+    case "draftAssignment":
+      return { ...state, assignmentDrafts: { ...state.assignmentDrafts, [action.assignmentId]: action.text } };
+    case "draftTicket":
+      return updateTicket(state, action.ticketId, (ticket) => ({ ...ticket, draft: { ...ticket.draft, ...action.draft } }));
+    case "saveTicketInvestigation": {
+      const ticket = state.tickets.find((row) => row.id === action.ticketId);
+      const ids = [...new Set(action.evidenceIds)];
+      if (!ticket || !ids.length || ids.some((id) => !ticket.evidenceOptions.some((option) => option.id === id))) return state;
+      const note = action.note.trim();
+      const next = updateTicket(state, ticket.id, (row) => ({
+        ...row,
+        evidence: ids.map((id) => row.evidence.find((item) => item.id === id) ?? { id, note: "", at: meta.at }),
+        investigationNote: note,
+        draft: { ...row.draft, evidence: undefined },
+      }));
+      const removed = ticket.evidence.filter((item) => !ids.includes(item.id)).map((item) => item.id);
+      return withAudit(next, meta, ACTION.RECORD_TICKET_EVIDENCE, `${ticket.id}: saved evidence ${ids.join(", ")}${removed.length ? `; removed ${removed.join(", ")}` : ""}${note ? ` · ${note.slice(0, 400)}` : ""}`, ticket.patientId, ticketContext(ticket));
+    }
     case "triageTicket": {
       const ticket = state.tickets.find((row) => row.id === action.ticketId);
       if (!ticket) return state;
-      const next = updateTicket(state, ticket.id, (row) => ({ ...row, status: row.status === "Resolved" ? row.status : ("Triaged" as const), triage: { category: action.category, priority: action.priority, owner: action.owner, at: meta.at } }));
+      const next = updateTicket(state, ticket.id, (row) => ({ ...row, status: row.status === "Resolved" ? row.status : ("Triaged" as const), triage: { category: action.category, priority: action.priority, owner: action.owner, at: meta.at }, draft: { ...row.draft, triage: undefined } }));
       return withAudit(next, meta, ACTION.TRIAGE_TICKET, `${ticket.id}: ${action.category} · ${action.priority} · owner ${action.owner}`, ticket.patientId, ticketContext(ticket));
     }
     case "recordTicketEvidence": {
@@ -338,7 +359,7 @@ export function ehrReducer(state: EHRState, action: WorkspaceAction, meta: Actio
     case "resolveTicket": {
       const ticket = state.tickets.find((row) => row.id === action.ticketId);
       if (!ticket) return state;
-      const next = updateTicket(state, ticket.id, (row) => ({ ...row, status: "Resolved" as const, resolution: { ...action.resolution, at: meta.at } }));
+      const next = updateTicket(state, ticket.id, (row) => ({ ...row, status: "Resolved" as const, resolution: { ...action.resolution, at: meta.at }, draft: { ...row.draft, resolution: undefined } }));
       const rootIndex = ticket.rootCauseOptions.indexOf(action.resolution.rootCause);
       return withAudit(next, meta, ACTION.RESOLVE_TICKET, `${ticket.id} root cause #${rootIndex + 1}: ${action.resolution.rootCause}. Evidence: ${ticket.evidence.map((item) => item.id).join(", ") || "none"}. Notify: ${action.resolution.notify.join(", ")}`, ticket.patientId, ticketContext(ticket));
     }

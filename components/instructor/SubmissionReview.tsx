@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Field, InlineAlert, Panel, Status } from "@/components/ui/primitives";
 import { apiFetch, postJson } from "@/lib/api";
+import { wordCount } from "@/lib/writing";
 import type { CourseAssignment } from "@/lib/config/types";
 import { formatWhen } from "@/components/views/shared";
 import { AutoChecks, type AutoChecksPayload } from "./AutoChecks";
@@ -92,6 +93,7 @@ export function SubmissionReview({ email, assignment, onChanged }: { email: stri
       {header ? <div className="submission-box">
         {header.status === "revision_requested" && <InlineAlert tone="warn" title={`Returned for revision ${formatWhen(header.returned_at)}`}><p>{header.return_comment}</p></InlineAlert>}
         <h3>Written analysis {versionShown ? `(version ${versionShown.version})` : ""}</h3>
+        <p className="help">{wordCount(versionShown ? versionShown.reflection : header.reflection)} words · assignment time spent is not graded</p>
         <p className="student-response">{versionShown ? versionShown.reflection : header.reflection}</p>
         <h3>Captured evidence</h3>
         <div className="evidence-bundle">{(versionShown ? versionShown.evidence : header.evidence).map((item, index) => <article key={`${item.eventId ?? index}`}><header><strong>{item.label ?? item.action}</strong><span>{formatWhen(item.timestamp)}{item.provenance === "imported" && <span className="imported-tag">Imported</span>}</span></header><small>{item.action}{item.patient ? ` · ${item.patient.name} (${item.patient.mrn})` : ""}{item.context ? ` · ${item.context}` : ""}</small><p>{item.detail}</p></article>)}</div>

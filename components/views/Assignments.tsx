@@ -11,11 +11,14 @@ import type { CourseAssignment, GuidePart, GuideStep } from "@/lib/config/types"
 import { roleFromSlug, viewFromSlug, type NavTarget } from "@/lib/navigation";
 import { computeProgress, matchesRequirement, mergeSavedProgress, toProgressEvent, type AssignmentProgressResult, type ProgressEvent } from "@/lib/progress";
 import { scopedReset } from "@/lib/store/reset";
+import type { WorkspaceAction } from "@/lib/store/reducer";
 import type { CourseSubmission, EHRState, ProgressRow } from "@/lib/types";
+import { wordCount } from "@/lib/writing";
 import { formatWhen } from "./shared";
 
 interface Props {
   state: EHRState;
+  dispatch: (action: WorkspaceAction) => void;
   courseData: CourseData | null;
   readOnly: boolean;
   exportLearnerReport: () => void;
@@ -25,7 +28,7 @@ interface Props {
   navigate: (target: NavTarget) => void;
 }
 
-type Message = { text: string; tone: "success" | "error" };
+type Message = { text: string; tone: "success" | "error"; assignmentId?: string };
 
 function cutoffFor(courseData: CourseData | null, id: string) {
   return [courseData?.resetMarkers?.[id], courseData?.resetMarkers?.["*"]].filter(Boolean).sort().at(-1) ?? null;
@@ -69,7 +72,7 @@ export function Assignments(props: Props) {
       <PageHeader
         eyebrow="Clinical informatics analyst · Fordham Health"
         title="Assignments"
-        subtitle={`Four FordMS assignments share ${FORDMS_CATEGORY_SHARE}% of the course grade equally. Each takes about 1–2 hours. Follow the guide; steps tick off as the EHR records your work.`}
+        subtitle={`Four FordMS assignments share ${FORDMS_CATEGORY_SHARE}% of the course grade equally. Time estimates are for planning; time spent does not affect your grade. Follow the guide; steps tick off as the EHR records your work.`}
         actions={<SimulationBadge />}
       />
       <div className="grid assignment-layout">
@@ -172,6 +175,7 @@ function AssignmentHeader({ assignment, progress, submission, serverRow }: {
       <div className="progress-bar" aria-label="Assignment progress">
         <i style={{ width: `${progress.percent}%` }} className={progress.hasImportedEvidence ? "imported" : ""} />
       </div>
+      <p className="help">The {assignment.estimatedMinutes}-minute estimate is for planning only. Time spent does not affect your grade, and you do not need to restart if you take longer.</p>
       {progress.hasImportedEvidence && (
         <InlineAlert tone="warn" title="Imported evidence">
           <p>{progress.importedUnits} of {progress.completedUnits} completed unit(s) come from an imported workspace. Imported evidence is shown to the instructor separately. Redo those actions here if you want them counted as work done in this workspace.</p>
@@ -318,16 +322,15 @@ function RubricPanel({ assignment }: { assignment: CourseAssignment }) {
   );
 }
 
-function SubmitPanel({ assignment, progress, submission, message, setMessage, readOnly, flushSync, refreshCourseData }: Props & {
+function SubmitPanel({ state, dispatch, assignment, progress, submission, message, setMessage, readOnly, flushSync, refreshCourseData }: Props & {
   assignment: CourseAssignment;
   progress: AssignmentProgressResult;
   submission: CourseSubmission | undefined;
   message: Message;
   setMessage: (message: Message) => void;
 }) {
-  const [reflection, setReflection] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
-  const text = reflection[assignment.id] ?? "";
+  const text = state.assignmentDrafts?.[assignment.id] ?? submission?.reflection ?? "";
 
   async function submit() {
     setSubmitting(true);
@@ -335,12 +338,17 @@ function SubmitPanel({ assignment, progress, submission, message, setMessage, re
     try {
       await flushSync();
       const payload = await postJson<{ version: number; late: boolean; importedUnits: number }>("/api/course/submit", { assignmentId: assignment.id, reflection: text });
-      await refreshCourseData();
       const late = payload.late ? " (recorded as late)" : "";
       const imported = payload.importedUnits ? `; ${payload.importedUnits} unit(s) rely on imported evidence` : "";
-      setMessage({ text: `Submitted ${assignment.id}. Version ${payload.version} is ready for grading${late}${imported}.`, tone: "success" });
+      const confirmation: Message = { text: `Submitted ${assignment.id}. Version ${payload.version} contains ${wordCount(text)} words and is ready for grading${late}${imported}.`, tone: "success", assignmentId: assignment.id };
+      setMessage(confirmation);
+      try {
+        await refreshCourseData();
+      } catch {
+        setMessage({ ...confirmation, text: `${confirmation.text} The receipt could not be refreshed. Reload to view it; you do not need to resubmit.` });
+      }
     } catch (error) {
-      setMessage({ text: error instanceof Error ? error.message : "Submission failed.", tone: "error" });
+      setMessage({ text: error instanceof Error ? error.message : "Submission failed.", tone: "error", assignmentId: assignment.id });
     } finally {
       setSubmitting(false);
     }
@@ -349,24 +357,34 @@ function SubmitPanel({ assignment, progress, submission, message, setMessage, re
   return (
     <Panel title="Submit for grading" subtitle="You may resubmit; every version is kept and the newest one is graded">
       <div className="submission-box">
+        {submission?.reflection != null && (
+          <section aria-label="Submission receipt" className="feedback-card">
+            <h3>Submitted written analysis</h3>
+            <p>Version {submission.version} · {formatWhen(submission.submitted_at)} · {wordCount(submission.reflection)} words</p>
+            <p className="help">This is the saved analysis available to your instructor. Editing the draft below changes your submission only when you resubmit.</p>
+            <p className="student-response">{submission.reflection}</p>
+          </section>
+        )}
         <p>{assignment.submissionPrompt}</p>
         <label>
           Written analysis
           <textarea
             rows={9}
             value={text}
-            onChange={(event) => setReflection({ ...reflection, [assignment.id]: event.target.value })}
+            onChange={(event) => dispatch({ type: "draftAssignment", assignmentId: assignment.id, text: event.target.value })}
+            maxLength={5000}
             placeholder="Write your evidence-based analysis here. Do not include real patient information."
-            disabled={readOnly}
+            disabled={readOnly || submitting}
           />
         </label>
         <div className="submission-actions">
-          <span>{text.length} characters (150 minimum){progress.complete ? "" : " · complete every required action first"}</span>
+          <span>{wordCount(text)} words · {text.trim().length} characters (150 minimum){progress.complete ? "" : " · complete every required action first"}</span>
           <button className="primary" disabled={!progress.complete || submitting || readOnly || text.trim().length < 150} onClick={submit}>
             {submitting ? "Submitting…" : submission ? "Resubmit assignment" : "Submit assignment"}
           </button>
         </div>
-        {message.text && <p className={`form-message ${message.tone}`} role="status">{message.text}</p>}
+        <p className="help">Drafts are saved with your workspace. Wait for the cloud save confirmation before closing the page. A draft is not a submission.</p>
+        {message.text && (!message.assignmentId || message.assignmentId === assignment.id) && <p className={`form-message ${message.tone}`} role="status">{message.text}</p>}
         {submission?.feedback && submission.status === "graded" && (
           <div className="feedback-card">
             <strong>Instructor feedback · {submission.score}/100 · graded {formatWhen(submission.graded_at)}</strong>
