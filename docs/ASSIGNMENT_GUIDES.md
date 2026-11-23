@@ -201,7 +201,7 @@ In 175–300 words: (1) for one ticket you resolved, state the root cause, the e
 
 ## A3: Exchange, analytics, and revenue integrity
 
-**Due:** Sunday, November 29, 2026 at 11:59 p.m. ET · **Time:** about 110 minutes · **Assignment id:** FORDMS-A3
+**Due:** Wednesday, December 2, 2026 at 11:59 p.m. ET · **Time:** about 110 minutes · **Assignment id:** FORDMS-A3
 
 ### Your situation
 

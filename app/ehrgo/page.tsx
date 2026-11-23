@@ -90,7 +90,7 @@ export default async function EhrgoMaterialsPage() {
 
         <section className="materials-section" aria-labelledby="analytics-heading">
           <h2 id="analytics-heading">Data querying and analytics</h2>
-          <p>Your instructor will identify the exercise for Activity 2, due November 22. These query prerequisites and analytics activities are available for preparation and practice.</p>
+          <p>EHR Go Activity 2 was dropped. These data querying and analytics exercises are optional practice.</p>
           <div className="materials-grid">
             {EHRGO_ACTIVITIES.filter((item) => item.category === "analytics").map((item) => <Activity key={item.id} activity={item} instructor={instructor} uploads={uploads} />)}
           </div>

@@ -20,11 +20,11 @@ describe("course configuration", () => {
     expect(new Set(ACTION_IDS).size).toBe(ACTION_IDS.length);
   });
 
-  it("assignment shares total 18 percent and due dates are Sundays in New York", () => {
+  it("assignment shares total 18 percent and due dates reflect the holiday schedule", () => {
     expect(defaultAssignments.reduce((sum, item) => sum + item.weightPercent, 0)).toBe(18);
     for (const assignment of defaultAssignments) {
       const weekday = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", weekday: "short" }).format(new Date(assignment.dueAt));
-      expect(weekday, assignment.id).toBe("Sun");
+      expect(weekday, assignment.id).toBe(assignment.id === "FORDMS-A3" ? "Wed" : "Sun");
     }
     expect(defaultAssignments[1].dueAt.startsWith("2026-11-08")).toBe(true);
   });
